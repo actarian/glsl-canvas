@@ -1,0 +1,17 @@
+[{
+	"inputFiles": [
+		"docs/js/glsl-canvas.js"
+    ],
+	"outputFileName": "docs/js/glsl-canvas.js",
+	"minify": {
+		"enabled": true
+	}
+}, {
+	"inputFiles": [
+        "docs/css/docs.css"
+    ],
+	"outputFileName": "docs/css/docs.css",
+	"minify": {
+		"enabled": true
+	}
+}]

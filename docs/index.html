@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>GlslCanvas</title>
+	<script type="text/javascript" src="js/glsl-canvas.js"></script>
+	<style>
+		body {
+			background: #111;
+		}
+
+		[glsl-canvas] {
+			width: 320px;
+			height: 172px;
+			margin: 0 10px 10px 0;
+			border: 1px solid black;
+		}
+
+		[glsl-canvas][controls].animated {
+			cursor: pointer;
+			transition: opacity 300ms cubic-bezier(0.4, 0.0, 0.6, 1.0);
+			/*
+			display: inline-block;
+			position: relative;
+			*/
+		}
+
+		[glsl-canvas][controls].animated.paused {
+			opacity: 0.5;
+		}
+
+		[glsl-canvas][controls].animated.paused:hover {
+			opacity: 0.75;
+		}
+
+		[glsl-canvas][controls].playing {
+			border: 1px solid red;
+		}
+
+	</style>
+</head>
+
+<body>
+	<canvas glsl-canvas controls data-fragment="
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+uniform float u_time;
+
+void main() {
+	vec2 st = gl_FragCoord.xy/u_resolution.xy;
+	st.x *= u_resolution.x/u_resolution.y;
+
+	vec3 color = vec3(0.);
+	color = vec3(st.x,st.y,abs(sin(u_time)));
+
+	gl_FragColor = vec4(color,1.0);
+}
+"></canvas>
+	<canvas glsl-canvas controls data-fragment="
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+uniform float u_time;
+uniform sampler2D u_buffer0;
+
+vec2 coord(in vec2 p) {
+	p = p / u_resolution.xy;
+    // correct aspect ratio
+    if (u_resolution.x > u_resolution.y) {
+        p.x *= u_resolution.x / u_resolution.y;
+        p.x += (u_resolution.y - u_resolution.x) / u_resolution.y / 2.0;
+    } else {
+        p.y *= u_resolution.y / u_resolution.x;
+	    p.y += (u_resolution.x - u_resolution.y) / u_resolution.x / 2.0;
+    }
+    // centering
+    p -= 0.5;
+    p *= vec2(-1.0, 1.0);
+	return p;
+}
+#define rx 1.0 / min(u_resolution.x, u_resolution.y)
+#define uv gl_FragCoord.xy / u_resolution.xy
+#define st coord(gl_FragCoord.xy)
+#define mx coord(u_mouse)
+
+float fill(in float d) { return 1.0 - smoothstep(0.0, rx * 2.0, d); }
+
+float sCircle(in vec2 p, in float w) {
+    return length(p) * 2.0 - w;
+}
+float circle(in vec2 p, in float w) {
+    float d = sCircle(p, w);
+    return fill(d);
+}
+
+#if defined(BUFFER_0)
+
+void main() {
+	vec3 color = vec3(
+		0.5 + cos(u_time) * 0.5,
+		0.5 + sin(u_time) * 0.5,
+		1.0
+	);
+	vec3 buffer = texture2D(u_buffer0, uv).rgb;
+	buffer *= 0.99;
+	vec2 p = vec2(
+		st.x + cos(u_time * 5.0) * 0.3,
+		st.y + sin(u_time * 2.0) * 0.3
+	);
+	float c = circle(p, 0.1 + 0.1 * sin(u_time));
+	buffer = mix(buffer, color, c * 1.0);
+	gl_FragColor = vec4(buffer, 1.0);
+}
+
+#else
+
+void main() {
+	vec3 color = vec3(0.0, 0.0, 0.0);
+	vec3 b0 = texture2D(u_buffer0, uv).rgb;
+	color += b0;
+	gl_FragColor = vec4(color, 1.0);
+}
+
+#endif
+"></canvas>
+	<canvas glsl-canvas controls data-fragment="
+// Author: Patricio Gonzalez Vivo
+
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+#define PI 3.1415926535
+#define HALF_PI 1.57079632679
+
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform sampler2D u_tex0; // data/moon.jpg
+uniform vec2 u_tex0Resolution;
+uniform sampler2D u_logo; // data/logo.jpg
+uniform vec2 u_logoResolution;
+
+vec2 scale(vec2 st, float s) {
+return (st-.5)*s+.5;
+}
+
+vec2 ratio(in vec2 st, in vec2 s) {
+return mix( vec2((st.x*s.x/s.y)-(s.x*.5-s.y*.5)/s.y,st.y),
+			vec2(st.x,st.y*(s.y/s.x)-(s.y*.5-s.x*.5)/s.x),
+			step(s.x,s.y));
+}
+
+float circleSDF(vec2 st) {
+return length(st - 0.5) * 2.0;
+}
+
+vec2 sphereCoords(vec2 _st, float _scale){
+float maxFactor = sin(1.570796327);
+vec2 uv = vec2(0.0);
+vec2 xy = 2.0 * _st.xy - 1.0;
+float d = length(xy);
+if (d < (2.0-maxFactor)){
+	d = length(xy * maxFactor);
+	float z = sqrt(1.0 - d * d);
+	float r = atan(d, z) / 3.1415926535 * _scale;
+	float phi = atan(xy.y, xy.x);
+	uv.x = r * cos(phi) + 0.5;
+	uv.y = r * sin(phi) + 0.5;
+} else {
+	uv = _st.xy;
+}
+return uv;
+}
+
+vec4 sphereTexture(in sampler2D _tex, in vec2 _uv, float _time) {
+vec2 st = sphereCoords(_uv, 1.0);
+float aspect = u_tex0Resolution.y/u_tex0Resolution.x;
+st.x = fract(st.x * aspect + _time);
+return texture2D(_tex, st);
+}
+
+vec3 sphereNormals(in vec2 uv) {
+uv = fract(uv)*2.0-1.0;
+vec3 ret;
+ret.xy = sqrt(uv * uv) * sign(uv);
+ret.z = sqrt(abs(1.0 - dot(ret.xy,ret.xy)));
+ret = ret * 0.5 + 0.5;
+return mix(vec3(0.0), ret, smoothstep(1.0,0.98,dot(uv,uv)) );
+}
+
+void main(){
+vec2 st = gl_FragCoord.xy/u_resolution.xy;
+st = scale(st, 2.0);
+st = ratio(st, u_resolution);
+vec3 color = vec3(0.0);
+color = sphereTexture(u_tex0, st, u_time * 0.01).rgb;
+
+// Calculate sun direction
+float speedSun = 0.25;
+vec3 sunPos = normalize(vec3(cos(u_time * speedSun - HALF_PI), 0.0, sin(speedSun * u_time - HALF_PI)));
+vec3 surface = normalize(sphereNormals(st)*2.0-1.0);
+
+// Add Shadows
+color *= clamp(dot(sunPos, surface), 0.0, 1.0);
+// Blend black the edge of the sphere
+float radius = 1.0 - circleSDF(st);
+color *= smoothstep(0.001, 0.02, radius);
+st = scale(st, 2.);
+color += texture2D(u_logo, st).rgb * step(.0001,st.y) * step(st.y,.999);
+gl_FragColor = vec4(color, 1.0);
+}
+"></canvas>
+	<canvas glsl-canvas controls data-fragment="
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+uniform vec2 u_resolution;
+uniform sampler2D u_texture; // data/moon.jpg
+uniform vec2 u_textureResolution;
+
+void main() {
+	vec2 st = gl_FragCoord.xy / u_resolution.xy;
+	vec3 color = texture2D(u_texture, st).rgb;
+	gl_FragColor = vec4(color, 1.0);
+}
+"></canvas>
+	<canvas glsl-canvas controls data-fragment="
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform sampler2D u_buffer0;
+uniform sampler2D u_video;
+uniform vec2 u_videoResolution;
+
+vec3 mod289(vec3 x) {
+	return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
+
+vec2 mod289(vec2 x) {
+	return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
+
+vec3 permute(vec3 x) {
+	return mod289(((x*34.0)+1.0)*x);
+}
+
+float snoise(vec2 v) {
+	const vec4 C = vec4(0.211324865405187,  // (3.0-sqrt(3.0))/6.0
+						0.366025403784439,  // 0.5*(sqrt(3.0)-1.0)
+					   -0.577350269189626,  // -1.0 + 2.0 * C.x
+						0.024390243902439); // 1.0 / 41.0
+	vec2 i  = floor(v + dot(v, C.yy) );
+	vec2 x0 = v -   i + dot(i, C.xx);
+
+	vec2 i1;
+	i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+	vec4 x12 = x0.xyxy + C.xxzz;
+	x12.xy -= i1;
+
+	i = mod289(i); // Avoid truncation effects in permutation
+	vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
+		  + i.x + vec3(0.0, i1.x, 1.0 ));
+
+	vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+	m = m*m ;
+	m = m*m ;
+
+	vec3 x = 2.0 * fract(p * C.www) - 1.0;
+	vec3 h = abs(x) - 0.5;
+	vec3 ox = floor(x + 0.5);
+	vec3 a0 = x - ox;
+
+	m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+
+	vec3 g;
+	g.x  = a0.x  * x0.x  + h.x  * x0.y;
+	g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+	return 130.0 * dot(m, g);
+}
+
+float rand(vec2 co) {
+	return fract(sin(dot(co.xy,vec2(12.9898,78.233))) * 43758.5453);
+}
+
+#if defined(BUFFER_0)
+
+void main() {
+	vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+    float time = u_time * 2.0;
+
+    float noise = max(0.0, snoise(vec2(time, uv.y * 0.3)) - 0.3) * (1.0 / 0.7);
+    noise = noise + (snoise(vec2(time*10.0, uv.y * 2.4)) - 0.5) * 0.15;
+    float xpos = uv.x - noise * noise * 0.25;
+	vec4 color = texture2D(u_video, vec2(xpos, uv.y));
+    color.rgb = mix(color.rgb, vec3(rand(vec2(uv.y * time))), noise * 0.3).rgb;
+
+    if (floor(mod(gl_FragCoord.y * 0.25, 2.0)) == 0.0) {
+        color.rgb *= 1.0 - (0.15 * noise);
+    }
+
+    color.g = mix(color.r, texture2D(u_buffer0, vec2(xpos + noise * 0.05, uv.y)).g, 0.25);
+	color.b = mix(color.r, texture2D(u_buffer0, vec2(xpos - noise * 0.05, uv.y)).b, 0.25);
+
+	gl_FragColor = color;
+}
+
+#else
+
+void main() {
+	vec2 st = gl_FragCoord.xy / u_resolution.xy;
+	vec3 color = texture2D(u_buffer0, st).rgb;
+	gl_FragColor = vec4(vec3(color.r), 1.0);
+}
+
+#endif
+"></canvas>
+</body>
+<video id="video" muted loop playsinline autoplay controls src="data/video.ogv"></video>
+<script>
+	var glslCanvases = Array.from(document.querySelectorAll('[glsl-canvas]'))
+		.forEach(function(x, i) {
+			const canvas = new GlslCanvas(x)
+				.on('load', () => {
+					console.log('loaded!');
+				});
+			if (i === 3) {
+				setTimeout(() => {
+					canvas.setUniform('u_texture', 'data/logo.jpg');
+				}, 4000);
+			}
+			if (i === 4) {
+				canvas.setUniform('u_video', '#video');
+			}
+			return canvas;
+			/*
+			return new GlslCanvas(x, {
+				premultipliedAlpha: false,
+				preserveDrawingBuffer: true,
+				backgroundColor: 'rgba(0,0,0,1)',
+			});
+			return new GlslCanvas(x, {
+				alpha: true,
+				backgroundColor: '#00ff00'
+			});
+			*/
+		});
+
+</script>
+
+</html>
