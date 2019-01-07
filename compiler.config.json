@@ -1,7 +1,7 @@
 ﻿[{
-	"inputFile": "src/glsl-canvas/glsl-canvas.ts",
-	"outputFile": "docs/js/glsl-canvas.js"
+    "inputFile": "src/glsl-canvas/glsl-canvas.ts",
+    "outputFile": "docs/js/glsl-canvas.js"
 }, {
-	"inputFile": "src/docs/scss/docs.scss",
-	"outputFile": "docs/css/docs.css"
+    "inputFile": "src/docs/scss/docs.scss",
+    "outputFile": "docs/css/docs.css"
 }]

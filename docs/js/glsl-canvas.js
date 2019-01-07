@@ -688,7 +688,14 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         gl.useProgram(this.program);
         gl.viewport(0, 0, BW, BH);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.output.buffer);
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.output.texture, 0);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.output.texture, 0); // !!!
+
+        var e = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+
+        if (e != gl.FRAMEBUFFER_COMPLETE) {
+          console.log(e);
+        }
+
         gl.drawArrays(gl.TRIANGLES, 0, 6); // swap
 
         var temp = this.input;
@@ -1040,9 +1047,9 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           var now = performance.now() / 1000.0;
           this.delay += now - this.previous;
           this.previous = now;
-        }
+        } // console.log(this.delay);
 
-        console.log(this.delay);
+
         this.paused = false;
       }
     }, {
@@ -1086,6 +1093,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
       _this.nTime = 0;
       _this.nDate = 0;
       _this.nMouse = 0;
+      _this.textureList = [];
       _this.textures = new textures_1.default();
       _this.buffers = new buffers_1.default();
       _this.uniforms = new uniforms_1.default();
@@ -1095,7 +1103,6 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
       };
       _this.valid = false;
       _this.visible = false;
-      _this.textureIndex = 0;
 
       if (!canvas) {
         return _possibleConstructorReturn(_this);
@@ -1201,11 +1208,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         };
 
         var click = function click(e) {
-          if (_this3.timer.paused) {
-            _this3.play();
-          } else {
-            _this3.pause();
-          }
+          _this3.toggle();
         };
 
         var loop = function loop(time) {
@@ -1266,7 +1269,6 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
 
         if (this.valid) {
           this.buffers = buffers_1.default.getBuffers(gl, this.fragmentString, this.vertexString);
-          this.textureIndex = this.buffers.count;
           this.vertexBuffers = context_1.default.createVertexBuffers(gl, program);
           this.createUniforms(); // this.getBuffers(this.fragmentString);
         } // Trigger event
@@ -1402,6 +1404,15 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         this.canvas.classList.remove('paused');
       }
     }, {
+      key: "toggle",
+      value: function toggle() {
+        if (this.timer.paused) {
+          this.play();
+        } else {
+          this.pause();
+        }
+      }
+    }, {
       key: "isVisible",
       value: function isVisible() {
         var rect = this.rect;
@@ -1415,7 +1426,8 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     }, {
       key: "isDirty",
       value: function isDirty() {
-        return this.dirty || this.uniforms.dirty || this.textures.dirty;
+        return this.dirty || this.uniforms.dirty || this.textures.dirty; // Array.from(this.textures.values()).reduce((p, texture) => p || texture.dirty, false);
+        // this.textures.dirty;
       } // !!!
 
     }, {
@@ -1475,7 +1487,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         var hasTime = (fragmentString.match(/u_time/g) || []).length > 1;
         var hasDate = (fragmentString.match(/u_date/g) || []).length > 1;
         var hasMouse = (fragmentString.match(/u_mouse/g) || []).length > 1;
-        var hasTextures = fragmentString.search(/sampler2D/g);
+        var hasTextures = this.parseTextures(fragmentString);
         this.animated = hasTime || hasDate || hasMouse;
 
         if (this.animated) {
@@ -1508,6 +1520,26 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         });
 
         if (hasTextures) {
+          this.textureList.forEach(function (x) {
+            _this6.loadTexture(x.key, x.url);
+          });
+        }
+        /*
+        while (this.textureList.length > 0) {
+            const x = this.textureList.shift();
+            this.loadTexture(x.key, x.url);
+        }
+        */
+
+      }
+    }, {
+      key: "parseTextures",
+      value: function parseTextures(fragmentString) {
+        var _this7 = this;
+
+        var hasTextures = fragmentString.search(/sampler2D/g);
+
+        if (hasTextures) {
           var lines = fragmentString.split('\n');
 
           for (var i = 0; i < lines.length; i++) {
@@ -1519,7 +1551,10 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
               var url = match[2];
 
               if (key && url && textures_1.TextureExtensions.indexOf(ext) !== -1) {
-                this.loadTexture(key, url);
+                this.textureList.push({
+                  key: key,
+                  url: url
+                }); // this.loadTexture(key, url);
               }
             }
 
@@ -1536,32 +1571,45 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           urls.forEach(function (url, i) {
             var key = 'u_tex' + i;
 
-            _this6.loadTexture(key, url);
+            _this7.textureList.push({
+              key: key,
+              url: url
+            }); // this.loadTexture(key, url);
+
           });
         }
+
+        return this.textureList.length > 0;
       }
     }, {
       key: "loadTexture",
       value: function loadTexture(key, url) {
-        var _this7 = this;
+        var _this8 = this;
 
-        return this.textures.createOrUpdate(this.gl, key, url, this.buffers.count).then(function (texture) {
-          var index = texture.index;
+        if (this.valid) {
+          return this.textures.createOrUpdate(this.gl, key, url, this.buffers.count).then(function (texture) {
+            var index = texture.index;
 
-          var uniform = _this7.uniforms.createTexture(key, index);
+            var uniform = _this8.uniforms.createTexture(key, index);
 
-          uniform.texture = texture;
+            uniform.texture = texture;
 
-          var uniformResolution = _this7.uniforms.create('2f', 'vec2', key + 'Resolution', texture.width, texture.height); // console.log('loadTexture', key, url, index, texture.width, texture.height);
+            var uniformResolution = _this8.uniforms.create('2f', 'vec2', key + 'Resolution', texture.width, texture.height);
 
-
-          return texture;
-        });
+            console.log('loadTexture', key, url, index, texture.width, texture.height);
+            return texture;
+          });
+        } else {
+          this.textureList.push({
+            key: key,
+            url: url
+          });
+        }
       }
     }, {
       key: "updateUniforms",
       value: function updateUniforms() {
-        var _this8 = this;
+        var _this9 = this;
 
         var gl = this.gl;
         var BW = gl.drawingBufferWidth;
@@ -1594,25 +1642,25 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         }
 
         this.buffers.forEach(function (buffer) {
-          _this8.uniforms.update('1i', 'sampler2D', buffer.key, buffer.input.index);
+          _this9.uniforms.update('1i', 'sampler2D', buffer.key, buffer.input.index);
         });
         this.textures.forEach(function (texture) {
-          texture.tryUpdate(gl);
+          texture.tryUpdate(gl); // console.log(texture.key, texture.index);
 
-          _this8.uniforms.update('1i', 'sampler2D', texture.key, texture.index);
+          _this9.uniforms.update('1i', 'sampler2D', texture.key, texture.index);
         });
       }
     }, {
       key: "render",
       value: function render() {
-        var _this9 = this;
+        var _this10 = this;
 
         var gl = this.gl;
         var BW = gl.drawingBufferWidth;
         var BH = gl.drawingBufferHeight;
         this.updateUniforms();
         this.buffers.forEach(function (buffer) {
-          _this9.uniforms.apply(gl, buffer.program);
+          _this10.uniforms.apply(gl, buffer.program);
 
           buffer.render(gl, BW, BH);
         });
@@ -1902,8 +1950,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 
         this.setData(gl, 1, 1, new Uint8Array([0, 0, 0, 0]), {
           filtering: TextureFilteringType.Linear
-        });
-        this.setFiltering(gl, this.options); // this.bindTexture();
+        }); // this.bindTexture();
         // this.load(options);
       }
     }, {
@@ -1927,8 +1974,6 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     }, {
       key: "setUrl",
       value: function setUrl(gl, url) {
-        var _this2 = this;
-
         var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
         if (!this.valid) {
@@ -1940,105 +1985,86 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         this.source = url;
         this.sourceType = TextureSourceType.Url;
         this.options = Object.assign(this.options, options);
-        return new Promise(function (resolve, reject) {
-          var ext = url.split('.').pop().toLowerCase();
-          var isVideo = exports.TextureVideoExtensions.indexOf(ext) !== -1;
-          var element;
+        var ext = url.split('.').pop().toLowerCase();
+        var isVideo = exports.TextureVideoExtensions.indexOf(ext) !== -1;
+        var element;
+        var promise;
 
-          if (isVideo) {
-            element = document.createElement('video');
-            element.autoplay = true;
-            options.filtering = TextureFilteringType.Nearest; // element.preload = 'auto';
-            // element.style.display = 'none';
-            // document.body.appendChild(element);
-          } else {
-            element = new Image();
-          }
+        if (isVideo) {
+          element = document.createElement('video'); // options.filtering = TextureFilteringType.Nearest;
 
-          element.onload = function () {
-            try {
-              _this2.setElement(gl, element, options);
-            } catch (error) {
-              console.log("Texture '".concat(_this2.key, "' failed to load url '").concat(url, "'"), error, options);
-            }
-
-            resolve(_this2);
-          };
-
-          element.onerror = function (error) {
-            // Warn and resolve on error
-            console.log("Texture '".concat(_this2.key, "' failed to load url '").concat(url, "'"), error, options);
-            resolve(_this2);
-          }; // Safari has a bug loading data-URL elements with CORS enabled, so it must be disabled in that case
-          // https://bugs.webkit.org/show_bug.cgi?id=123978
-
+          promise = this.setElement(gl, element, options);
+          element.setAttribute('playsinline', 'true');
+          element.autoplay = true;
+          element.muted = true;
+          element.src = url;
+        } else {
+          element = new Image();
+          promise = this.setElement(gl, element, options);
 
           if (!(Texture.isSafari() && url.slice(0, 5) === 'data:')) {
             element.crossOrigin = 'anonymous';
           }
 
           element.src = url;
+        }
 
-          if (isVideo) {
-            _this2.setElement(gl, element, options);
-          }
-        });
+        return promise;
       }
     }, {
       key: "setElement",
       value: function setElement(gl, element) {
+        var _this2 = this;
+
         var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
         this.options = Object.assign(this.options, options);
-        var originalElement = element; // a string element is interpeted as a CSS selector
+        return new Promise(function (resolve, reject) {
+          var originalElement = element; // a string element is interpeted as a CSS selector
 
-        if (typeof element === 'string') {
-          element = document.querySelector(element);
-        }
-
-        if (element instanceof HTMLCanvasElement || element instanceof HTMLImageElement || element instanceof HTMLVideoElement) {
-          this.source = element;
-          this.sourceType = TextureSourceType.Element;
-
-          if (element instanceof HTMLVideoElement) {
-            /*
-            const video = element as HTMLVideoElement;
-            console.log('video', video);
-            video.addEventListener('play', () => {
-                console.log('play', this.key);
-                this.animated = true;
-            });
-            video.addEventListener('pause', () => {
-                console.log('pause', this.key);
-                this.animated = false;
-            });
-            */
-
-            /*
-            video.addEventListener('canplaythrough', () => {
-                // !!!
-                this.intervalID = setInterval(() => {
-                    this.update(gl, options);
-                }, 15);
-            }, true);
-            */
-
-            /*
-            video.addEventListener('ended', () => {
-                video.currentTime = 0;
-                video.play();
-            }, true);
-            */
-          } else {
-            this.update(gl, options);
+          if (typeof element === 'string') {
+            element = document.querySelector(element);
           }
 
-          this.setFiltering(gl, options);
-        } else {
-          var message = "the 'element' parameter (`element: ".concat(JSON.stringify(originalElement), "`) must be a CSS selector string, or a <canvas>, <image> or <video> object");
-          console.log("Texture '".concat(this.key, "': ").concat(message), options);
-        }
+          if (element instanceof HTMLCanvasElement || element instanceof HTMLImageElement || element instanceof HTMLVideoElement) {
+            _this2.source = element;
+            _this2.sourceType = TextureSourceType.Element;
 
-        return Promise.resolve(this);
+            if (element instanceof HTMLVideoElement) {
+              var video = element;
+              video.addEventListener('loadeddata', function (event) {
+                _this2.update(gl, options);
+
+                _this2.setFiltering(gl, options);
+
+                resolve(_this2);
+              });
+              video.addEventListener('error', function (error) {
+                reject(error);
+              });
+            } else if (element instanceof HTMLImageElement) {
+              element.addEventListener('load', function () {
+                _this2.update(gl, options);
+
+                _this2.setFiltering(gl, options);
+
+                resolve(_this2);
+              });
+              element.addEventListener('error', function (error) {
+                reject(error);
+              });
+            } else {
+              _this2.update(gl, options);
+
+              _this2.setFiltering(gl, options);
+
+              resolve(_this2);
+            }
+          } else {
+            var message = "the 'element' parameter (`element: ".concat(JSON.stringify(originalElement), "`) must be a CSS selector string, or a <canvas>, <image> or <video> object");
+            console.log("Texture '".concat(_this2.key, "': ").concat(message), options);
+            reject(message);
+          }
+        });
       }
     }, {
       key: "setData",
@@ -2112,19 +2138,6 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         this.source = null;
         this.valid = false;
       }
-      /*
-      bindTexture(gl: WebGLRenderingContext) {
-          if (this.valid && Texture.activeTexture !== this.texture) {
-              Texture.activeUnit++;
-              gl.activeTexture(gl.TEXTURE0 + Texture.activeUnit);
-              gl.bindTexture(gl.TEXTURE_2D, this.texture);
-              console.log('bindTexture', this.key);
-              Texture.activeTexture = this.texture;
-          }
-      }
-      */
-      // Determines appropriate filtering mode
-
     }, {
       key: "setFiltering",
       value: function setFiltering(gl, options) {
@@ -2205,8 +2218,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
           }
 
           if (document) {
-            urlElementOrData = document.querySelector(urlElementOrData);
-            console.log(urlElementOrData);
+            urlElementOrData = document.querySelector(urlElementOrData); // console.log(urlElementOrData);
           }
         }
 
@@ -2225,7 +2237,6 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     return Texture;
   }(listener_subscriber_1.default);
 
-  Texture.activeUnit = -1;
   exports.Texture = Texture;
 
   var Textures =
@@ -2239,7 +2250,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
       _classCallCheck(this, Textures);
 
       _this3 = _possibleConstructorReturn(this, _getPrototypeOf(Textures).apply(this, arguments));
-      _this3.count = 1;
+      _this3.count = 0;
       _this3.dirty = false;
       _this3.animated = false;
       return _this3;
@@ -2267,25 +2278,26 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 
           return texture.load(gl, textureOptions).then(function (texture) {
             if (texture.source instanceof HTMLVideoElement) {
-              var video = texture.source;
-              console.log('video', video);
+              var video = texture.source; // console.log('video', video);
+
               video.addEventListener('play', function () {
-                console.log('play', texture.key);
+                // console.log('play', texture.key);
                 texture.animated = true;
                 _this4.animated = true;
               });
               video.addEventListener('pause', function () {
-                console.log('pause', texture.key);
+                // console.log('pause', texture.key);
                 texture.animated = false;
                 _this4.animated = Array.from(_this4.values()).reduce(function (flag, texture) {
                   return flag || texture.animated;
                 }, false);
               });
               video.addEventListener('seeked', function () {
-                console.log('seeked');
+                // console.log('seeked');
                 texture.update(gl, texture.options);
                 _this4.dirty = true;
-              });
+              }); // console.log('video');
+
               /*
               video.addEventListener('canplaythrough', () => {
                   // !!!
