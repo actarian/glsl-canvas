@@ -543,7 +543,7 @@ export default class GlslCanvas extends ListenerSubscriber {
                 const uniform = this.uniforms.createTexture(key, index);
                 uniform.texture = texture;
                 const uniformResolution = this.uniforms.create('2f', 'vec2', key + 'Resolution', texture.width, texture.height);
-                console.log('loadTexture', key, url, index, texture.width, texture.height);
+                // console.log('loadTexture', key, url, index, texture.width, texture.height);
                 return texture;
             });
         } else {

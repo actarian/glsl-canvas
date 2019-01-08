@@ -27,35 +27,43 @@ export class Buffer {
     }
 
     resize(gl: WebGLRenderingContext, BW: number, BH: number) {
-        const buffer = this.buffer;
-        const texture = this.texture;
-        const index = this.index;
-        gl.bindFramebuffer(gl.FRAMEBUFFER, buffer);
-        const minW = Math.min(BW, this.BW);
-        const minH = Math.min(BH, this.BH);
-        const pixels = new Float32Array(minW * minH * 4);
-        gl.readPixels(0, 0, minW, minH, gl.RGBA, gl.FLOAT, pixels);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        const newIndex = index + 1; // !!!
-        const newTexture = gl.createTexture();
-        gl.activeTexture(gl.TEXTURE0 + newIndex);
-        gl.bindTexture(gl.TEXTURE_2D, newTexture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, BW, BH, 0, gl.RGBA, gl.FLOAT, null);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, minW, minH, gl.RGBA, gl.FLOAT, pixels);
-        const newBuffer = gl.createFramebuffer();
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        gl.deleteTexture(texture);
-        gl.activeTexture(gl.TEXTURE0 + index);
-        gl.bindTexture(gl.TEXTURE_2D, newTexture);
-        this.index = index;
-        this.texture = newTexture;
-        this.buffer = newBuffer;
-        this.BW = BW;
-        this.BH = BH;
+        if (BW !== this.BW || BH !== this.BH) {
+            const buffer = this.buffer;
+            const texture = this.texture;
+            const index = this.index;
+            gl.bindFramebuffer(gl.FRAMEBUFFER, buffer);
+            const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+            const minW = Math.min(BW, this.BW);
+            const minH = Math.min(BH, this.BH);
+            let pixels: Float32Array;
+            if (status === gl.FRAMEBUFFER_COMPLETE) {
+                pixels = new Float32Array(minW * minH * 4);
+                gl.readPixels(0, 0, minW, minH, gl.RGBA, gl.FLOAT, pixels);
+            }
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            const newTexture = gl.createTexture();
+            const newIndex = index + 1; // temporary index
+            gl.activeTexture(gl.TEXTURE0 + newIndex);
+            gl.bindTexture(gl.TEXTURE_2D, newTexture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, BW, BH, 0, gl.RGBA, gl.FLOAT, null);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            if (pixels) {
+                gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, minW, minH, gl.RGBA, gl.FLOAT, pixels);
+            }
+            const newBuffer = gl.createFramebuffer();
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            gl.deleteTexture(texture);
+            gl.activeTexture(gl.TEXTURE0 + index);
+            gl.bindTexture(gl.TEXTURE_2D, newTexture);
+            this.index = index;
+            this.texture = newTexture;
+            this.buffer = newBuffer;
+            this.BW = BW;
+            this.BH = BH;
+        }
     }
 
 }
@@ -106,11 +114,6 @@ export class IOBuffer {
         gl.viewport(0, 0, BW, BH);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.output.buffer);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.output.texture, 0);
-        // !!!
-        const e = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
-        if (e != gl.FRAMEBUFFER_COMPLETE) {
-            console.log(e);
-        }
         gl.drawArrays(gl.TRIANGLES, 0, 6);
         // swap
         const temp = this.input;

@@ -30,7 +30,8 @@ void main() {
 
 	gl_FragColor = vec4(color,1.0);
 }
-"></canvas><button type="button" class="btn btn-toggle">toggle</button>
+"></canvas><button
+                type="button" class="btn btn-toggle">toggle</button>
         </div>
         <div class="example">
             <h4>buffers</h4>
@@ -103,7 +104,8 @@ void main() {
 }
 
 #endif
-"></canvas><button type="button" class="btn btn-toggle">toggle</button>
+"></canvas><button
+                type="button" class="btn btn-toggle">toggle</button>
         </div>
         <div class="example">
             <h4>texture url in fragment shader</h4>
@@ -193,7 +195,8 @@ st = scale(st, 2.);
 color += texture2D(u_logo, st).rgb * step(.0001,st.y) * step(st.y,.999);
 gl_FragColor = vec4(color, 1.0);
 }
-"></canvas><button type="button" class="btn btn-toggle">toggle</button>
+"></canvas><button
+                type="button" class="btn btn-toggle">toggle</button>
         </div>
         <div class="example">
             <h4>update texture uniform</h4>
@@ -211,7 +214,8 @@ void main() {
 	vec3 color = texture2D(u_texture, st).rgb;
 	gl_FragColor = vec4(color, 1.0);
 }
-"></canvas><button type="button" class="btn btn-toggle">toggle</button>
+"></canvas><button
+                type="button" class="btn btn-toggle">toggle</button>
         </div>
         <div class="example">
             <h4>video texture</h4>
@@ -307,7 +311,8 @@ void main() {
 }
 
 #endif
-"></canvas><button type="button" class="btn btn-toggle">toggle</button>
+"></canvas><button
+                type="button" class="btn btn-toggle">toggle</button>
         </div>
         <div class="example">
             <h4>video source</h4>
@@ -318,19 +323,27 @@ void main() {
 <script>
     var enabledIndexes = [0, 1, 2, 3, 4];
     var canvases = Array.from(document.querySelectorAll('[glsl-canvas]'))
-        .map(function (x, i) {
+        .map(function (element, i) {
             if (enabledIndexes.indexOf(i) !== -1) {
-                var canvas = new GlslCanvas(x)
+                var canvas = new GlslCanvas(element);
+                element.addEventListener('mouseover', function () {
+                    canvas.play();
+                    if (i === 3) {
+                        if (canvas.uniforms.get('u_texture').texture.url === 'data/logo.jpg') {
+                            canvas.setUniform('u_texture', 'data/moon.jpg');
+                        } else {
+                            canvas.setUniform('u_texture', 'data/logo.jpg');
+                        }
+                    }
+                });
+                element.addEventListener('mouseout', function () {
+                    canvas.pause();
+                });
                 /*
                 .on('load', () => {
                     console.log('loaded!');
                 });
                 */
-                if (i === 3) {
-                    setTimeout(function () {
-                        canvas.setUniform('u_texture', 'data/logo.jpg');
-                    }, 4000);
-                }
                 if (i === 4) {
                     canvas.setUniform('u_video', '#video');
                 }
