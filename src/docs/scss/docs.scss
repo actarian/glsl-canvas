@@ -51,7 +51,10 @@ h4 {
 [glsl-canvas] {
     width: 320px;
     height: 172px;
-    border: 4px solid black;
+    border: 4px solid #333;
+    border-radius: 5px;
+    overflow: hidden;
+    box-sizing: border-box;
 
     &[controls] {
         &.animated {
@@ -77,5 +80,11 @@ h4 {
 }
 
 video {
-    max-width: 100%;
+    width: 320px;
+    height: 172px;
+    border: 4px solid #333;
+    border-radius: 5px;
+    overflow: hidden;
+    box-sizing: border-box;
+    object-fit: cover;
 }
