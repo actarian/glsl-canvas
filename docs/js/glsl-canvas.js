@@ -1154,39 +1154,40 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
 
         return new Promise(function (resolve, reject) {
           var canvas = _this2.canvas;
-          var urls = [];
+          var urls = {};
 
           if (canvas.hasAttribute('data-vertex-url')) {
-            urls.push(canvas.getAttribute('data-vertex-url'));
+            urls.vertex = canvas.getAttribute('data-vertex-url');
           }
 
           if (canvas.hasAttribute('data-fragment-url')) {
-            urls.push(canvas.getAttribute('data-fragment-url'));
+            urls.fragment = canvas.getAttribute('data-fragment-url');
           }
 
-          if (urls.length) {
-            Promise.all(urls.map(function (url, i) {
+          if (canvas.hasAttribute('data-vertex')) {
+            _this2.vertexString = canvas.getAttribute('data-vertex');
+          }
+
+          if (canvas.hasAttribute('data-fragment')) {
+            _this2.fragmentString = canvas.getAttribute('data-fragment');
+          }
+
+          if (Object.keys(urls).length) {
+            Promise.all(Object.keys(urls).map(function (key, i) {
+              var url = urls[key];
               return fetch(url).then(function (response) {
                 return response.text();
               }).then(function (body) {
-                if (i === 0) {
+                if (key === 'vertex') {
                   return _this2.vertexString = body;
                 } else {
                   return _this2.fragmentString = body;
                 }
               });
             })).then(function (shaders) {
-              resolve(shaders);
+              resolve([_this2.vertexString, _this2.fragmentString]);
             });
           } else {
-            if (canvas.hasAttribute('data-vertex')) {
-              _this2.vertexString = canvas.getAttribute('data-vertex');
-            }
-
-            if (canvas.hasAttribute('data-fragment')) {
-              _this2.fragmentString = canvas.getAttribute('data-fragment');
-            }
-
             resolve([_this2.vertexString, _this2.fragmentString]);
           }
         });
@@ -1234,7 +1235,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         if (this.canvas.hasAttribute('controls')) {
           this.canvas.addEventListener('click', click);
 
-          if (!this.canvas.hasAttribute('autoplay')) {
+          if (!this.canvas.hasAttribute('data-autoplay')) {
             this.pause();
           }
         }
@@ -1399,22 +1400,28 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     }, {
       key: "pause",
       value: function pause() {
-        this.timer.pause();
-        this.canvas.classList.add('paused');
+        if (this.valid) {
+          this.timer.pause();
+          this.canvas.classList.add('paused');
+        }
       }
     }, {
       key: "play",
       value: function play() {
-        this.timer.play();
-        this.canvas.classList.remove('paused');
+        if (this.valid) {
+          this.timer.play();
+          this.canvas.classList.remove('paused');
+        }
       }
     }, {
       key: "toggle",
       value: function toggle() {
-        if (this.timer.paused) {
-          this.play();
-        } else {
-          this.pause();
+        if (this.valid) {
+          if (this.timer.paused) {
+            this.play();
+          } else {
+            this.pause();
+          }
         }
       }
     }, {

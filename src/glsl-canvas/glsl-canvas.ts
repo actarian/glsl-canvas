@@ -178,34 +178,36 @@ export default class GlslCanvas extends ListenerSubscriber {
     getShaders(): Promise<string[]> {
         return new Promise((resolve, reject) => {
             const canvas = this.canvas;
-            const urls = [];
+            const urls: any = {};
             if (canvas.hasAttribute('data-vertex-url')) {
-                urls.push(canvas.getAttribute('data-vertex-url'));
+                urls.vertex = canvas.getAttribute('data-vertex-url');
             }
             if (canvas.hasAttribute('data-fragment-url')) {
-                urls.push(canvas.getAttribute('data-fragment-url'));
+                urls.fragment = canvas.getAttribute('data-fragment-url');
             }
-            if (urls.length) {
-                Promise.all(urls.map((url, i) =>
-                    fetch(url)
+            if (canvas.hasAttribute('data-vertex')) {
+                this.vertexString = canvas.getAttribute('data-vertex');
+            }
+            if (canvas.hasAttribute('data-fragment')) {
+                this.fragmentString = canvas.getAttribute('data-fragment');
+            }
+            if (Object.keys(urls).length) {
+                Promise.all(Object.keys(urls).map((key, i) => {
+                    const url: string = urls[key];
+                    return fetch(url)
                         .then((response) => response.text())
                         .then((body) => {
-                            if (i === 0) {
+                            if (key === 'vertex') {
                                 return this.vertexString = body;
                             } else {
                                 return this.fragmentString = body;
                             }
                         })
+                }
                 )).then(shaders => {
-                    resolve(shaders);
+                    resolve([this.vertexString, this.fragmentString]);
                 });
             } else {
-                if (canvas.hasAttribute('data-vertex')) {
-                    this.vertexString = canvas.getAttribute('data-vertex');
-                }
-                if (canvas.hasAttribute('data-fragment')) {
-                    this.fragmentString = canvas.getAttribute('data-fragment');
-                }
                 resolve([this.vertexString, this.fragmentString]);
             }
         });
@@ -248,7 +250,7 @@ export default class GlslCanvas extends ListenerSubscriber {
         document.addEventListener('mousemove', mousemove, false);
         if (this.canvas.hasAttribute('controls')) {
             this.canvas.addEventListener('click', click);
-            if (!this.canvas.hasAttribute('autoplay')) {
+            if (!this.canvas.hasAttribute('data-autoplay')) {
                 this.pause();
             }
         }
@@ -382,20 +384,26 @@ export default class GlslCanvas extends ListenerSubscriber {
     }
 
     pause(): void {
-        this.timer.pause();
-        this.canvas.classList.add('paused');
+        if (this.valid) {
+            this.timer.pause();
+            this.canvas.classList.add('paused');
+        }
     }
 
     play(): void {
-        this.timer.play();
-        this.canvas.classList.remove('paused');
+        if (this.valid) {
+            this.timer.play();
+            this.canvas.classList.remove('paused');
+        }
     }
 
     toggle(): void {
-        if (this.timer.paused) {
-            this.play();
-        } else {
-            this.pause();
+        if (this.valid) {
+            if (this.timer.paused) {
+                this.play();
+            } else {
+                this.pause();
+            }
         }
     }
 

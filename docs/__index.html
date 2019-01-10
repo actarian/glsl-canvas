@@ -2,25 +2,24 @@
 <html>
 
 <head>
-	<meta charset="utf-8">
-	<title>GlslCanvas</title>
-	<script type="text/javascript" src="js/glsl-canvas.js"></script>
-	<style>
-		body {
-			background: #101515;
-		}
+    <meta charset="utf-8">
+    <title>GlslCanvas</title>
+    <script type="text/javascript" src="js/glsl-canvas.js"></script>
+    <style>
+        body {
+            background: #101515;
+        }
 
-		canvas {
-			width: 200px;
-			height: 150px;
-			border: 1px solid grey;
-		}
-
-	</style>
+        canvas {
+            width: 200px;
+            height: 150px;
+            border: 1px solid grey;
+        }
+    </style>
 </head>
 
 <body>
-	<canvas glsl-canvas data-fragment="
+    <canvas glsl-canvas data-fragment="
 #ifdef GL_ES
 precision mediump float;
 #endif
@@ -38,12 +37,9 @@ void main() {
 
 	gl_FragColor = vec4(color,1.0);
 }
-"
-	width="200"
-	height="150"
-></canvas>
+" width="200" height="150"></canvas>
 
-	<canvas glsl-canvas data-fragment="
+    <canvas glsl-canvas data-fragment="
 #ifdef GL_ES
 precision mediump float;
 #endif
@@ -152,11 +148,10 @@ void main() {
 " width="200" height="150"></canvas>
 </body>
 <script>
-	var glslCanvases = Array.from(document.querySelectorAll('[glsl-canvas]'))
-		.forEach(function(x, i) {
-			return new GlslCanvas(x);
-		});
-
+    var glslCanvases = Array.from(document.querySelectorAll('.glsl-canvas'))
+        .forEach(function (x, i) {
+            return new GlslCanvas(x);
+        });
 </script>
 
 </html>
