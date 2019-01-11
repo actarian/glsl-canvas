@@ -1002,7 +1002,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     var v = factory(require, exports);
     if (v !== undefined) module.exports = v;
   } else if (typeof define === "function" && define.amd) {
-    define(["require", "exports", "whatwg-fetch", "./buffers", "./context", "./listener.subscriber", "./textures", "./uniforms"], factory);
+    define(["require", "exports", "whatwg-fetch", "./buffers", "./context", "./subscriber", "./textures", "./uniforms"], factory);
   }
 })(function (require, exports) {
   "use strict";
@@ -1017,7 +1017,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
 
   var context_1 = __importDefault(require("./context"));
 
-  var listener_subscriber_1 = __importDefault(require("./listener.subscriber"));
+  var subscriber_1 = __importDefault(require("./subscriber"));
 
   var textures_1 = __importStar(require("./textures"));
 
@@ -1080,8 +1080,8 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
 
   var GlslCanvas =
   /*#__PURE__*/
-  function (_listener_subscriber_) {
-    _inherits(GlslCanvas, _listener_subscriber_);
+  function (_subscriber_1$default) {
+    _inherits(GlslCanvas, _subscriber_1$default);
 
     function GlslCanvas(canvas) {
       var _this;
@@ -1440,7 +1440,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
       value: function isDirty() {
         return this.dirty || this.uniforms.dirty || this.textures.dirty; // Array.from(this.textures.values()).reduce((p, texture) => p || texture.dirty, false);
         // this.textures.dirty;
-      } // !!!
+      } // check size change at start of requestFrame
 
     }, {
       key: "sizeDidChanged",
@@ -1549,32 +1549,28 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
       value: function parseTextures(fragmentString) {
         var _this7 = this;
 
-        var hasTextures = fragmentString.search(/sampler2D/g);
+        var regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\:\/\/|\.|\-|\_]*)|\s*)/gm;
+        var matches;
 
-        if (hasTextures) {
-          var lines = fragmentString.split('\n');
+        while ((matches = regexp.exec(fragmentString)) !== null) {
+          var key = matches[1];
 
-          for (var i = 0; i < lines.length; i++) {
-            var match = lines[i].match(/uniform\s*sampler2D\s*([\w]*);\s*\/\/\s*([\w|\:\/\/|\.|\-|\_]*)/i);
+          if (matches[3]) {
+            var ext = matches[3].split('.').pop().toLowerCase();
+            var url = matches[3];
 
-            if (match) {
-              var ext = match[2].split('.').pop().toLowerCase();
-              var key = match[1];
-              var url = match[2];
-
-              if (key && url && textures_1.TextureExtensions.indexOf(ext) !== -1) {
-                this.textureList.push({
-                  key: key,
-                  url: url
-                }); // this.loadTexture(key, url);
-              }
+            if (url && textures_1.TextureExtensions.indexOf(ext) !== -1) {
+              this.textureList.push({
+                key: key,
+                url: url
+              });
             }
-
-            var main = lines[i].match(/\s*void\s*main\s*/g);
-
-            if (main) {
-              break;
-            }
+          } else if (!this.buffers.has(key)) {
+            // create empty texture
+            this.textureList.push({
+              key: key,
+              url: null
+            });
           }
         }
 
@@ -1586,8 +1582,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
             _this7.textureList.push({
               key: key,
               url: url
-            }); // this.loadTexture(key, url);
-
+            });
           });
         }
 
@@ -1709,7 +1704,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     }]);
 
     return GlslCanvas;
-  }(listener_subscriber_1.default);
+  }(subscriber_1.default);
 
   exports.default = GlslCanvas;
   window.GlslCanvas = GlslCanvas;
@@ -1730,7 +1725,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
   });
 });
 
-},{"./buffers":2,"./context":3,"./listener.subscriber":5,"./textures":6,"./uniforms":7,"whatwg-fetch":1}],5:[function(require,module,exports){
+},{"./buffers":2,"./context":3,"./subscriber":5,"./textures":6,"./uniforms":7,"whatwg-fetch":1}],5:[function(require,module,exports){
 "use strict";
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -1764,18 +1759,18 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 
   exports.Listener = Listener;
 
-  var ListenerSubscriber =
+  var Subscriber =
   /*#__PURE__*/
   function () {
-    function ListenerSubscriber() {
-      _classCallCheck(this, ListenerSubscriber);
+    function Subscriber() {
+      _classCallCheck(this, Subscriber);
 
       this.listeners = new Set();
     }
 
-    _createClass(ListenerSubscriber, [{
-      key: "listSubscriptions",
-      value: function listSubscriptions() {
+    _createClass(Subscriber, [{
+      key: "logListeners",
+      value: function logListeners() {
         this.listeners.forEach(function (x) {
           return console.log(x);
         });
@@ -1834,10 +1829,10 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
       }
     }]);
 
-    return ListenerSubscriber;
+    return Subscriber;
   }();
 
-  exports.default = ListenerSubscriber;
+  exports.default = Subscriber;
 });
 
 },{}],6:[function(require,module,exports){
@@ -1880,7 +1875,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     var v = factory(require, exports);
     if (v !== undefined) module.exports = v;
   } else if (typeof define === "function" && define.amd) {
-    define(["require", "exports", "./listener.subscriber"], factory);
+    define(["require", "exports", "./subscriber"], factory);
   }
 })(function (require, exports) {
   "use strict";
@@ -1889,7 +1884,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     value: true
   }); // Texture management
 
-  var listener_subscriber_1 = __importDefault(require("./listener.subscriber"));
+  var subscriber_1 = __importDefault(require("./subscriber"));
 
   exports.TextureImageExtensions = ['jpg', 'jpeg', 'png'];
   exports.TextureVideoExtensions = ['ogv', 'webm', 'mp4'];
@@ -1924,8 +1919,8 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 
   var Texture =
   /*#__PURE__*/
-  function (_listener_subscriber_) {
-    _inherits(Texture, _listener_subscriber_);
+  function (_subscriber_1$default) {
+    _inherits(Texture, _subscriber_1$default);
 
     function Texture(gl, key, index) {
       var _this;
@@ -2247,7 +2242,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     }]);
 
     return Texture;
-  }(listener_subscriber_1.default);
+  }(subscriber_1.default);
 
   exports.Texture = Texture;
 
@@ -2277,17 +2272,15 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         var options = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
         var texture;
         var textureOptions = Texture.getTextureOptions(urlElementOrData, options);
+        texture = this.get(key);
+
+        if (!texture) {
+          texture = new Texture(gl, key, index + this.count, textureOptions);
+          this.count++;
+          this.set(key, texture);
+        }
 
         if (textureOptions !== undefined) {
-          texture = this.get(key);
-
-          if (!texture) {
-            texture = new Texture(gl, key, index + this.count, textureOptions);
-            this.count++;
-            this.set(key, texture);
-          } // return Promise.resolve(texture);
-
-
           return texture.load(gl, textureOptions).then(function (texture) {
             if (texture.source instanceof HTMLVideoElement) {
               var video = texture.source; // console.log('video', video);
@@ -2327,7 +2320,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
             return texture;
           });
         } else {
-          return Promise.reject(null);
+          return Promise.resolve(texture);
         }
       }
     }]);
@@ -2338,7 +2331,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
   exports.default = Textures;
 });
 
-},{"./listener.subscriber":5}],7:[function(require,module,exports){
+},{"./subscriber":5}],7:[function(require,module,exports){
 "use strict";
 
 function _wrapNativeSuper(Class) { var _cache = typeof Map === "function" ? new Map() : undefined; _wrapNativeSuper = function _wrapNativeSuper(Class) { if (Class === null || !_isNativeFunction(Class)) return Class; if (typeof Class !== "function") { throw new TypeError("Super expression must either be null or a function"); } if (typeof _cache !== "undefined") { if (_cache.has(Class)) return _cache.get(Class); _cache.set(Class, Wrapper); } function Wrapper() { return _construct(Class, arguments, _getPrototypeOf(this).constructor); } Wrapper.prototype = Object.create(Class.prototype, { constructor: { value: Wrapper, enumerable: false, writable: true, configurable: true } }); return _setPrototypeOf(Wrapper, Class); }; return _wrapNativeSuper(Class); }
@@ -2382,6 +2375,68 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
   });
 
   var textures_1 = require("./textures");
+
+  var UniformType;
+
+  (function (UniformType) {
+    UniformType[UniformType["Bool"] = 0] = "Bool";
+    UniformType[UniformType["BoolArray"] = 1] = "BoolArray";
+    UniformType[UniformType["Int"] = 2] = "Int";
+    UniformType[UniformType["IntArray"] = 3] = "IntArray";
+    UniformType[UniformType["IntVec2"] = 4] = "IntVec2";
+    UniformType[UniformType["IntVec2Array"] = 5] = "IntVec2Array";
+    UniformType[UniformType["IntVec3"] = 6] = "IntVec3";
+    UniformType[UniformType["IntVec3Array"] = 7] = "IntVec3Array";
+    UniformType[UniformType["IntVec4"] = 8] = "IntVec4";
+    UniformType[UniformType["IntVec4Array"] = 9] = "IntVec4Array";
+    UniformType[UniformType["Float"] = 10] = "Float";
+    UniformType[UniformType["FloatArray"] = 11] = "FloatArray";
+    UniformType[UniformType["FloatVec2"] = 12] = "FloatVec2";
+    UniformType[UniformType["FloatVec2Array"] = 13] = "FloatVec2Array";
+    UniformType[UniformType["FloatVec3"] = 14] = "FloatVec3";
+    UniformType[UniformType["FloatVec3Array"] = 15] = "FloatVec3Array";
+    UniformType[UniformType["FloatVec4"] = 16] = "FloatVec4";
+    UniformType[UniformType["FloatVec4Array"] = 17] = "FloatVec4Array";
+    UniformType[UniformType["Sampler2D"] = 18] = "Sampler2D";
+    UniformType[UniformType["Sampler2DArray"] = 19] = "Sampler2DArray";
+    UniformType[UniformType["SamplerCube"] = 20] = "SamplerCube";
+    UniformType[UniformType["SamplerCubeArray"] = 21] = "SamplerCubeArray";
+    UniformType[UniformType["Matrix2fv"] = 22] = "Matrix2fv";
+    UniformType[UniformType["Matrix3fv"] = 23] = "Matrix3fv";
+    UniformType[UniformType["Matrix4fv"] = 24] = "Matrix4fv";
+  })(UniformType = exports.UniformType || (exports.UniformType = {}));
+
+  var UniformMethod;
+
+  (function (UniformMethod) {
+    UniformMethod["Uniform1i"] = "uniform1i"; // Uniform1i  = 'uniform1i', // (boolUniformLoc,   v);                // for bool
+    // Uniform1i  = 'uniform1i', // (sampler2DUniformLoc,   v);           // for sampler2D
+    // Uniform1i  = 'uniform1i', // (samplerCubeUniformLoc,   v);         // for samplerCube
+
+    UniformMethod["Uniform1iv"] = "uniform1iv"; // Uniform1iv = 'uniform1iv', // (boolUniformLoc, [v]);                // for bool or bool array
+    // Uniform1iv = 'uniform1iv', // (sampler2DUniformLoc, [v]);           // for sampler2D or sampler2D array
+    // Uniform1iv = 'uniform1iv', // (samplerCubeUniformLoc, [v]);         // for samplerCube or samplerCube array
+
+    UniformMethod["Uniform2i"] = "uniform2i";
+    UniformMethod["Uniform2iv"] = "uniform2iv";
+    UniformMethod["Uniform3i"] = "uniform3i";
+    UniformMethod["Uniform3iv"] = "uniform3iv";
+    UniformMethod["Uniform4i"] = "uniform4i";
+    UniformMethod["Uniform4iv"] = "uniform4iv"; //
+
+    UniformMethod["Uniform1f"] = "uniform1f";
+    UniformMethod["Uniform1fv"] = "uniform1fv";
+    UniformMethod["Uniform2f"] = "uniform2f";
+    UniformMethod["Uniform2fv"] = "uniform2fv";
+    UniformMethod["Uniform3f"] = "uniform3f";
+    UniformMethod["Uniform3fv"] = "uniform3fv";
+    UniformMethod["Uniform4f"] = "uniform4f";
+    UniformMethod["Uniform4fv"] = "uniform4fv"; //
+
+    UniformMethod["UniformMatrix2fv"] = "uniformMatrix2fv";
+    UniformMethod["UniformMatrix3fv"] = "uniformMatrix3fv";
+    UniformMethod["UniformMatrix4fv"] = "uniformMatrix4fv";
+  })(UniformMethod = exports.UniformMethod || (exports.UniformMethod = {}));
 
   var Uniform =
   /*#__PURE__*/

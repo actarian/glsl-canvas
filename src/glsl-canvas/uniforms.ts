@@ -1,5 +1,63 @@
 import { Texture } from './textures';
 
+export enum UniformType {
+	Bool = 0,
+	BoolArray,
+	Int,
+	IntArray,
+	IntVec2,
+	IntVec2Array,
+	IntVec3,
+	IntVec3Array,
+	IntVec4,
+	IntVec4Array,
+	Float,
+	FloatArray,
+	FloatVec2,
+	FloatVec2Array,
+	FloatVec3,
+	FloatVec3Array,
+	FloatVec4,
+	FloatVec4Array,
+	Sampler2D,
+	Sampler2DArray,
+	SamplerCube,
+	SamplerCubeArray,
+	Matrix2fv,
+	Matrix3fv,
+	Matrix4fv,
+}
+
+export enum UniformMethod {
+	Uniform1i = 'uniform1i', // (intUniformLoc,   v);                 // for int
+	// Uniform1i  = 'uniform1i', // (boolUniformLoc,   v);                // for bool
+	// Uniform1i  = 'uniform1i', // (sampler2DUniformLoc,   v);           // for sampler2D
+	// Uniform1i  = 'uniform1i', // (samplerCubeUniformLoc,   v);         // for samplerCube
+	Uniform1iv = 'uniform1iv', // (intUniformLoc, [v]);                 // for int or int array
+	// Uniform1iv = 'uniform1iv', // (boolUniformLoc, [v]);                // for bool or bool array
+	// Uniform1iv = 'uniform1iv', // (sampler2DUniformLoc, [v]);           // for sampler2D or sampler2D array
+	// Uniform1iv = 'uniform1iv', // (samplerCubeUniformLoc, [v]);         // for samplerCube or samplerCube array
+	Uniform2i = 'uniform2i', // (ivec2UniformLoc, v0, v1);            // for ivec2
+	Uniform2iv = 'uniform2iv', // (ivec2UniformLoc, [v0, v1]);          // for ivec2 or ivec2 array
+	Uniform3i = 'uniform3i', // (ivec3UniformLoc, v0, v1, v2);        // for ivec3
+	Uniform3iv = 'uniform3iv', // (ivec3UniformLoc, [v0, v1, v2]);      // for ivec3 or ivec3 array
+	Uniform4i = 'uniform4i', // (ivec4UniformLoc, v0, v1, v2, v4);    // for ivec4
+	Uniform4iv = 'uniform4iv', // (ivec4UniformLoc, [v0, v1, v2, v4]);  // for ivec4 or ivec4 array
+	//
+	Uniform1f = 'uniform1f', // (floatUniformLoc, v);                 // for float
+	Uniform1fv = 'uniform1fv', // (floatUniformLoc, [v]);               // for float or float array
+	Uniform2f = 'uniform2f', // (vec2UniformLoc,  v0, v1);            // for vec2
+	Uniform2fv = 'uniform2fv', // (vec2UniformLoc,  [v0, v1]);          // for vec2 or vec2 array
+	Uniform3f = 'uniform3f', // (vec3UniformLoc,  v0, v1, v2);        // for vec3
+	Uniform3fv = 'uniform3fv', // (vec3UniformLoc,  [v0, v1, v2]);      // for vec3 or vec3 array
+	Uniform4f = 'uniform4f', // (vec4UniformLoc,  v0, v1, v2, v4);    // for vec4
+	Uniform4fv = 'uniform4fv', // (vec4UniformLoc,  [v0, v1, v2, v4]);  // for vec4 or vec4 array
+	//
+	UniformMatrix2fv = 'uniformMatrix2fv', // (mat2UniformLoc, false, [  4x element array ])  // for mat2 or mat2 array
+	UniformMatrix3fv = 'uniformMatrix3fv', // (mat3UniformLoc, false, [  9x element array ])  // for mat3 or mat3 array
+	UniformMatrix4fv = 'uniformMatrix4fv', // (mat4UniformLoc, false, [ 16x element array ])  // for mat4 or mat4 array
+}
+
 export class Uniform {
 	method: string;
 	type: string;

@@ -14,11 +14,11 @@ export class Listener {
 
 }
 
-export default class ListenerSubscriber {
+export default class Subscriber {
 
     private listeners: Set<Listener> = new Set<Listener>();
 
-    listSubscriptions() {
+    logListeners() {
         this.listeners.forEach(x => console.log(x));
     }
 

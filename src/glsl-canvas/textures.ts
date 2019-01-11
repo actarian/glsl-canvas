@@ -1,5 +1,5 @@
 // Texture management
-import ListenerSubscriber from './listener.subscriber';
+import Subscriber from './subscriber';
 
 export const TextureImageExtensions = ['jpg', 'jpeg', 'png'];
 export const TextureVideoExtensions = ['ogv', 'webm', 'mp4'];
@@ -38,7 +38,7 @@ export class TextureOptions {
 }
 
 // GL texture wrapper object for keeping track of a global set of textures, keyed by a unique user-defined name
-export class Texture extends ListenerSubscriber {
+export class Texture extends Subscriber {
 
     key: string;
     options: TextureOptions;
@@ -361,14 +361,13 @@ export default class Textures extends Map<string, Texture> {
     ): Promise<Texture> {
         let texture;
         const textureOptions = Texture.getTextureOptions(urlElementOrData, options);
+        texture = this.get(key);
+        if (!texture) {
+            texture = new Texture(gl, key, index + this.count, textureOptions);
+            this.count++;
+            this.set(key, texture);
+        }
         if (textureOptions !== undefined) {
-            texture = this.get(key);
-            if (!texture) {
-                texture = new Texture(gl, key, index + this.count, textureOptions);
-                this.count++;
-                this.set(key, texture);
-            }
-            // return Promise.resolve(texture);
             return texture.load(gl, textureOptions).then(
                 (texture) => {
                     if (texture.source instanceof HTMLVideoElement) {
@@ -409,7 +408,7 @@ export default class Textures extends Map<string, Texture> {
                 }
             );
         } else {
-            return Promise.reject(null);
+            return Promise.resolve(texture);
         }
     }
 

@@ -2,7 +2,7 @@
 import 'whatwg-fetch';
 import Buffers from './buffers';
 import Context, { ContextVertexBuffers } from './context';
-import ListenerSubscriber from './listener.subscriber';
+import Subscriber from './subscriber';
 import Textures, { Texture, TextureExtensions } from './textures';
 import Uniforms, { Uniform } from './uniforms';
 
@@ -93,7 +93,7 @@ export class GlslCanvasTimer {
 
 }
 
-export default class GlslCanvas extends ListenerSubscriber {
+export default class GlslCanvas extends Subscriber {
 
     canvas: HTMLCanvasElement;
     width: number;
@@ -422,7 +422,7 @@ export default class GlslCanvas extends ListenerSubscriber {
         // this.textures.dirty;
     }
 
-    // !!!
+    // check size change at start of requestFrame
     sizeDidChanged(): boolean {
         const gl = this.gl;
         const rect = this.rect;
@@ -513,24 +513,19 @@ export default class GlslCanvas extends ListenerSubscriber {
     }
 
     parseTextures(fragmentString: string): boolean {
-        const hasTextures = fragmentString.search(/sampler2D/g);
-        if (hasTextures) {
-            const lines = fragmentString.split('\n');
-            for (let i = 0; i < lines.length; i++) {
-                const match = lines[i].match(/uniform\s*sampler2D\s*([\w]*);\s*\/\/\s*([\w|\:\/\/|\.|\-|\_]*)/i);
-                if (match) {
-                    const ext = match[2].split('.').pop().toLowerCase();
-                    const key = match[1];
-                    const url = match[2];
-                    if (key && url && TextureExtensions.indexOf(ext) !== -1) {
-                        this.textureList.push({ key, url });
-                        // this.loadTexture(key, url);
-                    }
+        const regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\:\/\/|\.|\-|\_]*)|\s*)/gm;
+        let matches;
+        while ((matches = regexp.exec(fragmentString)) !== null) {
+            const key = matches[1];
+            if (matches[3]) {
+                const ext = matches[3].split('.').pop().toLowerCase();
+                const url = matches[3];
+                if (url && TextureExtensions.indexOf(ext) !== -1) {
+                    this.textureList.push({ key, url });
                 }
-                const main = lines[i].match(/\s*void\s*main\s*/g);
-                if (main) {
-                    break;
-                }
+            } else if (!this.buffers.has(key)) {
+                // create empty texture
+                this.textureList.push({ key, url: null });
             }
         }
         if (this.canvas.hasAttribute('data-textures')) {
@@ -538,7 +533,6 @@ export default class GlslCanvas extends ListenerSubscriber {
             urls.forEach((url: string, i: number) => {
                 const key = 'u_tex' + i;
                 this.textureList.push({ key, url });
-                // this.loadTexture(key, url);
             });
         }
         return this.textureList.length > 0;
