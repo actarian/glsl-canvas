@@ -48,12 +48,14 @@
         </div>
     </div>
 </body>
+
 <script>
+    console.log('index');
     var enabledIndexes = [0, 1, 2, 3, 4, 5];
     var canvases = Array.from(document.querySelectorAll('.glsl-canvas'))
         .map(function (element, i) {
             if (enabledIndexes.indexOf(i) !== -1) {
-                var canvas = new GlslCanvas(element);
+                var canvas = GlslCanvas.of(element);
                 element.addEventListener('mouseover', function () {
                     canvas.play();
                     if (i === 3) {

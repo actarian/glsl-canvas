@@ -1,556 +1,15 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-(function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-  typeof define === 'function' && define.amd ? define(['exports'], factory) :
-  (factory((global.WHATWGFetch = {})));
-}(this, (function (exports) { 'use strict';
-
-  var support = {
-    searchParams: 'URLSearchParams' in self,
-    iterable: 'Symbol' in self && 'iterator' in Symbol,
-    blob:
-      'FileReader' in self &&
-      'Blob' in self &&
-      (function() {
-        try {
-          new Blob();
-          return true
-        } catch (e) {
-          return false
-        }
-      })(),
-    formData: 'FormData' in self,
-    arrayBuffer: 'ArrayBuffer' in self
-  };
-
-  function isDataView(obj) {
-    return obj && DataView.prototype.isPrototypeOf(obj)
-  }
-
-  if (support.arrayBuffer) {
-    var viewClasses = [
-      '[object Int8Array]',
-      '[object Uint8Array]',
-      '[object Uint8ClampedArray]',
-      '[object Int16Array]',
-      '[object Uint16Array]',
-      '[object Int32Array]',
-      '[object Uint32Array]',
-      '[object Float32Array]',
-      '[object Float64Array]'
-    ];
-
-    var isArrayBufferView =
-      ArrayBuffer.isView ||
-      function(obj) {
-        return obj && viewClasses.indexOf(Object.prototype.toString.call(obj)) > -1
-      };
-  }
-
-  function normalizeName(name) {
-    if (typeof name !== 'string') {
-      name = String(name);
-    }
-    if (/[^a-z0-9\-#$%&'*+.^_`|~]/i.test(name)) {
-      throw new TypeError('Invalid character in header field name')
-    }
-    return name.toLowerCase()
-  }
-
-  function normalizeValue(value) {
-    if (typeof value !== 'string') {
-      value = String(value);
-    }
-    return value
-  }
-
-  // Build a destructive iterator for the value list
-  function iteratorFor(items) {
-    var iterator = {
-      next: function() {
-        var value = items.shift();
-        return {done: value === undefined, value: value}
-      }
-    };
-
-    if (support.iterable) {
-      iterator[Symbol.iterator] = function() {
-        return iterator
-      };
-    }
-
-    return iterator
-  }
-
-  function Headers(headers) {
-    this.map = {};
-
-    if (headers instanceof Headers) {
-      headers.forEach(function(value, name) {
-        this.append(name, value);
-      }, this);
-    } else if (Array.isArray(headers)) {
-      headers.forEach(function(header) {
-        this.append(header[0], header[1]);
-      }, this);
-    } else if (headers) {
-      Object.getOwnPropertyNames(headers).forEach(function(name) {
-        this.append(name, headers[name]);
-      }, this);
-    }
-  }
-
-  Headers.prototype.append = function(name, value) {
-    name = normalizeName(name);
-    value = normalizeValue(value);
-    var oldValue = this.map[name];
-    this.map[name] = oldValue ? oldValue + ', ' + value : value;
-  };
-
-  Headers.prototype['delete'] = function(name) {
-    delete this.map[normalizeName(name)];
-  };
-
-  Headers.prototype.get = function(name) {
-    name = normalizeName(name);
-    return this.has(name) ? this.map[name] : null
-  };
-
-  Headers.prototype.has = function(name) {
-    return this.map.hasOwnProperty(normalizeName(name))
-  };
-
-  Headers.prototype.set = function(name, value) {
-    this.map[normalizeName(name)] = normalizeValue(value);
-  };
-
-  Headers.prototype.forEach = function(callback, thisArg) {
-    for (var name in this.map) {
-      if (this.map.hasOwnProperty(name)) {
-        callback.call(thisArg, this.map[name], name, this);
-      }
-    }
-  };
-
-  Headers.prototype.keys = function() {
-    var items = [];
-    this.forEach(function(value, name) {
-      items.push(name);
-    });
-    return iteratorFor(items)
-  };
-
-  Headers.prototype.values = function() {
-    var items = [];
-    this.forEach(function(value) {
-      items.push(value);
-    });
-    return iteratorFor(items)
-  };
-
-  Headers.prototype.entries = function() {
-    var items = [];
-    this.forEach(function(value, name) {
-      items.push([name, value]);
-    });
-    return iteratorFor(items)
-  };
-
-  if (support.iterable) {
-    Headers.prototype[Symbol.iterator] = Headers.prototype.entries;
-  }
-
-  function consumed(body) {
-    if (body.bodyUsed) {
-      return Promise.reject(new TypeError('Already read'))
-    }
-    body.bodyUsed = true;
-  }
-
-  function fileReaderReady(reader) {
-    return new Promise(function(resolve, reject) {
-      reader.onload = function() {
-        resolve(reader.result);
-      };
-      reader.onerror = function() {
-        reject(reader.error);
-      };
-    })
-  }
-
-  function readBlobAsArrayBuffer(blob) {
-    var reader = new FileReader();
-    var promise = fileReaderReady(reader);
-    reader.readAsArrayBuffer(blob);
-    return promise
-  }
-
-  function readBlobAsText(blob) {
-    var reader = new FileReader();
-    var promise = fileReaderReady(reader);
-    reader.readAsText(blob);
-    return promise
-  }
-
-  function readArrayBufferAsText(buf) {
-    var view = new Uint8Array(buf);
-    var chars = new Array(view.length);
-
-    for (var i = 0; i < view.length; i++) {
-      chars[i] = String.fromCharCode(view[i]);
-    }
-    return chars.join('')
-  }
-
-  function bufferClone(buf) {
-    if (buf.slice) {
-      return buf.slice(0)
-    } else {
-      var view = new Uint8Array(buf.byteLength);
-      view.set(new Uint8Array(buf));
-      return view.buffer
-    }
-  }
-
-  function Body() {
-    this.bodyUsed = false;
-
-    this._initBody = function(body) {
-      this._bodyInit = body;
-      if (!body) {
-        this._bodyText = '';
-      } else if (typeof body === 'string') {
-        this._bodyText = body;
-      } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {
-        this._bodyBlob = body;
-      } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {
-        this._bodyFormData = body;
-      } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
-        this._bodyText = body.toString();
-      } else if (support.arrayBuffer && support.blob && isDataView(body)) {
-        this._bodyArrayBuffer = bufferClone(body.buffer);
-        // IE 10-11 can't handle a DataView body.
-        this._bodyInit = new Blob([this._bodyArrayBuffer]);
-      } else if (support.arrayBuffer && (ArrayBuffer.prototype.isPrototypeOf(body) || isArrayBufferView(body))) {
-        this._bodyArrayBuffer = bufferClone(body);
-      } else {
-        this._bodyText = body = Object.prototype.toString.call(body);
-      }
-
-      if (!this.headers.get('content-type')) {
-        if (typeof body === 'string') {
-          this.headers.set('content-type', 'text/plain;charset=UTF-8');
-        } else if (this._bodyBlob && this._bodyBlob.type) {
-          this.headers.set('content-type', this._bodyBlob.type);
-        } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
-          this.headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
-        }
-      }
-    };
-
-    if (support.blob) {
-      this.blob = function() {
-        var rejected = consumed(this);
-        if (rejected) {
-          return rejected
-        }
-
-        if (this._bodyBlob) {
-          return Promise.resolve(this._bodyBlob)
-        } else if (this._bodyArrayBuffer) {
-          return Promise.resolve(new Blob([this._bodyArrayBuffer]))
-        } else if (this._bodyFormData) {
-          throw new Error('could not read FormData body as blob')
-        } else {
-          return Promise.resolve(new Blob([this._bodyText]))
-        }
-      };
-
-      this.arrayBuffer = function() {
-        if (this._bodyArrayBuffer) {
-          return consumed(this) || Promise.resolve(this._bodyArrayBuffer)
-        } else {
-          return this.blob().then(readBlobAsArrayBuffer)
-        }
-      };
-    }
-
-    this.text = function() {
-      var rejected = consumed(this);
-      if (rejected) {
-        return rejected
-      }
-
-      if (this._bodyBlob) {
-        return readBlobAsText(this._bodyBlob)
-      } else if (this._bodyArrayBuffer) {
-        return Promise.resolve(readArrayBufferAsText(this._bodyArrayBuffer))
-      } else if (this._bodyFormData) {
-        throw new Error('could not read FormData body as text')
-      } else {
-        return Promise.resolve(this._bodyText)
-      }
-    };
-
-    if (support.formData) {
-      this.formData = function() {
-        return this.text().then(decode)
-      };
-    }
-
-    this.json = function() {
-      return this.text().then(JSON.parse)
-    };
-
-    return this
-  }
-
-  // HTTP methods whose capitalization should be normalized
-  var methods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT'];
-
-  function normalizeMethod(method) {
-    var upcased = method.toUpperCase();
-    return methods.indexOf(upcased) > -1 ? upcased : method
-  }
-
-  function Request(input, options) {
-    options = options || {};
-    var body = options.body;
-
-    if (input instanceof Request) {
-      if (input.bodyUsed) {
-        throw new TypeError('Already read')
-      }
-      this.url = input.url;
-      this.credentials = input.credentials;
-      if (!options.headers) {
-        this.headers = new Headers(input.headers);
-      }
-      this.method = input.method;
-      this.mode = input.mode;
-      this.signal = input.signal;
-      if (!body && input._bodyInit != null) {
-        body = input._bodyInit;
-        input.bodyUsed = true;
-      }
-    } else {
-      this.url = String(input);
-    }
-
-    this.credentials = options.credentials || this.credentials || 'same-origin';
-    if (options.headers || !this.headers) {
-      this.headers = new Headers(options.headers);
-    }
-    this.method = normalizeMethod(options.method || this.method || 'GET');
-    this.mode = options.mode || this.mode || null;
-    this.signal = options.signal || this.signal;
-    this.referrer = null;
-
-    if ((this.method === 'GET' || this.method === 'HEAD') && body) {
-      throw new TypeError('Body not allowed for GET or HEAD requests')
-    }
-    this._initBody(body);
-  }
-
-  Request.prototype.clone = function() {
-    return new Request(this, {body: this._bodyInit})
-  };
-
-  function decode(body) {
-    var form = new FormData();
-    body
-      .trim()
-      .split('&')
-      .forEach(function(bytes) {
-        if (bytes) {
-          var split = bytes.split('=');
-          var name = split.shift().replace(/\+/g, ' ');
-          var value = split.join('=').replace(/\+/g, ' ');
-          form.append(decodeURIComponent(name), decodeURIComponent(value));
-        }
-      });
-    return form
-  }
-
-  function parseHeaders(rawHeaders) {
-    var headers = new Headers();
-    // Replace instances of \r\n and \n followed by at least one space or horizontal tab with a space
-    // https://tools.ietf.org/html/rfc7230#section-3.2
-    var preProcessedHeaders = rawHeaders.replace(/\r?\n[\t ]+/g, ' ');
-    preProcessedHeaders.split(/\r?\n/).forEach(function(line) {
-      var parts = line.split(':');
-      var key = parts.shift().trim();
-      if (key) {
-        var value = parts.join(':').trim();
-        headers.append(key, value);
-      }
-    });
-    return headers
-  }
-
-  Body.call(Request.prototype);
-
-  function Response(bodyInit, options) {
-    if (!options) {
-      options = {};
-    }
-
-    this.type = 'default';
-    this.status = options.status === undefined ? 200 : options.status;
-    this.ok = this.status >= 200 && this.status < 300;
-    this.statusText = 'statusText' in options ? options.statusText : 'OK';
-    this.headers = new Headers(options.headers);
-    this.url = options.url || '';
-    this._initBody(bodyInit);
-  }
-
-  Body.call(Response.prototype);
-
-  Response.prototype.clone = function() {
-    return new Response(this._bodyInit, {
-      status: this.status,
-      statusText: this.statusText,
-      headers: new Headers(this.headers),
-      url: this.url
-    })
-  };
-
-  Response.error = function() {
-    var response = new Response(null, {status: 0, statusText: ''});
-    response.type = 'error';
-    return response
-  };
-
-  var redirectStatuses = [301, 302, 303, 307, 308];
-
-  Response.redirect = function(url, status) {
-    if (redirectStatuses.indexOf(status) === -1) {
-      throw new RangeError('Invalid status code')
-    }
-
-    return new Response(null, {status: status, headers: {location: url}})
-  };
-
-  exports.DOMException = self.DOMException;
-  try {
-    new exports.DOMException();
-  } catch (err) {
-    exports.DOMException = function(message, name) {
-      this.message = message;
-      this.name = name;
-      var error = Error(message);
-      this.stack = error.stack;
-    };
-    exports.DOMException.prototype = Object.create(Error.prototype);
-    exports.DOMException.prototype.constructor = exports.DOMException;
-  }
-
-  function fetch(input, init) {
-    return new Promise(function(resolve, reject) {
-      var request = new Request(input, init);
-
-      if (request.signal && request.signal.aborted) {
-        return reject(new exports.DOMException('Aborted', 'AbortError'))
-      }
-
-      var xhr = new XMLHttpRequest();
-
-      function abortXhr() {
-        xhr.abort();
-      }
-
-      xhr.onload = function() {
-        var options = {
-          status: xhr.status,
-          statusText: xhr.statusText,
-          headers: parseHeaders(xhr.getAllResponseHeaders() || '')
-        };
-        options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL');
-        var body = 'response' in xhr ? xhr.response : xhr.responseText;
-        resolve(new Response(body, options));
-      };
-
-      xhr.onerror = function() {
-        reject(new TypeError('Network request failed'));
-      };
-
-      xhr.ontimeout = function() {
-        reject(new TypeError('Network request failed'));
-      };
-
-      xhr.onabort = function() {
-        reject(new exports.DOMException('Aborted', 'AbortError'));
-      };
-
-      xhr.open(request.method, request.url, true);
-
-      if (request.credentials === 'include') {
-        xhr.withCredentials = true;
-      } else if (request.credentials === 'omit') {
-        xhr.withCredentials = false;
-      }
-
-      if ('responseType' in xhr && support.blob) {
-        xhr.responseType = 'blob';
-      }
-
-      request.headers.forEach(function(value, name) {
-        xhr.setRequestHeader(name, value);
-      });
-
-      if (request.signal) {
-        request.signal.addEventListener('abort', abortXhr);
-
-        xhr.onreadystatechange = function() {
-          // DONE (success or failure)
-          if (xhr.readyState === 4) {
-            request.signal.removeEventListener('abort', abortXhr);
-          }
-        };
-      }
-
-      xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit);
-    })
-  }
-
-  fetch.polyfill = true;
-
-  if (!self.fetch) {
-    self.fetch = fetch;
-    self.Headers = Headers;
-    self.Request = Request;
-    self.Response = Response;
-  }
-
-  exports.Headers = Headers;
-  exports.Request = Request;
-  exports.Response = Response;
-  exports.fetch = fetch;
-
-  Object.defineProperty(exports, '__esModule', { value: true });
-
-})));
-
-},{}],2:[function(require,module,exports){
 "use strict";
 
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
 function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
 
-function _wrapNativeSuper(Class) { var _cache = typeof Map === "function" ? new Map() : undefined; _wrapNativeSuper = function _wrapNativeSuper(Class) { if (Class === null || !_isNativeFunction(Class)) return Class; if (typeof Class !== "function") { throw new TypeError("Super expression must either be null or a function"); } if (typeof _cache !== "undefined") { if (_cache.has(Class)) return _cache.get(Class); _cache.set(Class, Wrapper); } function Wrapper() { return _construct(Class, arguments, _getPrototypeOf(this).constructor); } Wrapper.prototype = Object.create(Class.prototype, { constructor: { value: Wrapper, enumerable: false, writable: true, configurable: true } }); return _setPrototypeOf(Wrapper, Class); }; return _wrapNativeSuper(Class); }
-
-function isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
-
-function _construct(Parent, args, Class) { if (isNativeReflectConstruct()) { _construct = Reflect.construct; } else { _construct = function _construct(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; }; } return _construct.apply(null, arguments); }
-
-function _isNativeFunction(fn) { return Function.toString.call(fn).indexOf("[native code]") !== -1; }
-
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
-
-function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -571,7 +30,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     var v = factory(require, exports);
     if (v !== undefined) module.exports = v;
   } else if (typeof define === "function" && define.amd) {
-    define(["require", "exports", "./context"], factory);
+    define(["require", "exports", "./common", "./context"], factory);
   }
 })(function (require, exports) {
   "use strict";
@@ -579,6 +38,8 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
+
+  var common_1 = __importDefault(require("./common"));
 
   var context_1 = __importDefault(require("./context"));
 
@@ -734,8 +195,8 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 
   var Buffers =
   /*#__PURE__*/
-  function (_Map) {
-    _inherits(Buffers, _Map);
+  function (_common_1$default) {
+    _inherits(Buffers, _common_1$default);
 
     function Buffers() {
       _classCallCheck(this, Buffers);
@@ -746,7 +207,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     _createClass(Buffers, [{
       key: "count",
       get: function get() {
-        return this.size * 4;
+        return Object.keys(this.values).length * 4;
       }
     }], [{
       key: "getBuffers",
@@ -773,12 +234,106 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     }]);
 
     return Buffers;
-  }(_wrapNativeSuper(Map));
+  }(common_1.default);
 
   exports.default = Buffers;
 });
 
-},{"./context":3}],3:[function(require,module,exports){
+},{"./common":2,"./context":3}],2:[function(require,module,exports){
+"use strict";
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+(function (factory) {
+  if ((typeof module === "undefined" ? "undefined" : _typeof(module)) === "object" && _typeof(module.exports) === "object") {
+    var v = factory(require, exports);
+    if (v !== undefined) module.exports = v;
+  } else if (typeof define === "function" && define.amd) {
+    define(["require", "exports"], factory);
+  }
+})(function (require, exports) {
+  "use strict";
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var NumberMap = function NumberMap() {
+    _classCallCheck(this, NumberMap);
+  };
+
+  exports.NumberMap = NumberMap;
+  ;
+
+  var StringMap = function StringMap() {
+    _classCallCheck(this, StringMap);
+  };
+
+  exports.StringMap = StringMap;
+  ;
+
+  var IterableStringMap =
+  /*#__PURE__*/
+  function () {
+    function IterableStringMap() {
+      _classCallCheck(this, IterableStringMap);
+
+      this.values = new StringMap();
+    }
+
+    _createClass(IterableStringMap, [{
+      key: "has",
+      value: function has(key) {
+        return this.values.hasOwnProperty(key);
+      }
+    }, {
+      key: "set",
+      value: function set(key, item) {
+        this.values[key] = item;
+      }
+    }, {
+      key: "get",
+      value: function get(key) {
+        return this.values[key];
+      }
+    }, {
+      key: "forEach",
+      value: function forEach(callbackfn) {
+        var i = 0;
+
+        for (var key in this.values) {
+          callbackfn(this.values[key], i, this.values);
+          i++;
+        }
+      }
+    }, {
+      key: "reduce",
+      value: function reduce(callbackfn, initialValue) {
+        var previous = initialValue,
+            i = 0;
+
+        for (var key in this.values) {
+          previous = callbackfn(previous, this.values[key], i, this.values);
+          i++;
+        }
+
+        return previous;
+      }
+    }]);
+
+    return IterableStringMap;
+  }();
+
+  exports.default = IterableStringMap;
+});
+
+},{}],3:[function(require,module,exports){
 "use strict";
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -965,13 +520,13 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
-function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
-
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
@@ -1002,7 +557,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     var v = factory(require, exports);
     if (v !== undefined) module.exports = v;
   } else if (typeof define === "function" && define.amd) {
-    define(["require", "exports", "whatwg-fetch", "./buffers", "./context", "./subscriber", "./textures", "./uniforms"], factory);
+    define(["require", "exports", "./buffers", "./context", "./subscriber", "./textures", "./uniforms"], factory);
   }
 })(function (require, exports) {
   "use strict";
@@ -1010,8 +565,8 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
   Object.defineProperty(exports, "__esModule", {
     value: true
   }); // import '@babel/polyfill';
-
-  require("whatwg-fetch");
+  // import 'whatwg-fetch';
+  // import 'promise-polyfill';
 
   var buffers_1 = __importDefault(require("./buffers"));
 
@@ -1021,7 +576,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
 
   var textures_1 = __importStar(require("./textures"));
 
-  var uniforms_1 = __importDefault(require("./uniforms"));
+  var uniforms_1 = __importStar(require("./uniforms"));
 
   var GlslCanvasDefaultVertex = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nattribute vec2 a_position;\nattribute vec2 a_texcoord;\n\nvarying vec2 v_texcoord;\n\nvoid main(){\n\tgl_Position = vec4(a_position, 0.0, 1.0);\n\tv_texcoord = a_texcoord;\n}\n";
   var GlslCanvasDefaultFragment = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nvarying vec2 v_texcoord;\n\nvoid main(){\n\tgl_FragColor = vec4(0.0);\n}\n";
@@ -1144,10 +699,37 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         console.log('error', error);
       });
 
+      GlslCanvas.items.push(_assertThisInitialized(_assertThisInitialized(_this)));
       return _this;
     }
 
     _createClass(GlslCanvas, [{
+      key: "fetch",
+      value: function fetch(url) {
+        return new Promise(function (resolve, reject) {
+          var xhr = new XMLHttpRequest();
+
+          xhr.onload = function () {
+            resolve(xhr.response || xhr.responseText);
+          };
+
+          xhr.onerror = function () {
+            reject(new Error('Network request failed'));
+          };
+
+          xhr.ontimeout = function () {
+            reject(new Error('Network request failed'));
+          };
+
+          xhr.onabort = function () {
+            reject(new Error('Aborted'));
+          };
+
+          xhr.open('GET', url, true);
+          xhr.send(null);
+        });
+      }
+    }, {
       key: "getShaders",
       value: function getShaders() {
         var _this2 = this;
@@ -1175,9 +757,8 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           if (Object.keys(urls).length) {
             Promise.all(Object.keys(urls).map(function (key, i) {
               var url = urls[key];
-              return fetch(url).then(function (response) {
-                return response.text();
-              }).then(function (body) {
+              return _this2.fetch(url) // .then((response) => response.text())
+              .then(function (body) {
                 if (key === 'vertex') {
                   return _this2.vertexString = body;
                 } else {
@@ -1359,15 +940,19 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         */
 
         gl.useProgram(null);
-        gl.deleteProgram(this.program);
-        this.buffers.forEach(function (buffer) {
-          return buffer.destroy(gl);
-        });
+        gl.deleteProgram(this.program); // this.buffers.forEach((buffer: IOBuffer) => buffer.destroy(gl));
+
+        for (var key in this.buffers.values) {
+          var buffer = this.buffers.values[key];
+          buffer.destroy(gl);
+        }
+
         this.buffers = null;
         this.textures = null;
         this.uniforms = null;
         this.program = null;
         this.gl = null;
+        GlslCanvas.items.splice(GlslCanvas.items.indexOf(this), 1);
       }
     }, {
       key: "setUniform",
@@ -1381,7 +966,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         var uniform = (_uniforms_1$default = uniforms_1.default).parseUniform.apply(_uniforms_1$default, [key].concat(values));
 
         if (uniform) {
-          if (uniform.type === 'sampler2D') {
+          if (uniform.type === uniforms_1.UniformType.Sampler2D) {
             this.loadTexture(key, values[0]);
           } else {
             this.uniforms.set(key, uniform);
@@ -1438,7 +1023,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     }, {
       key: "isDirty",
       value: function isDirty() {
-        return this.dirty || this.uniforms.dirty || this.textures.dirty; // Array.from(this.textures.values()).reduce((p, texture) => p || texture.dirty, false);
+        return this.dirty || this.uniforms.dirty || this.textures.dirty; // [].slice.call(this.textures.values()).reduce((p, texture) => p || texture.dirty, false);
         // this.textures.dirty;
       } // check size change at start of requestFrame
 
@@ -1465,10 +1050,18 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
             gl.canvas.height = BH; // Set the viewport to match
             // gl.viewport(0, 0, BW, BH);
           }
+          /*
+          this.buffers.forEach((buffer: IOBuffer) => {
+              buffer.resize(gl, BW, BH);
+          });
+          */
 
-          this.buffers.forEach(function (buffer) {
+
+          for (var key in this.buffers.values) {
+            var buffer = this.buffers.values[key];
             buffer.resize(gl, BW, BH);
-          }); // gl.useProgram(this.program);
+          } // gl.useProgram(this.program);
+
 
           return true;
         } else {
@@ -1508,28 +1101,35 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           this.canvas.classList.remove('animated');
         }
 
-        this.uniforms.create('2f', 'vec2', 'u_resolution', BW, BH);
+        this.uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.FloatVec2, 'u_resolution', BW, BH);
 
         if (hasDelta) {
-          this.uniforms.create('1f', 'float', 'u_delta', timer.delta);
+          this.uniforms.create(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_delta', timer.delta);
         }
 
         if (hasTime) {
-          this.uniforms.create('1f', 'float', 'u_time', timer.current);
+          this.uniforms.create(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_time', timer.current);
         }
 
         if (hasDate) {
           var date = new Date();
-          this.uniforms.create('4f', 'float', 'u_date', date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001);
+          this.uniforms.create(uniforms_1.UniformMethod.Uniform4f, uniforms_1.UniformType.Float, 'u_date', date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001);
         }
 
         if (hasMouse) {
-          this.uniforms.create('2f', 'vec2', 'u_mouse', 0, 0);
+          this.uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.FloatVec2, 'u_mouse', 0, 0);
         }
 
-        this.buffers.forEach(function (buffer) {
-          _this6.uniforms.create('1i', 'sampler2D', buffer.key, buffer.input.index);
+        for (var key in this.buffers.values) {
+          var buffer = this.buffers.values[key];
+          this.uniforms.create(uniforms_1.UniformMethod.Uniform1i, uniforms_1.UniformType.Sampler2D, buffer.key, buffer.input.index);
+        }
+        /*
+        this.buffers.forEach((buffer: IOBuffer) => {
+            this.uniforms.create(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, buffer.input.index);
         });
+        */
+
 
         if (hasTextures) {
           this.textureList.forEach(function (x) {
@@ -1601,7 +1201,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
 
             uniform.texture = texture;
 
-            var uniformResolution = _this8.uniforms.create('2f', 'vec2', key + 'Resolution', texture.width, texture.height); // console.log('loadTexture', key, url, index, texture.width, texture.height);
+            var uniformResolution = _this8.uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.FloatVec2, key + 'Resolution', texture.width, texture.height); // console.log('loadTexture', key, url, index, texture.width, texture.height);
 
 
             return texture;
@@ -1616,25 +1216,23 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     }, {
       key: "updateUniforms",
       value: function updateUniforms() {
-        var _this9 = this;
-
         var gl = this.gl;
         var BW = gl.drawingBufferWidth;
         var BH = gl.drawingBufferHeight;
         var timer = this.timer.next();
-        this.uniforms.update('2f', 'vec2', 'u_resolution', BW, BH);
+        this.uniforms.update(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.FloatVec2, 'u_resolution', BW, BH);
 
         if (this.uniforms.has('u_delta')) {
-          this.uniforms.update('1f', 'float', 'u_delta', timer.delta);
+          this.uniforms.update(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_delta', timer.delta);
         }
 
         if (this.uniforms.has('u_time')) {
-          this.uniforms.update('1f', 'float', 'u_time', timer.current);
+          this.uniforms.update(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_time', timer.current);
         }
 
         if (this.uniforms.has('u_date')) {
           var date = new Date();
-          this.uniforms.update('4f', 'float', 'u_date', date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001);
+          this.uniforms.update(uniforms_1.UniformMethod.Uniform4f, uniforms_1.UniformType.Float, 'u_date', date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001);
         }
 
         if (this.uniforms.has('u_mouse')) {
@@ -1644,53 +1242,70 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           if (mouse.x >= rect.left && mouse.x <= rect.right && mouse.y >= rect.top && mouse.y <= rect.bottom) {
             var MX = (mouse.x - rect.left) * this.pixelRatio;
             var MY = this.canvas.height - (mouse.y - rect.top) * this.pixelRatio;
-            this.uniforms.update('2f', 'vec2', 'u_mouse', MX, MY);
+            this.uniforms.update(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.FloatVec2, 'u_mouse', MX, MY);
           }
         }
 
-        this.buffers.forEach(function (buffer) {
-          _this9.uniforms.update('1i', 'sampler2D', buffer.key, buffer.input.index);
+        for (var key in this.buffers.values) {
+          var buffer = this.buffers.values[key];
+          this.uniforms.update(uniforms_1.UniformMethod.Uniform1i, uniforms_1.UniformType.Sampler2D, buffer.key, buffer.input.index);
+        }
+        /*
+        this.buffers.forEach((buffer: IOBuffer) => {
+            this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, buffer.input.index);
         });
-        this.textures.forEach(function (texture) {
+        */
+
+
+        for (var _key2 in this.textures.values) {
+          var texture = this.textures.values[_key2];
           texture.tryUpdate(gl); // console.log(texture.key, texture.index);
 
-          _this9.uniforms.update('1i', 'sampler2D', texture.key, texture.index);
+          this.uniforms.update(uniforms_1.UniformMethod.Uniform1i, uniforms_1.UniformType.Sampler2D, texture.key, texture.index);
+        }
+        /*
+        this.textures.forEach((texture: Texture) => {
+            texture.tryUpdate(gl);
+            // console.log(texture.key, texture.index);
+            this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, texture.key, texture.index);
         });
+        */
+
       }
     }, {
       key: "render",
       value: function render() {
-        var _this10 = this;
-
         var gl = this.gl;
         var BW = gl.drawingBufferWidth;
         var BH = gl.drawingBufferHeight;
         this.updateUniforms();
-        this.buffers.forEach(function (buffer) {
-          _this10.uniforms.apply(gl, buffer.program);
-
-          buffer.render(gl, BW, BH);
+        /*
+        this.buffers.forEach((buffer: IOBuffer) => {
+            this.uniforms.apply(gl, buffer.program);
+            buffer.render(gl, BW, BH);
         });
+        */
+
+        for (var key in this.buffers.values) {
+          var buffer = this.buffers.values[key];
+          this.uniforms.apply(gl, buffer.program);
+          buffer.render(gl, BW, BH);
+        }
+
         gl.useProgram(this.program);
         this.uniforms.apply(gl, this.program);
         gl.viewport(0, 0, BW, BH);
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
-        this.uniforms.forEach(function (uniform) {
-          return uniform.dirty = false;
-        });
-        this.uniforms.dirty = false;
-        this.textures.forEach(function (texture) {
-          return texture.dirty = false;
-        });
-        this.textures.dirty = false;
+        this.uniforms.clean();
+        this.textures.clean();
         this.dirty = false;
         this.trigger('render', {});
       }
     }], [{
       key: "version",
       value: function version() {
-        return '0.1.8';
+        return '0.2.0';
       }
     }, {
       key: "isDifferent",
@@ -1701,31 +1316,35 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
 
         return false;
       }
+    }, {
+      key: "of",
+      value: function of(canvas) {
+        return GlslCanvas.items.find(function (x) {
+          return x.canvas === canvas;
+        }) || new GlslCanvas(canvas);
+      }
+    }, {
+      key: "loadAll",
+      value: function loadAll() {
+        var canvases = [].slice.call(document.getElementsByClassName('glsl-canvas')).filter(function (x) {
+          return x instanceof HTMLCanvasElement;
+        });
+        return canvases.map(function (x) {
+          return GlslCanvas.of(x);
+        });
+      }
     }]);
 
     return GlslCanvas;
   }(subscriber_1.default);
 
+  GlslCanvas.items = [];
   exports.default = GlslCanvas;
   window.GlslCanvas = GlslCanvas;
-
-  var loadAllGlslCanvas = function loadAllGlslCanvas() {
-    var canvases = Array.from(document.getElementsByClassName('glslCanvas')).filter(function (x) {
-      return x instanceof HTMLCanvasElement;
-    });
-    window.glslCanvases = canvases.map(function (x) {
-      return new GlslCanvas(x);
-    }).filter(function (x) {
-      return x.valid;
-    });
-  };
-
-  window.addEventListener('load', function () {
-    loadAllGlslCanvas();
-  });
+  document.addEventListener("DOMContentLoaded", GlslCanvas.loadAll);
 });
 
-},{"./buffers":2,"./context":3,"./subscriber":5,"./textures":6,"./uniforms":7,"whatwg-fetch":1}],5:[function(require,module,exports){
+},{"./buffers":1,"./context":3,"./subscriber":5,"./textures":6,"./uniforms":7}],5:[function(require,module,exports){
 "use strict";
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -1838,14 +1457,6 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 },{}],6:[function(require,module,exports){
 "use strict";
 
-function _wrapNativeSuper(Class) { var _cache = typeof Map === "function" ? new Map() : undefined; _wrapNativeSuper = function _wrapNativeSuper(Class) { if (Class === null || !_isNativeFunction(Class)) return Class; if (typeof Class !== "function") { throw new TypeError("Super expression must either be null or a function"); } if (typeof _cache !== "undefined") { if (_cache.has(Class)) return _cache.get(Class); _cache.set(Class, Wrapper); } function Wrapper() { return _construct(Class, arguments, _getPrototypeOf(this).constructor); } Wrapper.prototype = Object.create(Class.prototype, { constructor: { value: Wrapper, enumerable: false, writable: true, configurable: true } }); return _setPrototypeOf(Wrapper, Class); }; return _wrapNativeSuper(Class); }
-
-function isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
-
-function _construct(Parent, args, Class) { if (isNativeReflectConstruct()) { _construct = Reflect.construct; } else { _construct = function _construct(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; }; } return _construct.apply(null, arguments); }
-
-function _isNativeFunction(fn) { return Function.toString.call(fn).indexOf("[native code]") !== -1; }
-
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
@@ -1875,14 +1486,16 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     var v = factory(require, exports);
     if (v !== undefined) module.exports = v;
   } else if (typeof define === "function" && define.amd) {
-    define(["require", "exports", "./subscriber"], factory);
+    define(["require", "exports", "./common", "./subscriber"], factory);
   }
 })(function (require, exports) {
   "use strict";
 
   Object.defineProperty(exports, "__esModule", {
     value: true
-  }); // Texture management
+  }); // import 'promise-polyfill';
+
+  var common_1 = __importDefault(require("./common"));
 
   var subscriber_1 = __importDefault(require("./subscriber"));
 
@@ -2248,8 +1861,8 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 
   var Textures =
   /*#__PURE__*/
-  function (_Map) {
-    _inherits(Textures, _Map);
+  function (_common_1$default) {
+    _inherits(Textures, _common_1$default);
 
     function Textures() {
       var _this3;
@@ -2264,6 +1877,15 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     }
 
     _createClass(Textures, [{
+      key: "clean",
+      value: function clean() {
+        for (var key in this.values) {
+          this.values[key].dirty = false;
+        }
+
+        this.dirty = false;
+      }
+    }, {
       key: "createOrUpdate",
       value: function createOrUpdate(gl, key, urlElementOrData) {
         var _this4 = this;
@@ -2293,7 +1915,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
               video.addEventListener('pause', function () {
                 // console.log('pause', texture.key);
                 texture.animated = false;
-                _this4.animated = Array.from(_this4.values()).reduce(function (flag, texture) {
+                _this4.animated = _this4.reduce(function (flag, texture) {
                   return flag || texture.animated;
                 }, false);
               });
@@ -2326,21 +1948,13 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     }]);
 
     return Textures;
-  }(_wrapNativeSuper(Map));
+  }(common_1.default);
 
   exports.default = Textures;
 });
 
-},{"./subscriber":5}],7:[function(require,module,exports){
+},{"./common":2,"./subscriber":5}],7:[function(require,module,exports){
 "use strict";
-
-function _wrapNativeSuper(Class) { var _cache = typeof Map === "function" ? new Map() : undefined; _wrapNativeSuper = function _wrapNativeSuper(Class) { if (Class === null || !_isNativeFunction(Class)) return Class; if (typeof Class !== "function") { throw new TypeError("Super expression must either be null or a function"); } if (typeof _cache !== "undefined") { if (_cache.has(Class)) return _cache.get(Class); _cache.set(Class, Wrapper); } function Wrapper() { return _construct(Class, arguments, _getPrototypeOf(this).constructor); } Wrapper.prototype = Object.create(Class.prototype, { constructor: { value: Wrapper, enumerable: false, writable: true, configurable: true } }); return _setPrototypeOf(Wrapper, Class); }; return _wrapNativeSuper(Class); }
-
-function isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
-
-function _construct(Parent, args, Class) { if (isNativeReflectConstruct()) { _construct = Reflect.construct; } else { _construct = function _construct(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; }; } return _construct.apply(null, arguments); }
-
-function _isNativeFunction(fn) { return Function.toString.call(fn).indexOf("[native code]") !== -1; }
 
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
@@ -2360,12 +1974,18 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
+var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
 (function (factory) {
   if ((typeof module === "undefined" ? "undefined" : _typeof(module)) === "object" && _typeof(module.exports) === "object") {
     var v = factory(require, exports);
     if (v !== undefined) module.exports = v;
   } else if (typeof define === "function" && define.amd) {
-    define(["require", "exports", "./textures"], factory);
+    define(["require", "exports", "./common", "./textures"], factory);
   }
 })(function (require, exports) {
   "use strict";
@@ -2374,37 +1994,9 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
     value: true
   });
 
+  var common_1 = __importDefault(require("./common"));
+
   var textures_1 = require("./textures");
-
-  var UniformType;
-
-  (function (UniformType) {
-    UniformType[UniformType["Bool"] = 0] = "Bool";
-    UniformType[UniformType["BoolArray"] = 1] = "BoolArray";
-    UniformType[UniformType["Int"] = 2] = "Int";
-    UniformType[UniformType["IntArray"] = 3] = "IntArray";
-    UniformType[UniformType["IntVec2"] = 4] = "IntVec2";
-    UniformType[UniformType["IntVec2Array"] = 5] = "IntVec2Array";
-    UniformType[UniformType["IntVec3"] = 6] = "IntVec3";
-    UniformType[UniformType["IntVec3Array"] = 7] = "IntVec3Array";
-    UniformType[UniformType["IntVec4"] = 8] = "IntVec4";
-    UniformType[UniformType["IntVec4Array"] = 9] = "IntVec4Array";
-    UniformType[UniformType["Float"] = 10] = "Float";
-    UniformType[UniformType["FloatArray"] = 11] = "FloatArray";
-    UniformType[UniformType["FloatVec2"] = 12] = "FloatVec2";
-    UniformType[UniformType["FloatVec2Array"] = 13] = "FloatVec2Array";
-    UniformType[UniformType["FloatVec3"] = 14] = "FloatVec3";
-    UniformType[UniformType["FloatVec3Array"] = 15] = "FloatVec3Array";
-    UniformType[UniformType["FloatVec4"] = 16] = "FloatVec4";
-    UniformType[UniformType["FloatVec4Array"] = 17] = "FloatVec4Array";
-    UniformType[UniformType["Sampler2D"] = 18] = "Sampler2D";
-    UniformType[UniformType["Sampler2DArray"] = 19] = "Sampler2DArray";
-    UniformType[UniformType["SamplerCube"] = 20] = "SamplerCube";
-    UniformType[UniformType["SamplerCubeArray"] = 21] = "SamplerCubeArray";
-    UniformType[UniformType["Matrix2fv"] = 22] = "Matrix2fv";
-    UniformType[UniformType["Matrix3fv"] = 23] = "Matrix3fv";
-    UniformType[UniformType["Matrix4fv"] = 24] = "Matrix4fv";
-  })(UniformType = exports.UniformType || (exports.UniformType = {}));
 
   var UniformMethod;
 
@@ -2438,6 +2030,36 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
     UniformMethod["UniformMatrix4fv"] = "uniformMatrix4fv";
   })(UniformMethod = exports.UniformMethod || (exports.UniformMethod = {}));
 
+  var UniformType;
+
+  (function (UniformType) {
+    UniformType[UniformType["Bool"] = 0] = "Bool";
+    UniformType[UniformType["BoolArray"] = 1] = "BoolArray";
+    UniformType[UniformType["Int"] = 2] = "Int";
+    UniformType[UniformType["IntArray"] = 3] = "IntArray";
+    UniformType[UniformType["IntVec2"] = 4] = "IntVec2";
+    UniformType[UniformType["IntVec2Array"] = 5] = "IntVec2Array";
+    UniformType[UniformType["IntVec3"] = 6] = "IntVec3";
+    UniformType[UniformType["IntVec3Array"] = 7] = "IntVec3Array";
+    UniformType[UniformType["IntVec4"] = 8] = "IntVec4";
+    UniformType[UniformType["IntVec4Array"] = 9] = "IntVec4Array";
+    UniformType[UniformType["Float"] = 10] = "Float";
+    UniformType[UniformType["FloatArray"] = 11] = "FloatArray";
+    UniformType[UniformType["FloatVec2"] = 12] = "FloatVec2";
+    UniformType[UniformType["FloatVec2Array"] = 13] = "FloatVec2Array";
+    UniformType[UniformType["FloatVec3"] = 14] = "FloatVec3";
+    UniformType[UniformType["FloatVec3Array"] = 15] = "FloatVec3Array";
+    UniformType[UniformType["FloatVec4"] = 16] = "FloatVec4";
+    UniformType[UniformType["FloatVec4Array"] = 17] = "FloatVec4Array";
+    UniformType[UniformType["Sampler2D"] = 18] = "Sampler2D";
+    UniformType[UniformType["Sampler2DArray"] = 19] = "Sampler2DArray";
+    UniformType[UniformType["SamplerCube"] = 20] = "SamplerCube";
+    UniformType[UniformType["SamplerCubeArray"] = 21] = "SamplerCubeArray";
+    UniformType[UniformType["Matrix2fv"] = 22] = "Matrix2fv";
+    UniformType[UniformType["Matrix3fv"] = 23] = "Matrix3fv";
+    UniformType[UniformType["Matrix4fv"] = 24] = "Matrix4fv";
+  })(UniformType = exports.UniformType || (exports.UniformType = {}));
+
   var Uniform =
   /*#__PURE__*/
   function () {
@@ -2455,9 +2077,9 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
       this.apply = function (gl, program) {
         if (_this.dirty) {
           gl.useProgram(program);
-          var method = 'uniform' + _this.method;
           var location = gl.getUniformLocation(program, _this.key);
-          gl[method].apply(gl, [location].concat(_this.values));
+
+          gl[_this.method].apply(gl, [location].concat(_this.values));
         }
       };
     }
@@ -2496,8 +2118,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 
   var Uniforms =
   /*#__PURE__*/
-  function (_Map) {
-    _inherits(Uniforms, _Map);
+  function (_common_1$default) {
+    _inherits(Uniforms, _common_1$default);
 
     function Uniforms() {
       var _this2;
@@ -2510,6 +2132,15 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
     }
 
     _createClass(Uniforms, [{
+      key: "clean",
+      value: function clean() {
+        for (var key in this.values) {
+          this.values[key].dirty = false;
+        }
+
+        this.dirty = false;
+      }
+    }, {
       key: "setParse",
       value: function setParse(key) {
         for (var _len = arguments.length, values = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
@@ -2545,8 +2176,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
       key: "createTexture",
       value: function createTexture(key, index) {
         var uniform = new UniformTexture({
-          method: '1i',
-          type: 'sampler2D',
+          method: UniformMethod.Uniform1i,
+          type: UniformType.Sampler2D,
           key: key,
           values: [index]
         });
@@ -2607,9 +2238,10 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
     }, {
       key: "apply",
       value: function apply(gl, program) {
-        this.forEach(function (uniform) {
-          return uniform.apply(gl, program);
-        });
+        for (var key in this.values) {
+          this.values[key].apply(gl, program);
+        } // this.forEach(uniform => uniform.apply(gl, program));
+
       }
     }], [{
       key: "isArrayOfNumbers",
@@ -2631,24 +2263,24 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 
         if (typeof value === 'number') {
           uniform = new Uniform({
-            type: 'float',
-            method: '1f',
+            method: UniformMethod.Uniform1f,
+            type: UniformType.Float,
             key: key,
             values: [value]
           });
         } else if (typeof value === 'boolean') {
           // Boolean
           uniform = new Uniform({
-            type: 'bool',
-            method: '1i',
+            method: UniformMethod.Uniform1i,
+            type: UniformType.Bool,
             key: key,
             values: [value]
           });
         } else if (textures_1.Texture.isTexture(value)) {
           // Texture
           uniform = new Uniform({
-            type: 'sampler2D',
-            method: '1i',
+            method: UniformMethod.Uniform1i,
+            type: UniformType.Sampler2D,
             key: key,
             values: value // !!!
 
@@ -2657,37 +2289,58 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
           // Array: vector, array of floats, array of textures, or array of structs
           // Numeric values
           if (Uniforms.isArrayOfNumbers(value)) {
-            // float vectors (vec2, vec3, vec4)
-            if (value.length === 1) {
-              uniform = new Uniform({
-                type: 'float',
-                method: '1f',
-                key: key,
-                values: value
-              });
-            } else if (value.length >= 2 && value.length <= 4) {
-              // float vectors (vec2, vec3, vec4)
-              uniform = new Uniform({
-                type: 'vec' + value.length,
-                method: value.length + 'fv',
-                key: key,
-                values: value
-              });
-            } else if (value.length > 4) {
-              // float array
-              uniform = new Uniform({
-                type: 'float[]',
-                method: '1fv',
-                key: key,
-                values: value
-              });
+            switch (value.length) {
+              case 1:
+                uniform = new Uniform({
+                  method: UniformMethod.Uniform1f,
+                  type: UniformType.Float,
+                  key: key,
+                  values: value
+                });
+                break;
+
+              case 2:
+                uniform = new Uniform({
+                  method: UniformMethod.Uniform2fv,
+                  type: UniformType.FloatVec2,
+                  key: key,
+                  values: value
+                });
+                break;
+
+              case 3:
+                uniform = new Uniform({
+                  method: UniformMethod.Uniform3fv,
+                  type: UniformType.FloatVec3,
+                  key: key,
+                  values: value
+                });
+                break;
+
+              case 4:
+                uniform = new Uniform({
+                  method: UniformMethod.Uniform4fv,
+                  type: UniformType.FloatVec4,
+                  key: key,
+                  values: value
+                });
+                break;
+
+              default:
+                // float array
+                uniform = new Uniform({
+                  method: UniformMethod.Uniform1fv,
+                  type: UniformType.FloatArray,
+                  key: key,
+                  values: value
+                });
             } // TODO: assume matrix for (typeof == Float32Array && length == 16)?
 
           } else if (textures_1.Texture.getTextureOptions(value[0])) {
             // Array of textures
             uniform = new Uniform({
-              type: 'sampler2D',
-              method: '1iv',
+              method: UniformMethod.Uniform1iv,
+              type: UniformType.Sampler2D,
               key: key,
               values: value
             });
@@ -2697,12 +2350,34 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
             if (value[0].length >= 2 && value[0].length <= 4) {
               // Set each vector in the array
               for (var u = 0; u < value.length; u++) {
-                uniform = new Uniform({
-                  type: 'vec' + value[0].length,
-                  method: value[u].length + 'fv',
-                  key: key + '[' + u + ']',
-                  values: value[u]
-                });
+                switch (value.length) {
+                  case 2:
+                    uniform = new Uniform({
+                      method: UniformMethod.Uniform2fv,
+                      type: UniformType.FloatVec2,
+                      key: key + '[' + u + ']',
+                      values: value
+                    });
+                    break;
+
+                  case 3:
+                    uniform = new Uniform({
+                      method: UniformMethod.Uniform3fv,
+                      type: UniformType.FloatVec3,
+                      key: key + '[' + u + ']',
+                      values: value
+                    });
+                    break;
+
+                  case 4:
+                    uniform = new Uniform({
+                      method: UniformMethod.Uniform4fv,
+                      type: UniformType.FloatVec4,
+                      key: key + '[' + u + ']',
+                      values: value
+                    });
+                    break;
+                }
               }
             } // else error?
 
@@ -2744,11 +2419,11 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
     }]);
 
     return Uniforms;
-  }(_wrapNativeSuper(Map));
+  }(common_1.default);
 
   exports.default = Uniforms;
 });
 
-},{"./textures":6}]},{},[4]);
+},{"./common":2,"./textures":6}]},{},[4]);
 
 //# sourceMappingURL=glsl-canvas.js.map

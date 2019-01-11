@@ -1,4 +1,5 @@
-// Texture management
+// import 'promise-polyfill';
+import IterableStringMap from './common';
 import Subscriber from './subscriber';
 
 export const TextureImageExtensions = ['jpg', 'jpeg', 'png'];
@@ -346,11 +347,18 @@ export class Texture extends Subscriber {
     }
 }
 
-export default class Textures extends Map<string, Texture> {
+export default class Textures extends IterableStringMap<Texture> {
 
     count: number = 0;
     dirty: boolean = false;
     animated: boolean = false;
+
+    clean() {
+        for (const key in this.values) {
+            this.values[key].dirty = false;
+        }
+        this.dirty = false;
+    }
 
     createOrUpdate(
         gl: WebGLRenderingContext,
@@ -381,7 +389,7 @@ export default class Textures extends Map<string, Texture> {
                         video.addEventListener('pause', () => {
                             // console.log('pause', texture.key);
                             texture.animated = false;
-                            this.animated = Array.from(this.values()).reduce((flag: boolean, texture: Texture) => {
+                            this.animated = this.reduce((flag: boolean, texture: Texture) => {
                                 return flag || texture.animated;
                             }, false);
                         });

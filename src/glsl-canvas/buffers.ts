@@ -1,3 +1,4 @@
+import IterableStringMap from './common';
 import Context from './context';
 
 export class Buffer {
@@ -139,10 +140,10 @@ export class IOBuffer {
 
 }
 
-export default class Buffers extends Map<string, IOBuffer> {
+export default class Buffers extends IterableStringMap<IOBuffer> {
 
     get count(): number {
-        return this.size * 4;
+        return Object.keys(this.values).length * 4;
     }
 
     static getBuffers(gl: WebGLRenderingContext, fragmentString: string, vertexString: string): Buffers {

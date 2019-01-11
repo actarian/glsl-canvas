@@ -1,10 +1,11 @@
 // import '@babel/polyfill';
-import 'whatwg-fetch';
-import Buffers from './buffers';
+// import 'whatwg-fetch';
+// import 'promise-polyfill';
+import Buffers, { IOBuffer } from './buffers';
 import Context, { ContextVertexBuffers } from './context';
 import Subscriber from './subscriber';
 import Textures, { Texture, TextureExtensions } from './textures';
-import Uniforms, { Uniform } from './uniforms';
+import Uniforms, { Uniform, UniformMethod, UniformType } from './uniforms';
 
 const GlslCanvasDefaultVertex = `
 #ifdef GL_ES
@@ -100,7 +101,6 @@ export default class GlslCanvas extends Subscriber {
     height: number;
     timer: GlslCanvasTimer;
     dirty: boolean = true;
-
     animated: boolean = false;
     nDelta: number = 0;
     nTime: number = 0;
@@ -162,10 +162,13 @@ export default class GlslCanvas extends Subscriber {
             (error) => {
                 console.log('error', error);
             });
+        GlslCanvas.items.push(this);
     }
 
+    static items: GlslCanvas[] = [];
+
     static version(): string {
-        return '0.1.8';
+        return '0.2.0';
     }
 
     static isDifferent(a: any, b: any): boolean {
@@ -173,6 +176,35 @@ export default class GlslCanvas extends Subscriber {
             return a.toString() !== b.toString();
         }
         return false;
+    }
+
+    static of(canvas: HTMLCanvasElement): GlslCanvas {
+        return GlslCanvas.items.find(x => x.canvas === canvas) || new GlslCanvas(canvas);
+    }
+
+    static loadAll(): GlslCanvas[] {
+        const canvases: HTMLCanvasElement[] = <HTMLCanvasElement[]>[].slice.call(document.getElementsByClassName('glsl-canvas')).filter((x: HTMLElement) => x instanceof HTMLCanvasElement);
+        return canvases.map(x => GlslCanvas.of(x));
+    }
+
+    fetch(url: string): Promise<string> {
+        return new Promise(function (resolve, reject) {
+            const xhr: XMLHttpRequest = new XMLHttpRequest();
+            xhr.onload = function () {
+                resolve(xhr.response || xhr.responseText);
+            };
+            xhr.onerror = function () {
+                reject(new Error('Network request failed'));
+            };
+            xhr.ontimeout = function () {
+                reject(new Error('Network request failed'));
+            };
+            xhr.onabort = function () {
+                reject(new Error('Aborted'));
+            };
+            xhr.open('GET', url, true);
+            xhr.send(null);
+        })
     }
 
     getShaders(): Promise<string[]> {
@@ -194,8 +226,8 @@ export default class GlslCanvas extends Subscriber {
             if (Object.keys(urls).length) {
                 Promise.all(Object.keys(urls).map((key, i) => {
                     const url: string = urls[key];
-                    return fetch(url)
-                        .then((response) => response.text())
+                    return this.fetch(url)
+                        // .then((response) => response.text())
                         .then((body) => {
                             if (key === 'vertex') {
                                 return this.vertexString = body;
@@ -348,28 +380,33 @@ export default class GlslCanvas extends Subscriber {
         this.animated = false;
         this.valid = false;
         const gl = this.gl;
-		/*
-		// !!!
-		for (let texture in this.textures) {
-			if (texture.destroy) {
-				texture.destroy(gl);
-			}
-		}
-		*/
+        /*
+        // !!!
+        for (let texture in this.textures) {
+            if (texture.destroy) {
+                texture.destroy(gl);
+            }
+        }
+        */
         gl.useProgram(null);
         gl.deleteProgram(this.program);
-        this.buffers.forEach(buffer => buffer.destroy(gl));
+        // this.buffers.forEach((buffer: IOBuffer) => buffer.destroy(gl));
+        for (const key in this.buffers.values) {
+            const buffer: IOBuffer = this.buffers.values[key];
+            buffer.destroy(gl)
+        }
         this.buffers = null;
         this.textures = null;
         this.uniforms = null;
         this.program = null;
         this.gl = null;
+        GlslCanvas.items.splice(GlslCanvas.items.indexOf(this), 1);
     }
 
     setUniform(key: string, ...values: any[]): void {
         const uniform: Uniform = Uniforms.parseUniform(key, ...values);
         if (uniform) {
-            if (uniform.type === 'sampler2D') {
+            if (uniform.type === UniformType.Sampler2D) {
                 this.loadTexture(key, values[0]);
             } else {
                 this.uniforms.set(key, uniform);
@@ -418,7 +455,7 @@ export default class GlslCanvas extends Subscriber {
 
     isDirty(): boolean {
         return this.dirty || this.uniforms.dirty || this.textures.dirty;
-        // Array.from(this.textures.values()).reduce((p, texture) => p || texture.dirty, false);
+        // [].slice.call(this.textures.values()).reduce((p, texture) => p || texture.dirty, false);
         // this.textures.dirty;
     }
 
@@ -446,9 +483,15 @@ export default class GlslCanvas extends Subscriber {
                 // Set the viewport to match
                 // gl.viewport(0, 0, BW, BH);
             }
-            this.buffers.forEach(buffer => {
+            /*
+            this.buffers.forEach((buffer: IOBuffer) => {
                 buffer.resize(gl, BW, BH);
-            });
+            });            
+            */
+            for (const key in this.buffers.values) {
+                const buffer: IOBuffer = this.buffers.values[key];
+                buffer.resize(gl, BW, BH);
+            }
             // gl.useProgram(this.program);
             return true;
         } else {
@@ -482,23 +525,29 @@ export default class GlslCanvas extends Subscriber {
         } else {
             this.canvas.classList.remove('animated');
         }
-        this.uniforms.create('2f', 'vec2', 'u_resolution', BW, BH);
+        this.uniforms.create(UniformMethod.Uniform2f, UniformType.FloatVec2, 'u_resolution', BW, BH);
         if (hasDelta) {
-            this.uniforms.create('1f', 'float', 'u_delta', timer.delta);
+            this.uniforms.create(UniformMethod.Uniform1f, UniformType.Float, 'u_delta', timer.delta);
         }
         if (hasTime) {
-            this.uniforms.create('1f', 'float', 'u_time', timer.current);
+            this.uniforms.create(UniformMethod.Uniform1f, UniformType.Float, 'u_time', timer.current);
         }
         if (hasDate) {
             const date = new Date();
-            this.uniforms.create('4f', 'float', 'u_date', date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001);
+            this.uniforms.create(UniformMethod.Uniform4f, UniformType.Float, 'u_date', date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001);
         }
         if (hasMouse) {
-            this.uniforms.create('2f', 'vec2', 'u_mouse', 0, 0);
+            this.uniforms.create(UniformMethod.Uniform2f, UniformType.FloatVec2, 'u_mouse', 0, 0);
         }
-        this.buffers.forEach(buffer => {
-            this.uniforms.create('1i', 'sampler2D', buffer.key, buffer.input.index);
+        for (const key in this.buffers.values) {
+            const buffer: IOBuffer = this.buffers.values[key];
+            this.uniforms.create(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, buffer.input.index);
+        }
+        /*
+        this.buffers.forEach((buffer: IOBuffer) => {
+            this.uniforms.create(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, buffer.input.index);
         });
+        */
         if (hasTextures) {
             this.textureList.forEach(x => {
                 this.loadTexture(x.key, x.url);
@@ -544,7 +593,7 @@ export default class GlslCanvas extends Subscriber {
                 const index = texture.index;
                 const uniform = this.uniforms.createTexture(key, index);
                 uniform.texture = texture;
-                const uniformResolution = this.uniforms.create('2f', 'vec2', key + 'Resolution', texture.width, texture.height);
+                const uniformResolution = this.uniforms.create(UniformMethod.Uniform2f, UniformType.FloatVec2, key + 'Resolution', texture.width, texture.height);
                 // console.log('loadTexture', key, url, index, texture.width, texture.height);
                 return texture;
             });
@@ -558,16 +607,16 @@ export default class GlslCanvas extends Subscriber {
         const BW = gl.drawingBufferWidth;
         const BH = gl.drawingBufferHeight;
         const timer = this.timer.next();
-        this.uniforms.update('2f', 'vec2', 'u_resolution', BW, BH);
+        this.uniforms.update(UniformMethod.Uniform2f, UniformType.FloatVec2, 'u_resolution', BW, BH);
         if (this.uniforms.has('u_delta')) {
-            this.uniforms.update('1f', 'float', 'u_delta', timer.delta);
+            this.uniforms.update(UniformMethod.Uniform1f, UniformType.Float, 'u_delta', timer.delta);
         }
         if (this.uniforms.has('u_time')) {
-            this.uniforms.update('1f', 'float', 'u_time', timer.current);
+            this.uniforms.update(UniformMethod.Uniform1f, UniformType.Float, 'u_time', timer.current);
         }
         if (this.uniforms.has('u_date')) {
             const date = new Date();
-            this.uniforms.update('4f', 'float', 'u_date', date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001);
+            this.uniforms.update(UniformMethod.Uniform4f, UniformType.Float, 'u_date', date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001);
         }
         if (this.uniforms.has('u_mouse')) {
             const rect = this.rect;
@@ -576,17 +625,31 @@ export default class GlslCanvas extends Subscriber {
                 mouse.y >= rect.top && mouse.y <= rect.bottom) {
                 const MX = (mouse.x - rect.left) * this.pixelRatio;
                 const MY = (this.canvas.height - (mouse.y - rect.top) * this.pixelRatio);
-                this.uniforms.update('2f', 'vec2', 'u_mouse', MX, MY);
+                this.uniforms.update(UniformMethod.Uniform2f, UniformType.FloatVec2, 'u_mouse', MX, MY);
             }
         }
-        this.buffers.forEach(buffer => {
-            this.uniforms.update('1i', 'sampler2D', buffer.key, buffer.input.index);
+        for (const key in this.buffers.values) {
+            const buffer: IOBuffer = this.buffers.values[key];
+            this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, buffer.input.index);
+        }
+        /*
+        this.buffers.forEach((buffer: IOBuffer) => {
+            this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, buffer.input.index);
         });
-        this.textures.forEach(texture => {
+        */
+        for (const key in this.textures.values) {
+            const texture: Texture = this.textures.values[key];
             texture.tryUpdate(gl);
             // console.log(texture.key, texture.index);
-            this.uniforms.update('1i', 'sampler2D', texture.key, texture.index);
+            this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, texture.key, texture.index);
+        }
+        /*
+        this.textures.forEach((texture: Texture) => {
+            texture.tryUpdate(gl);
+            // console.log(texture.key, texture.index);
+            this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, texture.key, texture.index);
         });
+        */
     }
 
     render(): void {
@@ -594,19 +657,24 @@ export default class GlslCanvas extends Subscriber {
         const BW = gl.drawingBufferWidth;
         const BH = gl.drawingBufferHeight;
         this.updateUniforms();
-        this.buffers.forEach(buffer => {
+        /*
+        this.buffers.forEach((buffer: IOBuffer) => {
             this.uniforms.apply(gl, buffer.program);
             buffer.render(gl, BW, BH);
         });
+        */
+        for (const key in this.buffers.values) {
+            const buffer: IOBuffer = this.buffers.values[key];
+            this.uniforms.apply(gl, buffer.program);
+            buffer.render(gl, BW, BH);
+        }
         gl.useProgram(this.program);
         this.uniforms.apply(gl, this.program);
         gl.viewport(0, 0, BW, BH);
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
-        this.uniforms.forEach(uniform => uniform.dirty = false);
-        this.uniforms.dirty = false;
-        this.textures.forEach(texture => texture.dirty = false);
-        this.textures.dirty = false;
+        this.uniforms.clean();
+        this.textures.clean();
         this.dirty = false;
         this.trigger('render', {});
     }
@@ -615,13 +683,4 @@ export default class GlslCanvas extends Subscriber {
 
 (<any>window).GlslCanvas = GlslCanvas;
 
-const loadAllGlslCanvas = () => {
-    const canvases: HTMLCanvasElement[] = <HTMLCanvasElement[]>Array.from(document.getElementsByClassName('glslCanvas')).filter(x => x instanceof HTMLCanvasElement);
-    (<any>window).glslCanvases = canvases.map(x => {
-        return new GlslCanvas(x);
-    }).filter(x => x.valid);
-}
-
-window.addEventListener('load', () => {
-    loadAllGlslCanvas();
-});
+document.addEventListener("DOMContentLoaded", GlslCanvas.loadAll);
