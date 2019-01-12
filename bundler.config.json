@@ -1,16 +1,24 @@
 [{
 	"inputFiles": [
-		"docs/js/glsl-canvas.js"
-    ],
-	"outputFileName": "docs/js/glsl-canvas.js",
+		"docs/css/docs.css"
+	],
+	"outputFileName": "docs/css/docs.css",
 	"minify": {
 		"enabled": true
 	}
 }, {
 	"inputFiles": [
-        "docs/css/docs.css"
-    ],
-	"outputFileName": "docs/css/docs.css",
+		"node_modules/stats.js/build/stats.min.js"
+	],
+	"outputFileName": "docs/js/vendors.js",
+	"minify": {
+		"enabled": false
+	}
+}, {
+	"inputFiles": [
+		"docs/js/glsl-canvas.js"
+	],
+	"outputFileName": "docs/js/glsl-canvas.js",
 	"minify": {
 		"enabled": true
 	}

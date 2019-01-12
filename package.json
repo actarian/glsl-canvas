@@ -49,6 +49,7 @@
         "gulp-webserver": "0.9.1",
         "merge-stream": "1.0.1",
         "rollupify": "^0.5.1",
+        "stats.js": "^0.17.0",
         "through2": "^3.0.0",
         "tsify": "^4.0.1",
         "tslint": "^5.12.0",

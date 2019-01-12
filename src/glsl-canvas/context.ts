@@ -1,5 +1,47 @@
 
 
+export const ContextDefaultVertex = `
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+attribute vec2 a_position;
+attribute vec2 a_texcoord;
+
+varying vec2 v_texcoord;
+
+void main(){
+	gl_Position = vec4(a_position, 0.0, 1.0);
+	v_texcoord = a_texcoord;
+}
+`;
+
+export const ContextDefaultFragment = `
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+varying vec2 v_texcoord;
+
+void main(){
+	gl_FragColor = vec4(0.0);
+}
+`;
+
+export interface IContextOptions {
+    backgroundColor?: string;
+    vertexString?: string;
+    fragmentString?: string;
+    alpha?: GLboolean;
+    antialias?: GLboolean;
+    depth?: GLboolean;
+    failIfMajorPerformanceCaveat?: boolean;
+    // powerPreference?: WebGLPowerPreference;
+    premultipliedAlpha?: GLboolean;
+    preserveDrawingBuffer?: GLboolean;
+    stencil?: GLboolean;
+}
+
 export enum ContextError {
     BrowserSupport = 1,
     Other = 2,

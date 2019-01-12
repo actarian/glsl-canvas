@@ -1,5 +1,5 @@
 // import 'promise-polyfill';
-import IterableStringMap from './common';
+import IterableStringMap from './iterable';
 import Subscriber from './subscriber';
 
 export const TextureImageExtensions = ['jpg', 'jpeg', 'png'];

@@ -1,6 +1,8 @@
 
-import IterableStringMap from './common';
+import IterableStringMap from './iterable';
 import { Texture } from './textures';
+
+export interface IUniformOption { [key: string]: any[]; }
 
 export enum UniformMethod {
     Uniform1i = 'uniform1i', // (intUniformLoc,   v);                 // for int
@@ -77,6 +79,8 @@ export class Uniform {
             if (this.dirty) {
                 gl.useProgram(program);
                 const location = gl.getUniformLocation(program, this.key);
+                // console.log(this.key, this.method, this.values);
+                // (gl as any)[this.method].apply(gl, [location].concat(this.values));
                 (gl as any)[this.method].apply(gl, [location].concat(this.values));
             }
         }
@@ -165,7 +169,7 @@ export default class Uniforms extends IterableStringMap<Uniform> {
                         break;
                     case 2:
                         uniform = new Uniform({
-                            method: UniformMethod.Uniform2fv,
+                            method: UniformMethod.Uniform2f,
                             type: UniformType.FloatVec2,
                             key: key,
                             values: value
@@ -173,7 +177,7 @@ export default class Uniforms extends IterableStringMap<Uniform> {
                         break;
                     case 3:
                         uniform = new Uniform({
-                            method: UniformMethod.Uniform3fv,
+                            method: UniformMethod.Uniform3f,
                             type: UniformType.FloatVec3,
                             key: key,
                             values: value
@@ -181,7 +185,7 @@ export default class Uniforms extends IterableStringMap<Uniform> {
                         break;
                     case 4:
                         uniform = new Uniform({
-                            method: UniformMethod.Uniform4fv,
+                            method: UniformMethod.Uniform4f,
                             type: UniformType.FloatVec4,
                             key: key,
                             values: value

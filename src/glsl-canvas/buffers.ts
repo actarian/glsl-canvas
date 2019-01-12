@@ -1,5 +1,5 @@
-import IterableStringMap from './common';
 import Context from './context';
+import IterableStringMap from './iterable';
 
 export class Buffer {
 

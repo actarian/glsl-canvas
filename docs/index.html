@@ -4,8 +4,9 @@
 <head>
     <meta charset="utf-8">
     <title>GlslCanvas</title>
-    <script type="text/javascript" src="js/glsl-canvas.js"></script>
     <link rel="stylesheet" type="text/css" href="css/docs.min.css">
+    <script type="text/javascript" src="js/vendors.js"></script>
+    <script type="text/javascript" src="js/glsl-canvas.js"></script>
 </head>
 
 <body>
@@ -40,58 +41,76 @@
             <canvas class="glsl-canvas" controls data-fragment-url="shaders/example-5.glsl"></canvas>
             <button type="button" class="btn btn-toggle">toggle</button>
         </div>
+        <div class="example">
+            <h4>vec2 update</h4>
+            <canvas class="glsl-canvas" controls data-fragment-url="shaders/example-6.glsl"></canvas>
+            <button type="button" class="btn btn-toggle">toggle</button>
+        </div>
+        <div class="example">
+            <h4>vec3 update</h4>
+            <canvas class="glsl-canvas" controls data-fragment-url="shaders/example-7.glsl"></canvas>
+            <button type="button" class="btn btn-toggle">toggle</button>
+        </div>
+        <div class="example">
+            <h4>vec4 update</h4>
+            <canvas class="glsl-canvas" controls data-fragment-url="shaders/example-8.glsl"></canvas>
+            <button type="button" class="btn btn-toggle">toggle</button>
+        </div>
     </div>
     <div class="examples">
         <div class="example">
             <h4>video source</h4>
-            <video id="video" muted loop playsinline autoplay controls src="data/video.ogv"></video>
+            <video id="video" muted loop preload controls src="data/video.ogv"></video>
+            <!-- playsinline autoplay -->
         </div>
     </div>
 </body>
 
 <script>
-    console.log('index');
-    var enabledIndexes = [0, 1, 2, 3, 4, 5];
-    var canvases = Array.from(document.querySelectorAll('.glsl-canvas'))
+    var stats = new Stats();
+    stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+    document.body.appendChild(stats.dom);
+    var canvases = [].slice.call(document.querySelectorAll('.glsl-canvas'))
         .map(function (element, i) {
-            if (enabledIndexes.indexOf(i) !== -1) {
-                var canvas = GlslCanvas.of(element);
-                element.addEventListener('mouseover', function () {
-                    canvas.play();
-                    if (i === 3) {
+            var canvas = GlslCanvas.of(element);
+            canvas.on('render', function () {
+                stats.end();
+                stats.begin();
+            });
+            switch (i) {
+                case 3:
+                    canvas.on('mouseover', function () {
                         if (canvas.uniforms.get('u_texture').texture.url === 'data/logo.jpg') {
                             canvas.setUniform('u_texture', 'data/moon.jpg');
                         } else {
                             canvas.setUniform('u_texture', 'data/logo.jpg');
                         }
-                    }
-                });
-                element.addEventListener('mouseout', function () {
-                    canvas.pause();
-                });
-                /*
-                .on('load', () => {
-                    console.log('loaded!');
-                });
-                */
-                if (i === 4) {
+                    });
+                    break;
+                case 4:
                     canvas.setUniform('u_video', '#video');
-                }
-                return canvas;
-                /*
-                return new GlslCanvas(x, {
-                    premultipliedAlpha: false,
-                    preserveDrawingBuffer: true,
-                    backgroundColor: 'rgba(0,0,0,1)',
-                });
-                return new GlslCanvas(x, {
-                    alpha: true,
-                    backgroundColor: '#00ff00'
-                });
-                */
+                    break;
+                case 6:
+                    canvas.on('render', function () {
+                        canvas.setUniform('u_pos', Math.random() - 0.5, Math.random() - 0.5);
+                    });
+                    break;
+                case 7:
+                    canvas.on('render', function () {
+                        canvas.setUniform('u_pos', Math.random() - 0.5, Math.random() - 0.5);
+                        canvas.setUniform('u_col', Math.random(), Math.random(), Math.random());
+                    });
+                    break;
+                case 8:
+                    canvas.on('render', function () {
+                        canvas.setUniform('u_pos', Math.random() - 0.5, Math.random() - 0.5);
+                        canvas.setUniform('u_col', Math.random(), Math.random(), Math.random(), Math.random());
+                    });
+                    break;
             }
+            return canvas;
         });
-    var buttons = Array.from(document.querySelectorAll('.btn-toggle'))
+    var buttons = [].slice.call(document.querySelectorAll('.btn-toggle'))
         .forEach(function (button, i) {
             button.addEventListener('click', function () {
                 var canvas = canvases[i];

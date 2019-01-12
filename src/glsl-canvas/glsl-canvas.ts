@@ -1,53 +1,12 @@
 // import '@babel/polyfill';
 // import 'whatwg-fetch';
-// import 'promise-polyfill';
+import 'promise-polyfill';
 import Buffers, { IOBuffer } from './buffers';
-import Context, { ContextVertexBuffers } from './context';
+import Common from './common';
+import Context, { ContextDefaultFragment, ContextDefaultVertex, ContextVertexBuffers, IContextOptions } from './context';
 import Subscriber from './subscriber';
 import Textures, { Texture, TextureExtensions } from './textures';
-import Uniforms, { Uniform, UniformMethod, UniformType } from './uniforms';
-
-const GlslCanvasDefaultVertex = `
-#ifdef GL_ES
-precision mediump float;
-#endif
-
-attribute vec2 a_position;
-attribute vec2 a_texcoord;
-
-varying vec2 v_texcoord;
-
-void main(){
-	gl_Position = vec4(a_position, 0.0, 1.0);
-	v_texcoord = a_texcoord;
-}
-`;
-
-const GlslCanvasDefaultFragment = `
-#ifdef GL_ES
-precision mediump float;
-#endif
-
-varying vec2 v_texcoord;
-
-void main(){
-	gl_FragColor = vec4(0.0);
-}
-`;
-
-export interface ICanvasContextOptions {
-    backgroundColor?: string;
-    vertexString?: string;
-    fragmentString?: string;
-    alpha?: GLboolean;
-    antialias?: GLboolean;
-    depth?: GLboolean;
-    failIfMajorPerformanceCaveat?: boolean;
-    // powerPreference?: WebGLPowerPreference;
-    premultipliedAlpha?: GLboolean;
-    preserveDrawingBuffer?: GLboolean;
-    stencil?: GLboolean;
-}
+import Uniforms, { IUniformOption, Uniform, UniformMethod, UniformType } from './uniforms';
 
 export interface IPoint {
     x: number,
@@ -55,7 +14,7 @@ export interface IPoint {
 }
 
 export class GlslCanvasOptions {
-
+    onError?: Function;
 }
 
 export class GlslCanvasTimer {
@@ -121,16 +80,13 @@ export default class GlslCanvas extends Subscriber {
     visible: boolean = false;
     vertexString: string;
     fragmentString: string;
-    resize: Function;
-    scroll: Function;
-    mousemove: Function;
-    click: Function;
     loop: Function;
+    removeListeners: Function = () => { };
 
     constructor(
         canvas: HTMLCanvasElement,
-        contextOptions: ICanvasContextOptions = {},
-        options: any = {}
+        contextOptions: IContextOptions = {},
+        options: GlslCanvasOptions = {}
     ) {
         super();
         if (!canvas) {
@@ -140,8 +96,8 @@ export default class GlslCanvas extends Subscriber {
         this.width = canvas.clientWidth;
         this.height = canvas.clientHeight;
         this.rect = canvas.getBoundingClientRect();
-        this.vertexString = contextOptions.vertexString || GlslCanvasDefaultVertex;
-        this.fragmentString = contextOptions.fragmentString || GlslCanvasDefaultFragment;
+        this.vertexString = contextOptions.vertexString || ContextDefaultVertex;
+        this.fragmentString = contextOptions.fragmentString || ContextDefaultFragment;
         const gl = Context.tryGetContext(canvas, contextOptions, options.onError);
         if (!gl) {
             return;
@@ -187,26 +143,6 @@ export default class GlslCanvas extends Subscriber {
         return canvases.map(x => GlslCanvas.of(x));
     }
 
-    fetch(url: string): Promise<string> {
-        return new Promise(function (resolve, reject) {
-            const xhr: XMLHttpRequest = new XMLHttpRequest();
-            xhr.onload = function () {
-                resolve(xhr.response || xhr.responseText);
-            };
-            xhr.onerror = function () {
-                reject(new Error('Network request failed'));
-            };
-            xhr.ontimeout = function () {
-                reject(new Error('Network request failed'));
-            };
-            xhr.onabort = function () {
-                reject(new Error('Aborted'));
-            };
-            xhr.open('GET', url, true);
-            xhr.send(null);
-        })
-    }
-
     getShaders(): Promise<string[]> {
         return new Promise((resolve, reject) => {
             const canvas = this.canvas;
@@ -226,7 +162,7 @@ export default class GlslCanvas extends Subscriber {
             if (Object.keys(urls).length) {
                 Promise.all(Object.keys(urls).map((key, i) => {
                     const url: string = urls[key];
-                    return this.fetch(url)
+                    return Common.fetch(url)
                         // .then((response) => response.text())
                         .then((body) => {
                             if (key === 'vertex') {
@@ -246,11 +182,9 @@ export default class GlslCanvas extends Subscriber {
     }
 
     addListeners(): void {
-        // resize buffers on canvas resize
-        // consider applying a throttle of 50 ms on canvas resize
-        // to avoid requestAnimationFrame and Gl violations
         const resize = (e: Event) => {
             this.rect = this.canvas.getBoundingClientRect();
+            this.trigger('resize', e);
         };
 
         const scroll = (e: Event) => {
@@ -260,10 +194,22 @@ export default class GlslCanvas extends Subscriber {
         const mousemove = (e: MouseEvent) => {
             this.mouse.x = e.clientX || e.pageX;
             this.mouse.y = e.clientY || e.pageY;
+            this.trigger('mousemove', e);
         };
 
         const click = (e: MouseEvent) => {
             this.toggle();
+            this.trigger('click', e);
+        };
+
+        const mouseover = (e: MouseEvent) => {
+            this.play();
+            this.trigger('mouseover', e);
+        };
+
+        const mouseout = (e: MouseEvent) => {
+            this.pause();
+            this.trigger('mouseout', e);
         };
 
         const loop: FrameRequestCallback = (time: number) => {
@@ -271,10 +217,6 @@ export default class GlslCanvas extends Subscriber {
             window.requestAnimationFrame(loop);
         };
 
-        this.resize = resize;
-        this.scroll = scroll;
-        this.mousemove = mousemove;
-        this.click = click;
         this.loop = loop;
 
         window.addEventListener('resize', resize);
@@ -282,8 +224,21 @@ export default class GlslCanvas extends Subscriber {
         document.addEventListener('mousemove', mousemove, false);
         if (this.canvas.hasAttribute('controls')) {
             this.canvas.addEventListener('click', click);
+            this.canvas.addEventListener('mouseover', mouseover);
+            this.canvas.addEventListener('mouseout', mouseout);
             if (!this.canvas.hasAttribute('data-autoplay')) {
                 this.pause();
+            }
+        }
+
+        this.removeListeners = () => {
+            window.removeEventListener('resize', resize);
+            window.removeEventListener('scroll', scroll);
+            document.removeEventListener('mousemove', mousemove);
+            if (this.canvas.hasAttribute('controls')) {
+                this.canvas.removeEventListener('click', click);
+                this.canvas.removeEventListener('mouseover', mouseover);
+                this.canvas.removeEventListener('mouseout', mouseout);
             }
         }
     }
@@ -326,7 +281,7 @@ export default class GlslCanvas extends Subscriber {
             // this.getBuffers(this.fragmentString);
         }
         // Trigger event
-        this.trigger('load', {});
+        this.trigger('load', this);
         // this.render();
     }
 
@@ -377,23 +332,20 @@ export default class GlslCanvas extends Subscriber {
     }
 
     destroy(): void {
+        this.removeListeners();
         this.animated = false;
         this.valid = false;
         const gl = this.gl;
-        /*
-        // !!!
-        for (let texture in this.textures) {
-            if (texture.destroy) {
-                texture.destroy(gl);
-            }
-        }
-        */
         gl.useProgram(null);
         gl.deleteProgram(this.program);
         // this.buffers.forEach((buffer: IOBuffer) => buffer.destroy(gl));
         for (const key in this.buffers.values) {
             const buffer: IOBuffer = this.buffers.values[key];
-            buffer.destroy(gl)
+            buffer.destroy(gl);
+        }
+        for (const key in this.textures.values) {
+            const texture: Texture = this.textures.values[key];
+            texture.destroy(gl);
         }
         this.buffers = null;
         this.textures = null;
@@ -406,24 +358,28 @@ export default class GlslCanvas extends Subscriber {
     setUniform(key: string, ...values: any[]): void {
         const uniform: Uniform = Uniforms.parseUniform(key, ...values);
         if (uniform) {
-            if (uniform.type === UniformType.Sampler2D) {
-                this.loadTexture(key, values[0]);
-            } else {
-                this.uniforms.set(key, uniform);
+            switch (uniform.type) {
+                case UniformType.Sampler2D:
+                    this.loadTexture(key, values[0]);
+                    break;
+                default:
+                    this.uniforms.set(key, uniform);
             }
         }
     }
 
-    setUniforms(values: Map<string, any[]>): void {
-        values.forEach((value: any[], key: string) => {
+    setUniforms(values: IUniformOption): void {
+        for (const key in values) {
+            const value = values[key];
             this.setUniform(key, ...value);
-        });
+        }
     }
 
     pause(): void {
         if (this.valid) {
             this.timer.pause();
             this.canvas.classList.add('paused');
+            this.trigger('pause');
         }
     }
 
@@ -431,6 +387,7 @@ export default class GlslCanvas extends Subscriber {
         if (this.valid) {
             this.timer.play();
             this.canvas.classList.remove('paused');
+            this.trigger('play');
         }
     }
 
@@ -676,7 +633,7 @@ export default class GlslCanvas extends Subscriber {
         this.uniforms.clean();
         this.textures.clean();
         this.dirty = false;
-        this.trigger('render', {});
+        this.trigger('render', this);
     }
 
 }
