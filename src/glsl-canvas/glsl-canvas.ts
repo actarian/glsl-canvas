@@ -5,7 +5,7 @@ import Buffers, { IOBuffer } from './buffers';
 import Common from './common';
 import Context, { ContextDefaultFragment, ContextDefaultVertex, ContextVertexBuffers, IContextOptions } from './context';
 import Subscriber from './subscriber';
-import Textures, { Texture, TextureExtensions } from './textures';
+import Textures, { Texture, TextureData, TextureExtensions } from './textures';
 import Uniforms, { IUniformOption, Uniform, UniformMethod, UniformType } from './uniforms';
 
 export interface IPoint {
@@ -356,8 +356,10 @@ export default class GlslCanvas extends Subscriber {
     }
 
     setUniform(key: string, ...values: any[]): void {
-        const uniform: Uniform = Uniforms.parseUniform(key, ...values);
-        if (uniform) {
+        const uniform: Uniform | Uniform[] = Uniforms.parseUniform(key, ...values);
+        if (Array.isArray(uniform)) {
+            uniform.forEach((x) => this.loadTexture(x.key, x.values[0]));
+        } else if (uniform) {
             switch (uniform.type) {
                 case UniformType.Sampler2D:
                     this.loadTexture(key, values[0]);
@@ -544,18 +546,22 @@ export default class GlslCanvas extends Subscriber {
         return this.textureList.length > 0;
     }
 
-    loadTexture(key: string, url: string): Promise<Texture> {
+    loadTexture(
+        key: string,
+        urlElementOrData: string | HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | Element | TextureData
+    ): Promise<Texture> {
         if (this.valid) {
-            return this.textures.createOrUpdate(this.gl, key, url, this.buffers.count).then(texture => {
+            return this.textures.createOrUpdate(this.gl, key, urlElementOrData, this.buffers.count).then(texture => {
                 const index = texture.index;
                 const uniform = this.uniforms.createTexture(key, index);
                 uniform.texture = texture;
-                const uniformResolution = this.uniforms.create(UniformMethod.Uniform2f, UniformType.FloatVec2, key + 'Resolution', texture.width, texture.height);
+                const keyResolution = key.indexOf('[') !== -1 ? key.replace('[', 'Resolution[') : key + 'Resolution';
+                const uniformResolution = this.uniforms.create(UniformMethod.Uniform2f, UniformType.FloatVec2, keyResolution, texture.width, texture.height);
                 // console.log('loadTexture', key, url, index, texture.width, texture.height);
                 return texture;
             });
         } else {
-            this.textureList.push({ key, url });
+            this.textureList.push({ key, url: urlElementOrData });
         }
     }
 

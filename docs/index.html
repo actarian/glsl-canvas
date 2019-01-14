@@ -56,6 +56,11 @@
             <canvas class="glsl-canvas" controls data-fragment-url="shaders/example-8.glsl"></canvas>
             <button type="button" class="btn btn-toggle">toggle</button>
         </div>
+        <div class="example">
+            <h4>texture array</h4>
+            <canvas class="glsl-canvas" controls data-fragment-url="shaders/example-9.glsl"></canvas>
+            <button type="button" class="btn btn-toggle">toggle</button>
+        </div>
     </div>
     <div class="examples">
         <div class="example">
@@ -80,10 +85,10 @@
             switch (i) {
                 case 3:
                     canvas.on('mouseover', function () {
-                        if (canvas.uniforms.get('u_texture').texture.url === 'data/logo.jpg') {
+                        if (canvas.uniforms.get('u_texture').texture.url === 'data/mars.jpg') {
                             canvas.setUniform('u_texture', 'data/moon.jpg');
                         } else {
-                            canvas.setUniform('u_texture', 'data/logo.jpg');
+                            canvas.setUniform('u_texture', 'data/mars.jpg');
                         }
                     });
                     break;
@@ -104,8 +109,11 @@
                 case 8:
                     canvas.on('render', function () {
                         canvas.setUniform('u_pos', Math.random() - 0.5, Math.random() - 0.5);
-                        canvas.setUniform('u_col', Math.random(), Math.random(), Math.random(), Math.random());
+                        canvas.setUniform('u_col', [Math.random(), Math.random(), Math.random(), Math.random()]);
                     });
+                    break;
+                case 9:
+                    canvas.setUniform('u_texture', ['data/moon.jpg', 'data/mars.jpg']);
                     break;
             }
             return canvas;
