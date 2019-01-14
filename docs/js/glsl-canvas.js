@@ -2688,13 +2688,11 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     }
 
     _createClass(Uniform, null, [{
-      key: "isDifferent",
-      value: function isDifferent(a, b) {
-        if (a && b) {
-          return a.toString() !== b.toString();
-        }
-
-        return false;
+      key: "Differs",
+      value: function Differs(a, b) {
+        return a.length !== b.length || a.reduce(function (f, v, i) {
+          return f || v !== b[i];
+        }, false);
       }
     }]);
 
@@ -2786,26 +2784,6 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         });
         this.set(key, uniform);
         this.dirty = true;
-        return uniform; // const uniform = this.setParse(key, url) as UniformTexture; // !!!
-        // console.log(uniform.type, key, url);
-
-        /*
-        if (uniform.type === 'sampler2D') {
-            // console.log(u, uniform);
-            // For textures, we need to track texture units, so we have a special setter
-            // this.uniformTexture(uniform.key, uniform.value[0]);
-            if (uniform.method === '1iv') {
-                // todo
-                uniform.values.map((
-                    urlElementOrData: string | HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | Element | TextureData,
-                    i: number
-                ) => this.uniformTexture(uniform.key + i, urlElementOrData));
-            } else {
-                this.uniformTexture(uniform.key, uniform.values[0]);
-            }
-        }
-        */
-
         return uniform;
       }
     }, {
@@ -2817,7 +2795,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
           values[_key3 - 3] = arguments[_key3];
         }
 
-        if (uniform && (uniform.method !== method || uniform.type !== type || uniform.values !== values)) {
+        if (uniform && (uniform.method !== method || uniform.type !== type || Uniform.Differs(uniform.values, values))) {
           uniform.method = method;
           uniform.type = type;
           uniform.values = values;
@@ -2939,7 +2917,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
                 });
             } // TODO: assume matrix for (typeof == Float32Array && length == 16)?
 
-          } else if (textures_1.Texture.getTextureOptions(value[0])) {
+          } else if (textures_1.Texture.isTexture(value[0])) {
             // Array of textures
             uniform = new Uniform({
               method: UniformMethod.Uniform1iv,

@@ -86,22 +86,20 @@ export class Uniform {
         }
     }
 
-    static isDifferent(a: any, b: any): boolean {
+    static Differs(a: any[], b: any[]) {
+        return a.length !== b.length ||
+            a.reduce((f: boolean, v: any, i: number) => {
+                return f || v !== b[i];
+            }, false);
+    }
+
+    /*
+	static isDifferent(a: any, b: any): boolean {
         if (a && b) {
             return a.toString() !== b.toString();
         }
         return false;
     }
-
-	/*
-	set?(gl: WebGLRenderingContext, program: WebGLProgram, ...values: any) {
-		let dirty = false;
-		// remember and keep track of uniforms location to save calls
-		if (!this.location || !this.values || Uniform.isDifferent(this.values, values)) {
-			dirty = true;
-		}
-		return dirty;
-	}
 	*/
 
 }
@@ -201,7 +199,7 @@ export default class Uniforms extends IterableStringMap<Uniform> {
                         });
                 }
                 // TODO: assume matrix for (typeof == Float32Array && length == 16)?
-            } else if (Texture.getTextureOptions(value[0])) {
+            } else if (Texture.isTexture(value[0])) {
                 // Array of textures
                 uniform = new Uniform({
                     method: UniformMethod.Uniform1iv,
@@ -312,25 +310,6 @@ export default class Uniforms extends IterableStringMap<Uniform> {
         this.set(key, uniform);
         this.dirty = true;
         return uniform;
-        // const uniform = this.setParse(key, url) as UniformTexture; // !!!
-        // console.log(uniform.type, key, url);
-		/*
-		if (uniform.type === 'sampler2D') {
-			// console.log(u, uniform);
-			// For textures, we need to track texture units, so we have a special setter
-			// this.uniformTexture(uniform.key, uniform.value[0]);
-			if (uniform.method === '1iv') {
-				// todo
-				uniform.values.map((
-					urlElementOrData: string | HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | Element | TextureData,
-					i: number
-				) => this.uniformTexture(uniform.key + i, urlElementOrData));
-			} else {
-				this.uniformTexture(uniform.key, uniform.values[0]);
-			}
-		}
-		*/
-        return uniform;
     }
 
     update(method: UniformMethod, type: UniformType, key: string, ...values: any[]) {
@@ -338,7 +317,7 @@ export default class Uniforms extends IterableStringMap<Uniform> {
         if (uniform &&
             (uniform.method !== method ||
                 uniform.type !== type ||
-                uniform.values !== values
+                Uniform.Differs(uniform.values, values)
             )) {
             uniform.method = method;
             uniform.type = type;
