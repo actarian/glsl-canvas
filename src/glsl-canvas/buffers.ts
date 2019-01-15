@@ -18,12 +18,10 @@ export class Buffer {
     constructor(gl: WebGLRenderingContext, BW: number, BH: number, index: number) {
         const buffer = gl.createFramebuffer();
         const texture = this.getTexture(gl, BW, BH, index);
-        /*
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        */
         this.texture = texture;
         this.buffer = buffer;
         this.BW = BW;
@@ -72,6 +70,7 @@ export class Buffer {
     }
 
     resize(gl: WebGLRenderingContext, BW: number, BH: number) {
+        return;
         if (BW !== this.BW || BH !== this.BH) {
             const buffer = this.buffer;
             const texture = this.texture;
@@ -90,12 +89,10 @@ export class Buffer {
             const newIndex = index + 1; // temporary index
             const newTexture = this.getTexture(gl, BW, BH, newIndex);
             floatType = this.getFloatType(gl);
-            /*
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            */
             if (pixels) {
                 gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, minW, minH, gl.RGBA, floatType, pixels);
             }
