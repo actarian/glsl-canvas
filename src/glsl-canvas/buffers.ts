@@ -8,7 +8,7 @@ export enum BufferFloatType {
 
 export class Buffer {
 
-    static floatType: BufferFloatType = BufferFloatType.FLOAT;
+    static floatType: BufferFloatType = BufferFloatType.HALF_FLOAT;
     texture: WebGLTexture;
     buffer: WebGLFramebuffer;
     BW: number;
@@ -70,7 +70,6 @@ export class Buffer {
     }
 
     resize(gl: WebGLRenderingContext, BW: number, BH: number) {
-        return;
         if (BW !== this.BW || BH !== this.BH) {
             const buffer = this.buffer;
             const texture = this.texture;

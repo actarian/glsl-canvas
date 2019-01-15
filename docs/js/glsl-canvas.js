@@ -649,8 +649,6 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     }, {
       key: "resize",
       value: function resize(gl, BW, BH) {
-        return;
-
         if (BW !== this.BW || BH !== this.BH) {
           var buffer = this.buffer;
           var texture = this.texture;
@@ -698,7 +696,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     return Buffer;
   }();
 
-  Buffer.floatType = BufferFloatType.FLOAT;
+  Buffer.floatType = BufferFloatType.HALF_FLOAT;
   exports.Buffer = Buffer;
 
   var IOBuffer =
