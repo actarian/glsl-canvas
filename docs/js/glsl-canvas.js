@@ -1066,14 +1066,6 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 },{}],7:[function(require,module,exports){
 "use strict";
 
-function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
-
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
-
-function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
-
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
-
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
@@ -1153,14 +1145,19 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
       this.current = 0.0;
       this.delta = 0.0;
       this.paused = false;
-      this.start = this.previous = performance.now() / 1000.0;
+      this.start = this.previous = this.now();
     }
 
     _createClass(GlslCanvasTimer, [{
+      key: "now",
+      value: function now() {
+        return performance.now();
+      }
+    }, {
       key: "play",
       value: function play() {
         if (this.previous) {
-          var now = performance.now() / 1000.0;
+          var now = this.now();
           this.delay += now - this.previous;
           this.previous = now;
         } // console.log(this.delay);
@@ -1176,7 +1173,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     }, {
       key: "next",
       value: function next() {
-        var now = performance.now() / 1000.0;
+        var now = this.now();
         this.delta = now - this.previous;
         this.current = now - this.start - this.delay;
         this.previous = now;
@@ -1197,7 +1194,10 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     function GlslCanvas(canvas) {
       var _this;
 
-      var contextOptions = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      var contextOptions = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {// alpha: true,
+        // antialias: true,
+        // premultipliedAlpha: true
+      };
       var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
       _classCallCheck(this, GlslCanvas);
@@ -1541,8 +1541,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
       key: "setUniforms",
       value: function setUniforms(values) {
         for (var key in values) {
-          var value = values[key];
-          this.setUniform.apply(this, [key].concat(_toConsumableArray(value)));
+          this.setUniform(key, values[key]);
         }
       }
     }, {
@@ -1669,11 +1668,11 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         this.uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.FloatVec2, 'u_resolution', BW, BH);
 
         if (hasDelta) {
-          this.uniforms.create(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_delta', timer.delta);
+          this.uniforms.create(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_delta', timer.delta / 1000.0);
         }
 
         if (hasTime) {
-          this.uniforms.create(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_time', timer.current);
+          this.uniforms.create(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_time', timer.current / 1000.0);
         }
 
         if (hasDate) {
@@ -1789,11 +1788,11 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         this.uniforms.update(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.FloatVec2, 'u_resolution', BW, BH);
 
         if (this.uniforms.has('u_delta')) {
-          this.uniforms.update(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_delta', timer.delta);
+          this.uniforms.update(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_delta', timer.delta / 1000.0);
         }
 
         if (this.uniforms.has('u_time')) {
-          this.uniforms.update(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_time', timer.current);
+          this.uniforms.update(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_time', timer.current / 1000.0);
         }
 
         if (this.uniforms.has('u_date')) {
@@ -2948,7 +2947,6 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
           values[_key4 - 1] = arguments[_key4];
         }
 
-        var value = values.length === 1 ? values[0] : values;
         var uniform;
 
         if (Uniforms.isArrayOfInteger(values)) {
@@ -2990,7 +2988,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
               break;
           }
         } else if (Uniforms.isArrayOfNumber(values)) {
-          switch (value.length) {
+          switch (values.length) {
             case 1:
               uniform = new Uniform({
                 method: UniformMethod.Uniform1f,
@@ -3028,7 +3026,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
               break;
           }
         } else if (Uniforms.isArrayOfBoolean(values)) {
-          switch (value.length) {
+          switch (values.length) {
             case 1:
               uniform = new Uniform({
                 method: UniformMethod.Uniform1i,
@@ -3066,19 +3064,19 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
               break;
           }
         } else if (values.length === 1) {
-          var _value = values[0];
+          var value = values[0];
 
-          if (textures_1.Texture.isTexture(_value)) {
+          if (textures_1.Texture.isTexture(value)) {
             uniform = new Uniform({
               method: UniformMethod.Uniform1i,
               type: UniformType.Sampler2D,
               key: key,
-              values: _value // !!!
+              values: value // !!!
 
             });
-          } else if (Array.isArray(_value)) {
-            if (Uniforms.isArrayOfInteger(_value)) {
-              switch (_value.length) {
+          } else if (Array.isArray(value)) {
+            if (Uniforms.isArrayOfInteger(value)) {
+              switch (value.length) {
                 case 1:
                   uniform = new Uniform({
                     method: UniformMethod.Uniform1iv,
@@ -3115,8 +3113,8 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
                   });
                   break;
               }
-            } else if (Uniforms.isArrayOfNumber(_value)) {
-              switch (_value.length) {
+            } else if (Uniforms.isArrayOfNumber(value)) {
+              switch (value.length) {
                 case 1:
                   uniform = new Uniform({
                     method: UniformMethod.Uniform1fv,
@@ -3153,8 +3151,8 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
                   });
                   break;
               }
-            } else if (Uniforms.isArrayOfBoolean(_value)) {
-              switch (_value.length) {
+            } else if (Uniforms.isArrayOfBoolean(value)) {
+              switch (value.length) {
                 case 1:
                   uniform = new Uniform({
                     method: UniformMethod.Uniform1iv,
@@ -3191,8 +3189,8 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
                   });
                   break;
               }
-            } else if (Uniforms.isArrayOfTexture(_value)) {
-              var uniforms = _value.map(function (texture, index) {
+            } else if (Uniforms.isArrayOfTexture(value)) {
+              var uniforms = value.map(function (texture, index) {
                 return new Uniform({
                   method: UniformMethod.Uniform1iv,
                   type: UniformType.Sampler2DArray,
@@ -3200,7 +3198,6 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
                   values: [texture]
                 });
               });
-
               return uniforms;
             }
           }

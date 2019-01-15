@@ -150,7 +150,6 @@ export default class Uniforms extends IterableStringMap<Uniform> {
     }
 
     static parseUniform(key: string, ...values: any[]): Uniform | Uniform[] {
-        const value = values.length === 1 ? values[0] : values;
         let uniform: Uniform;
         if (Uniforms.isArrayOfInteger(values)) {
             switch (values.length) {
@@ -188,7 +187,7 @@ export default class Uniforms extends IterableStringMap<Uniform> {
                     break;
             }
         } else if (Uniforms.isArrayOfNumber(values)) {
-            switch (value.length) {
+            switch (values.length) {
                 case 1:
                     uniform = new Uniform({
                         method: UniformMethod.Uniform1f,
@@ -223,7 +222,7 @@ export default class Uniforms extends IterableStringMap<Uniform> {
                     break;
             }
         } else if (Uniforms.isArrayOfBoolean(values)) {
-            switch (value.length) {
+            switch (values.length) {
                 case 1:
                     uniform = new Uniform({
                         method: UniformMethod.Uniform1i,

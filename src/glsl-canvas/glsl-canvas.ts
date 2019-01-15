@@ -26,12 +26,16 @@ export class GlslCanvasTimer {
     paused: boolean = false;
 
     constructor() {
-        this.start = this.previous = performance.now() / 1000.0;
+        this.start = this.previous = this.now();
+    }
+
+    now() {
+        return performance.now();
     }
 
     play() {
         if (this.previous) {
-            const now = performance.now() / 1000.0;
+            const now = this.now();
             this.delay += (now - this.previous);
             this.previous = now;
         }
@@ -44,7 +48,7 @@ export class GlslCanvasTimer {
     }
 
     next(): GlslCanvasTimer {
-        const now = performance.now() / 1000.0;
+        const now = this.now();
         this.delta = now - this.previous;
         this.current = now - this.start - this.delay;
         this.previous = now;
@@ -85,7 +89,11 @@ export default class GlslCanvas extends Subscriber {
 
     constructor(
         canvas: HTMLCanvasElement,
-        contextOptions: IContextOptions = {},
+        contextOptions: IContextOptions = {
+            // alpha: true,
+            // antialias: true,
+            // premultipliedAlpha: true
+        },
         options: GlslCanvasOptions = {}
     ) {
         super();
@@ -372,8 +380,7 @@ export default class GlslCanvas extends Subscriber {
 
     setUniforms(values: IUniformOption): void {
         for (const key in values) {
-            const value = values[key];
-            this.setUniform(key, ...value);
+            this.setUniform(key, values[key]);
         }
     }
 
@@ -486,10 +493,10 @@ export default class GlslCanvas extends Subscriber {
         }
         this.uniforms.create(UniformMethod.Uniform2f, UniformType.FloatVec2, 'u_resolution', BW, BH);
         if (hasDelta) {
-            this.uniforms.create(UniformMethod.Uniform1f, UniformType.Float, 'u_delta', timer.delta);
+            this.uniforms.create(UniformMethod.Uniform1f, UniformType.Float, 'u_delta', timer.delta / 1000.0);
         }
         if (hasTime) {
-            this.uniforms.create(UniformMethod.Uniform1f, UniformType.Float, 'u_time', timer.current);
+            this.uniforms.create(UniformMethod.Uniform1f, UniformType.Float, 'u_time', timer.current / 1000.0);
         }
         if (hasDate) {
             const date = new Date();
@@ -572,10 +579,10 @@ export default class GlslCanvas extends Subscriber {
         const timer = this.timer.next();
         this.uniforms.update(UniformMethod.Uniform2f, UniformType.FloatVec2, 'u_resolution', BW, BH);
         if (this.uniforms.has('u_delta')) {
-            this.uniforms.update(UniformMethod.Uniform1f, UniformType.Float, 'u_delta', timer.delta);
+            this.uniforms.update(UniformMethod.Uniform1f, UniformType.Float, 'u_delta', timer.delta / 1000.0);
         }
         if (this.uniforms.has('u_time')) {
-            this.uniforms.update(UniformMethod.Uniform1f, UniformType.Float, 'u_time', timer.current);
+            this.uniforms.update(UniformMethod.Uniform1f, UniformType.Float, 'u_time', timer.current / 1000.0);
         }
         if (this.uniforms.has('u_date')) {
             const date = new Date();

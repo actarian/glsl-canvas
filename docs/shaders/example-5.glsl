@@ -1,7 +1,9 @@
 // Author: Luca Zampetti
 // Title: vscode-glsl-canvas Easing examples
 
+#ifdef GL_ES
 precision highp float;
+#endif
 
 /***   u n i f o r m s   ***/
 
