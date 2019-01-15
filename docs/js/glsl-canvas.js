@@ -586,10 +586,13 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 
       var buffer = gl.createFramebuffer();
       var texture = this.getTexture(gl, BW, BH, index);
+      /*
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      */
+
       this.texture = texture;
       this.buffer = buffer;
       this.BW = BW;
@@ -670,10 +673,12 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 
           var newTexture = this.getTexture(gl, BW, BH, newIndex);
           floatType = this.getFloatType(gl);
+          /*
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+          */
 
           if (pixels) {
             gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, minW, minH, gl.RGBA, floatType, pixels);
