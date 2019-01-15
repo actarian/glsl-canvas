@@ -55,6 +55,7 @@ h4 {
     border-radius: 5px;
     overflow: hidden;
     box-sizing: border-box;
+    user-select: none;
 
     &[controls] {
         &.animated {
@@ -87,4 +88,8 @@ video {
     overflow: hidden;
     box-sizing: border-box;
     object-fit: cover;
+}
+
+* {
+    user-select: none;
 }
