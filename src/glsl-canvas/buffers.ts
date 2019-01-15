@@ -1,8 +1,14 @@
 import Context from './context';
 import IterableStringMap from './iterable';
 
+export enum BufferFloatType {
+    FLOAT = 0,
+    HALF_FLOAT,
+}
+
 export class Buffer {
 
+    static floatType: BufferFloatType = BufferFloatType.FLOAT;
     texture: WebGLTexture;
     buffer: WebGLFramebuffer;
     BW: number;
@@ -10,11 +16,7 @@ export class Buffer {
     index: number;
 
     constructor(gl: WebGLRenderingContext, BW: number, BH: number, index: number) {
-        gl.getExtension('OES_texture_float');
-        gl.activeTexture(gl.TEXTURE0 + index);
-        const texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, BW, BH, 0, gl.RGBA, gl.FLOAT, null);
+        const texture = this.getTexture(gl, BW, BH, index);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -27,6 +29,36 @@ export class Buffer {
         this.index = index;
     }
 
+    getFloatType(gl: WebGLRenderingContext): number {
+        let floatType: number;
+        if (Buffer.floatType === BufferFloatType.FLOAT) {
+            gl.getExtension('OES_texture_float');
+            floatType = gl.FLOAT;
+        } else {
+            const extension = gl.getExtension('OES_texture_half_float');
+            floatType = extension.HALF_FLOAT_OES;
+        }
+        return floatType;
+    }
+
+    getTexture(gl: WebGLRenderingContext, BW: number, BH: number, index: number): WebGLTexture {
+        const floatType = this.getFloatType(gl);
+        const texture = gl.createTexture();
+        gl.activeTexture(gl.TEXTURE0 + index);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, BW, BH, 0, gl.RGBA, floatType, null);
+        const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+        if (status !== gl.FRAMEBUFFER_COMPLETE) {
+            if (Buffer.floatType === BufferFloatType.FLOAT) {
+                Buffer.floatType = BufferFloatType.HALF_FLOAT;
+            } else {
+                Buffer.floatType = BufferFloatType.FLOAT;
+            }
+            return this.getTexture(gl, BW, BH, index);
+        }
+        return texture;
+    }
+
     resize(gl: WebGLRenderingContext, BW: number, BH: number) {
         if (BW !== this.BW || BH !== this.BH) {
             const buffer = this.buffer;
@@ -37,22 +69,21 @@ export class Buffer {
             const minW = Math.min(BW, this.BW);
             const minH = Math.min(BH, this.BH);
             let pixels: Float32Array;
+            let floatType = this.getFloatType(gl);
             if (status === gl.FRAMEBUFFER_COMPLETE) {
                 pixels = new Float32Array(minW * minH * 4);
-                gl.readPixels(0, 0, minW, minH, gl.RGBA, gl.FLOAT, pixels);
+                gl.readPixels(0, 0, minW, minH, gl.RGBA, floatType, pixels);
             }
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-            const newTexture = gl.createTexture();
             const newIndex = index + 1; // temporary index
-            gl.activeTexture(gl.TEXTURE0 + newIndex);
-            gl.bindTexture(gl.TEXTURE_2D, newTexture);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, BW, BH, 0, gl.RGBA, gl.FLOAT, null);
+            const newTexture = this.getTexture(gl, BW, BH, newIndex);
+            floatType = this.getFloatType(gl);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             if (pixels) {
-                gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, minW, minH, gl.RGBA, gl.FLOAT, pixels);
+                gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, minW, minH, gl.RGBA, floatType, pixels);
             }
             const newBuffer = gl.createFramebuffer();
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);

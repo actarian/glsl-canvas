@@ -571,17 +571,20 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 
   var iterable_1 = __importDefault(require("./iterable"));
 
+  var BufferFloatType;
+
+  (function (BufferFloatType) {
+    BufferFloatType[BufferFloatType["FLOAT"] = 0] = "FLOAT";
+    BufferFloatType[BufferFloatType["HALF_FLOAT"] = 1] = "HALF_FLOAT";
+  })(BufferFloatType = exports.BufferFloatType || (exports.BufferFloatType = {}));
+
   var Buffer =
   /*#__PURE__*/
   function () {
     function Buffer(gl, BW, BH, index) {
       _classCallCheck(this, Buffer);
 
-      gl.getExtension('OES_texture_float');
-      gl.activeTexture(gl.TEXTURE0 + index);
-      var texture = gl.createTexture();
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, BW, BH, 0, gl.RGBA, gl.FLOAT, null);
+      var texture = this.getTexture(gl, BW, BH, index);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -595,6 +598,43 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     }
 
     _createClass(Buffer, [{
+      key: "getFloatType",
+      value: function getFloatType(gl) {
+        var floatType;
+
+        if (Buffer.floatType === BufferFloatType.FLOAT) {
+          gl.getExtension('OES_texture_float');
+          floatType = gl.FLOAT;
+        } else {
+          var extension = gl.getExtension('OES_texture_half_float');
+          floatType = extension.HALF_FLOAT_OES;
+        }
+
+        return floatType;
+      }
+    }, {
+      key: "getTexture",
+      value: function getTexture(gl, BW, BH, index) {
+        var floatType = this.getFloatType(gl);
+        var texture = gl.createTexture();
+        gl.activeTexture(gl.TEXTURE0 + index);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, BW, BH, 0, gl.RGBA, floatType, null);
+        var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+
+        if (status !== gl.FRAMEBUFFER_COMPLETE) {
+          if (Buffer.floatType === BufferFloatType.FLOAT) {
+            Buffer.floatType = BufferFloatType.HALF_FLOAT;
+          } else {
+            Buffer.floatType = BufferFloatType.FLOAT;
+          }
+
+          return this.getTexture(gl, BW, BH, index);
+        }
+
+        return texture;
+      }
+    }, {
       key: "resize",
       value: function resize(gl, BW, BH) {
         if (BW !== this.BW || BH !== this.BH) {
@@ -606,26 +646,25 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
           var minW = Math.min(BW, this.BW);
           var minH = Math.min(BH, this.BH);
           var pixels;
+          var floatType = this.getFloatType(gl);
 
           if (status === gl.FRAMEBUFFER_COMPLETE) {
             pixels = new Float32Array(minW * minH * 4);
-            gl.readPixels(0, 0, minW, minH, gl.RGBA, gl.FLOAT, pixels);
+            gl.readPixels(0, 0, minW, minH, gl.RGBA, floatType, pixels);
           }
 
           gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-          var newTexture = gl.createTexture();
           var newIndex = index + 1; // temporary index
 
-          gl.activeTexture(gl.TEXTURE0 + newIndex);
-          gl.bindTexture(gl.TEXTURE_2D, newTexture);
-          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, BW, BH, 0, gl.RGBA, gl.FLOAT, null);
+          var newTexture = this.getTexture(gl, BW, BH, newIndex);
+          floatType = this.getFloatType(gl);
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
           if (pixels) {
-            gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, minW, minH, gl.RGBA, gl.FLOAT, pixels);
+            gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, minW, minH, gl.RGBA, floatType, pixels);
           }
 
           var newBuffer = gl.createFramebuffer();
@@ -645,6 +684,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     return Buffer;
   }();
 
+  Buffer.floatType = BufferFloatType.FLOAT;
   exports.Buffer = Buffer;
 
   var IOBuffer =
