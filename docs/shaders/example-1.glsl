@@ -1,5 +1,5 @@
 #ifdef GL_ES
-precision mediump float;
+precision highp float;
 #endif
 
 uniform vec2 u_resolution;
@@ -45,23 +45,19 @@ void main() {
 		0.5 + sin(u_time) * 0.5,
 		1.0
 	);
-	vec3 buffer = texture2D(u_buffer0, uv).rgb;
-	buffer *= 0.99;
+	vec3 buffer = texture2D(u_buffer0, uv).rgb * 0.99;
 	vec2 p = vec2(
 		st.x + cos(u_time * 5.0) * 0.3,
 		st.y + sin(u_time * 2.0) * 0.3
 	);
 	float c = circle(p, 0.1 + 0.1 * sin(u_time));
-	buffer = mix(buffer, color, c * 1.0);
-	gl_FragColor = vec4(buffer, 1.0);
+	gl_FragColor = vec4(mix(buffer, color, c), 1.0);
 }
 
 #else
 
 void main() {
-	vec3 color = vec3(0.0, 0.0, 0.0);
-	vec3 b0 = texture2D(u_buffer0, uv).rgb;
-	color += b0;
+	vec3 color = texture2D(u_buffer0, uv).rgb;
 	gl_FragColor = vec4(color, 1.0);
 }
 
