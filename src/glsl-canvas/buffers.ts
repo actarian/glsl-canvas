@@ -16,12 +16,12 @@ export class Buffer {
     index: number;
 
     constructor(gl: WebGLRenderingContext, BW: number, BH: number, index: number) {
+        const buffer = gl.createFramebuffer();
         const texture = this.getTexture(gl, BW, BH, index);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        const buffer = gl.createFramebuffer();
         this.texture = texture;
         this.buffer = buffer;
         this.BW = BW;
@@ -30,13 +30,23 @@ export class Buffer {
     }
 
     getFloatType(gl: WebGLRenderingContext): number {
-        let floatType: number;
+        let floatType: number, extension;
         if (Buffer.floatType === BufferFloatType.FLOAT) {
-            gl.getExtension('OES_texture_float');
-            floatType = gl.FLOAT;
+            extension = gl.getExtension('OES_texture_float');
+            if (extension) {
+                floatType = gl.FLOAT;
+            } else {
+                Buffer.floatType = BufferFloatType.HALF_FLOAT;
+                return this.getFloatType(gl);
+            }
         } else {
-            const extension = gl.getExtension('OES_texture_half_float');
-            floatType = extension.HALF_FLOAT_OES;
+            extension = gl.getExtension('OES_texture_half_float');
+            if (extension) {
+                floatType = extension.HALF_FLOAT_OES;
+            } else {
+                Buffer.floatType = BufferFloatType.FLOAT;
+                return this.getFloatType(gl);
+            }
         }
         return floatType;
     }

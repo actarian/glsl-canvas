@@ -584,12 +584,12 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     function Buffer(gl, BW, BH, index) {
       _classCallCheck(this, Buffer);
 
+      var buffer = gl.createFramebuffer();
       var texture = this.getTexture(gl, BW, BH, index);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      var buffer = gl.createFramebuffer();
       this.texture = texture;
       this.buffer = buffer;
       this.BW = BW;
@@ -600,14 +600,26 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     _createClass(Buffer, [{
       key: "getFloatType",
       value: function getFloatType(gl) {
-        var floatType;
+        var floatType, extension;
 
         if (Buffer.floatType === BufferFloatType.FLOAT) {
-          gl.getExtension('OES_texture_float');
-          floatType = gl.FLOAT;
+          extension = gl.getExtension('OES_texture_float');
+
+          if (extension) {
+            floatType = gl.FLOAT;
+          } else {
+            Buffer.floatType = BufferFloatType.HALF_FLOAT;
+            return this.getFloatType(gl);
+          }
         } else {
-          var extension = gl.getExtension('OES_texture_half_float');
-          floatType = extension.HALF_FLOAT_OES;
+          extension = gl.getExtension('OES_texture_half_float');
+
+          if (extension) {
+            floatType = extension.HALF_FLOAT_OES;
+          } else {
+            Buffer.floatType = BufferFloatType.FLOAT;
+            return this.getFloatType(gl);
+          }
         }
 
         return floatType;
