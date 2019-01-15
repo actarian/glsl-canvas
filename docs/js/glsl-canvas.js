@@ -1203,21 +1203,17 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
       _classCallCheck(this, GlslCanvas);
 
       _this = _possibleConstructorReturn(this, _getPrototypeOf(GlslCanvas).call(this));
-      _this.dirty = true;
-      _this.animated = false;
-      _this.nDelta = 0;
-      _this.nTime = 0;
-      _this.nDate = 0;
-      _this.nMouse = 0;
-      _this.textureList = [];
-      _this.textures = new textures_1.default();
-      _this.buffers = new buffers_1.default();
-      _this.uniforms = new uniforms_1.default();
       _this.mouse = {
         x: 0,
         y: 0
       };
+      _this.uniforms = new uniforms_1.default();
+      _this.buffers = new buffers_1.default();
+      _this.textures = new textures_1.default();
+      _this.textureList = [];
       _this.valid = false;
+      _this.animated = false;
+      _this.dirty = true;
       _this.visible = false;
 
       _this.removeListeners = function () {};
@@ -1239,7 +1235,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
       }
 
       _this.gl = gl;
-      _this.pixelRatio = window.devicePixelRatio || 1;
+      _this.devicePixelRatio = window.devicePixelRatio || 1;
       canvas.style.backgroundColor = contextOptions.backgroundColor || 'rgba(0,0,0,0)';
 
       _this.getShaders().then(function (success) {
@@ -1320,29 +1316,72 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           _this3.rect = _this3.canvas.getBoundingClientRect();
         };
 
-        var mousemove = function mousemove(e) {
-          _this3.mouse.x = e.clientX || e.pageX;
-          _this3.mouse.y = e.clientY || e.pageY;
-
-          _this3.trigger('mousemove', e);
-        };
-
         var click = function click(e) {
           _this3.toggle();
 
           _this3.trigger('click', e);
         };
 
+        var move = function move(mx, my) {
+          var rect = _this3.rect,
+              gap = 20;
+          var x = Math.max(-gap, Math.min(rect.width + gap, (mx - rect.left) * _this3.devicePixelRatio));
+          var y = Math.max(-gap, Math.min(rect.height + gap, _this3.canvas.height - (my - rect.top) * _this3.devicePixelRatio));
+
+          if (x !== _this3.mouse.x || y !== _this3.mouse.y) {
+            _this3.mouse.x = x;
+            _this3.mouse.y = y;
+
+            _this3.trigger('move', _this3.mouse);
+          }
+        };
+
+        var mousemove = function mousemove(e) {
+          move(e.clientX || e.pageX, e.clientY || e.pageY);
+        };
+
         var mouseover = function mouseover(e) {
           _this3.play();
 
-          _this3.trigger('mouseover', e);
+          _this3.trigger('over', e);
         };
 
         var mouseout = function mouseout(e) {
           _this3.pause();
 
-          _this3.trigger('mouseout', e);
+          _this3.trigger('out', e);
+        };
+
+        var touchmove = function touchmove(e) {
+          var touch = [].slice.call(e.touches).reduce(function (p, touch) {
+            p = p || {
+              x: 0,
+              y: 0
+            };
+            p.x += touch.clientX;
+            p.y += touch.clientY;
+            return p;
+          }, null);
+
+          if (touch) {
+            move(touch.x / e.touches.length, touch.y / e.touches.length);
+          }
+        };
+
+        var touchstart = function touchstart(e) {
+          _this3.play();
+
+          _this3.trigger('over', e);
+
+          document.addEventListener('touchend', touchend);
+        };
+
+        var touchend = function touchend(e) {
+          _this3.pause();
+
+          _this3.trigger('out', e);
+
+          document.removeEventListener('touchend', touchend);
         };
 
         var loop = function loop(time) {
@@ -1355,11 +1394,13 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         window.addEventListener('resize', resize);
         window.addEventListener('scroll', scroll);
         document.addEventListener('mousemove', mousemove, false);
+        document.addEventListener('touchmove', touchmove);
 
         if (this.canvas.hasAttribute('controls')) {
           this.canvas.addEventListener('click', click);
           this.canvas.addEventListener('mouseover', mouseover);
           this.canvas.addEventListener('mouseout', mouseout);
+          this.canvas.addEventListener('touchstart', touchstart);
 
           if (!this.canvas.hasAttribute('data-autoplay')) {
             this.pause();
@@ -1370,6 +1411,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           window.removeEventListener('resize', resize);
           window.removeEventListener('scroll', scroll);
           document.removeEventListener('mousemove', mousemove);
+          document.removeEventListener('touchmove', touchmove);
 
           if (_this3.canvas.hasAttribute('controls')) {
             _this3.canvas.removeEventListener('click', click);
@@ -1377,6 +1419,8 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
             _this3.canvas.removeEventListener('mouseover', mouseover);
 
             _this3.canvas.removeEventListener('mouseout', mouseout);
+
+            _this3.canvas.removeEventListener('touchstart', touchstart);
           }
         };
       }
@@ -1396,7 +1440,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         var fragmentShader = context_1.default.createShader(gl, this.fragmentString, gl.FRAGMENT_SHADER); // If Fragment shader fails load a empty one to sign the error
 
         if (!fragmentShader) {
-          fragmentShader = context_1.default.createShader(gl, "void main(){\n\t\t\t\tgl_FragColor = vec4(1.0);\n\t\t\t}", gl.FRAGMENT_SHADER);
+          fragmentShader = context_1.default.createShader(gl, context_1.ContextDefaultFragment, gl.FRAGMENT_SHADER);
           this.valid = false;
         } else {
           this.valid = true;
@@ -1416,11 +1460,11 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         if (this.valid) {
           this.buffers = buffers_1.default.getBuffers(gl, this.fragmentString, this.vertexString);
           this.vertexBuffers = context_1.default.createVertexBuffers(gl, program);
-          this.createUniforms(); // this.getBuffers(this.fragmentString);
+          this.createUniforms();
         } // Trigger event
 
 
-        this.trigger('load', this); // this.render();
+        this.trigger('load', this);
       }
     }, {
       key: "test",
@@ -1428,11 +1472,10 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         var _this4 = this;
 
         return new Promise(function (resolve, reject) {
-          // Thanks to @thespite for the help here
-          // https://www.khronos.org/registry/webgl/extensions/EXT_disjoint_timer_query/
           var vertex = _this4.vertexString;
           var fragment = _this4.fragmentString;
-          var paused = _this4.timer.paused;
+          var paused = _this4.timer.paused; // Thanks to @thespite for the help here
+          // https://www.khronos.org/registry/webgl/extensions/EXT_disjoint_timer_query/
 
           var extension = _this4.gl.getExtension('EXT_disjoint_timer_query');
 
@@ -1491,7 +1534,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         this.valid = false;
         var gl = this.gl;
         gl.useProgram(null);
-        gl.deleteProgram(this.program); // this.buffers.forEach((buffer: IOBuffer) => buffer.destroy(gl));
+        gl.deleteProgram(this.program);
 
         for (var key in this.buffers.values) {
           var buffer = this.buffers.values[key];
@@ -1587,8 +1630,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     }, {
       key: "isDirty",
       value: function isDirty() {
-        return this.dirty || this.uniforms.dirty || this.textures.dirty; // [].slice.call(this.textures.values()).reduce((p, texture) => p || texture.dirty, false);
-        // this.textures.dirty;
+        return this.dirty || this.uniforms.dirty || this.textures.dirty;
       } // check size change at start of requestFrame
 
     }, {
@@ -1605,21 +1647,14 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           // and compute a size needed to make our drawingbuffer match it in
           // device pixels.
 
-          var BW = Math.floor(W * this.pixelRatio);
-          var BH = Math.floor(H * this.pixelRatio); // Check if the canvas is not the same size.
+          var BW = Math.floor(W * this.devicePixelRatio);
+          var BH = Math.floor(H * this.devicePixelRatio);
 
           if (gl.canvas.width !== BW || gl.canvas.height !== BH) {
-            // Make the canvas the same size
             gl.canvas.width = BW;
             gl.canvas.height = BH; // Set the viewport to match
             // gl.viewport(0, 0, BW, BH);
           }
-          /*
-          this.buffers.forEach((buffer: IOBuffer) => {
-              buffer.resize(gl, BW, BH);
-          });
-          */
-
 
           for (var key in this.buffers.values) {
             var buffer = this.buffers.values[key];
@@ -1688,25 +1723,13 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           var buffer = this.buffers.values[key];
           this.uniforms.create(uniforms_1.UniformMethod.Uniform1i, uniforms_1.UniformType.Sampler2D, buffer.key, buffer.input.index);
         }
-        /*
-        this.buffers.forEach((buffer: IOBuffer) => {
-            this.uniforms.create(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, buffer.input.index);
-        });
-        */
-
 
         if (hasTextures) {
           this.textureList.forEach(function (x) {
             _this6.loadTexture(x.key, x.url);
           });
+          this.textureList = [];
         }
-        /*
-        while (this.textureList.length > 0) {
-            const x = this.textureList.shift();
-            this.loadTexture(x.key, x.url);
-        }
-        */
-
       }
     }, {
       key: "parseTextures",
@@ -1801,41 +1824,29 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         }
 
         if (this.uniforms.has('u_mouse')) {
-          var rect = this.rect;
           var mouse = this.mouse;
-
-          if (mouse.x >= rect.left && mouse.x <= rect.right && mouse.y >= rect.top && mouse.y <= rect.bottom) {
-            var MX = (mouse.x - rect.left) * this.pixelRatio;
-            var MY = this.canvas.height - (mouse.y - rect.top) * this.pixelRatio;
-            this.uniforms.update(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.FloatVec2, 'u_mouse', MX, MY);
+          this.uniforms.update(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.FloatVec2, 'u_mouse', mouse.x, mouse.y);
+          /*
+          const rect = this.rect;
+          if (mouse.x >= rect.left && mouse.x <= rect.right &&
+              mouse.y >= rect.top && mouse.y <= rect.bottom) {
+              const MX = (mouse.x - rect.left) * this.devicePixelRatio;
+              const MY = (this.canvas.height - (mouse.y - rect.top) * this.devicePixelRatio);
+              this.uniforms.update(UniformMethod.Uniform2f, UniformType.FloatVec2, 'u_mouse', MX, MY);
           }
+          */
         }
 
         for (var key in this.buffers.values) {
           var buffer = this.buffers.values[key];
           this.uniforms.update(uniforms_1.UniformMethod.Uniform1i, uniforms_1.UniformType.Sampler2D, buffer.key, buffer.input.index);
         }
-        /*
-        this.buffers.forEach((buffer: IOBuffer) => {
-            this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, buffer.input.index);
-        });
-        */
-
 
         for (var _key3 in this.textures.values) {
           var texture = this.textures.values[_key3];
-          texture.tryUpdate(gl); // console.log(texture.key, texture.index);
-
+          texture.tryUpdate(gl);
           this.uniforms.update(uniforms_1.UniformMethod.Uniform1i, uniforms_1.UniformType.Sampler2D, texture.key, texture.index);
         }
-        /*
-        this.textures.forEach((texture: Texture) => {
-            texture.tryUpdate(gl);
-            // console.log(texture.key, texture.index);
-            this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, texture.key, texture.index);
-        });
-        */
-
       }
     }, {
       key: "render",
@@ -1844,12 +1855,6 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         var BW = gl.drawingBufferWidth;
         var BH = gl.drawingBufferHeight;
         this.updateUniforms();
-        /*
-        this.buffers.forEach((buffer: IOBuffer) => {
-            this.uniforms.apply(gl, buffer.program);
-            buffer.render(gl, BW, BH);
-        });
-        */
 
         for (var key in this.buffers.values) {
           var buffer = this.buffers.values[key];

@@ -18,6 +18,7 @@ export class GlslCanvasOptions {
 }
 
 export class GlslCanvasTimer {
+
     start: number;
     previous: number;
     delay: number = 0.0;
@@ -60,30 +61,28 @@ export class GlslCanvasTimer {
 export default class GlslCanvas extends Subscriber {
 
     canvas: HTMLCanvasElement;
-    width: number;
-    height: number;
-    timer: GlslCanvasTimer;
-    dirty: boolean = true;
-    animated: boolean = false;
-    nDelta: number = 0;
-    nTime: number = 0;
-    nDate: number = 0;
-    nMouse: number = 0;
-
-    pixelRatio: number;
     gl: WebGLRenderingContext;
     program: WebGLProgram;
-    textureList: any[] = [];
-    textures: Textures = new Textures();
-    buffers: Buffers = new Buffers();
-    uniforms: Uniforms = new Uniforms();
+    timer: GlslCanvasTimer;
     vertexBuffers: ContextVertexBuffers;
     rect: ClientRect | DOMRect;
     mouse: IPoint = { x: 0, y: 0 };
-    valid: boolean = false;
-    visible: boolean = false;
+    uniforms: Uniforms = new Uniforms();
+    buffers: Buffers = new Buffers();
+    textures: Textures = new Textures();
+    textureList: any[] = [];
+
     vertexString: string;
     fragmentString: string;
+    width: number;
+    height: number;
+    devicePixelRatio: number;
+
+    valid: boolean = false;
+    animated: boolean = false;
+    dirty: boolean = true;
+    visible: boolean = false;
+
     loop: Function;
     removeListeners: Function = () => { };
 
@@ -111,7 +110,7 @@ export default class GlslCanvas extends Subscriber {
             return;
         }
         this.gl = gl;
-        this.pixelRatio = window.devicePixelRatio || 1;
+        this.devicePixelRatio = window.devicePixelRatio || 1;
         canvas.style.backgroundColor = contextOptions.backgroundColor || 'rgba(0,0,0,0)';
         this.getShaders().then(
             (success) => {
@@ -199,25 +198,59 @@ export default class GlslCanvas extends Subscriber {
             this.rect = this.canvas.getBoundingClientRect();
         };
 
-        const mousemove = (e: MouseEvent) => {
-            this.mouse.x = e.clientX || e.pageX;
-            this.mouse.y = e.clientY || e.pageY;
-            this.trigger('mousemove', e);
-        };
-
         const click = (e: MouseEvent) => {
             this.toggle();
             this.trigger('click', e);
         };
 
+        const move = (mx: number, my: number) => {
+            const rect = this.rect, gap = 20;
+            const x = Math.max(-gap, Math.min(rect.width + gap, (mx - rect.left) * this.devicePixelRatio));
+            const y = Math.max(-gap, Math.min(rect.height + gap, (this.canvas.height - (my - rect.top) * this.devicePixelRatio)));
+            if (x !== this.mouse.x ||
+                y !== this.mouse.y) {
+                this.mouse.x = x;
+                this.mouse.y = y;
+                this.trigger('move', this.mouse);
+            }
+        };
+
+        const mousemove = (e: MouseEvent) => {
+            move(e.clientX || e.pageX, e.clientY || e.pageY);
+        };
+
         const mouseover = (e: MouseEvent) => {
             this.play();
-            this.trigger('mouseover', e);
+            this.trigger('over', e);
         };
 
         const mouseout = (e: MouseEvent) => {
             this.pause();
-            this.trigger('mouseout', e);
+            this.trigger('out', e);
+        };
+
+        const touchmove = (e: TouchEvent) => {
+            const touch = [].slice.call(e.touches).reduce((p: IPoint, touch: Touch) => {
+                p = p || { x: 0, y: 0 };
+                p.x += touch.clientX;
+                p.y += touch.clientY;
+                return p;
+            }, null);
+            if (touch) {
+                move(touch.x / e.touches.length, touch.y / e.touches.length);
+            }
+        };
+
+        const touchstart = (e: TouchEvent) => {
+            this.play();
+            this.trigger('over', e);
+            document.addEventListener('touchend', touchend);
+        };
+
+        const touchend = (e: TouchEvent) => {
+            this.pause();
+            this.trigger('out', e);
+            document.removeEventListener('touchend', touchend);
         };
 
         const loop: FrameRequestCallback = (time: number) => {
@@ -230,10 +263,12 @@ export default class GlslCanvas extends Subscriber {
         window.addEventListener('resize', resize);
         window.addEventListener('scroll', scroll);
         document.addEventListener('mousemove', mousemove, false);
+        document.addEventListener('touchmove', touchmove);
         if (this.canvas.hasAttribute('controls')) {
             this.canvas.addEventListener('click', click);
             this.canvas.addEventListener('mouseover', mouseover);
             this.canvas.addEventListener('mouseout', mouseout);
+            this.canvas.addEventListener('touchstart', touchstart);
             if (!this.canvas.hasAttribute('data-autoplay')) {
                 this.pause();
             }
@@ -243,10 +278,12 @@ export default class GlslCanvas extends Subscriber {
             window.removeEventListener('resize', resize);
             window.removeEventListener('scroll', scroll);
             document.removeEventListener('mousemove', mousemove);
+            document.removeEventListener('touchmove', touchmove);
             if (this.canvas.hasAttribute('controls')) {
                 this.canvas.removeEventListener('click', click);
                 this.canvas.removeEventListener('mouseover', mouseover);
                 this.canvas.removeEventListener('mouseout', mouseout);
+                this.canvas.removeEventListener('touchstart', touchstart);
             }
         }
     }
@@ -266,9 +303,7 @@ export default class GlslCanvas extends Subscriber {
         let fragmentShader = Context.createShader(gl, this.fragmentString, gl.FRAGMENT_SHADER);
         // If Fragment shader fails load a empty one to sign the error
         if (!fragmentShader) {
-            fragmentShader = Context.createShader(gl, `void main(){
-				gl_FragColor = vec4(1.0);
-			}`, gl.FRAGMENT_SHADER);
+            fragmentShader = Context.createShader(gl, ContextDefaultFragment, gl.FRAGMENT_SHADER);
             this.valid = false;
         } else {
             this.valid = true;
@@ -286,11 +321,9 @@ export default class GlslCanvas extends Subscriber {
             this.buffers = Buffers.getBuffers(gl, this.fragmentString, this.vertexString);
             this.vertexBuffers = Context.createVertexBuffers(gl, program);
             this.createUniforms();
-            // this.getBuffers(this.fragmentString);
         }
         // Trigger event
         this.trigger('load', this);
-        // this.render();
     }
 
     test(
@@ -298,11 +331,11 @@ export default class GlslCanvas extends Subscriber {
         vertexString?: string
     ): Promise<any> {
         return new Promise((resolve, reject) => {
-            // Thanks to @thespite for the help here
-            // https://www.khronos.org/registry/webgl/extensions/EXT_disjoint_timer_query/
             const vertex = this.vertexString;
             const fragment = this.fragmentString;
             const paused = this.timer.paused;
+            // Thanks to @thespite for the help here
+            // https://www.khronos.org/registry/webgl/extensions/EXT_disjoint_timer_query/
             const extension = this.gl.getExtension('EXT_disjoint_timer_query');
             const query = extension.createQueryEXT();
             let wasValid = this.valid;
@@ -346,7 +379,6 @@ export default class GlslCanvas extends Subscriber {
         const gl = this.gl;
         gl.useProgram(null);
         gl.deleteProgram(this.program);
-        // this.buffers.forEach((buffer: IOBuffer) => buffer.destroy(gl));
         for (const key in this.buffers.values) {
             const buffer: IOBuffer = this.buffers.values[key];
             buffer.destroy(gl);
@@ -421,8 +453,6 @@ export default class GlslCanvas extends Subscriber {
 
     isDirty(): boolean {
         return this.dirty || this.uniforms.dirty || this.textures.dirty;
-        // [].slice.call(this.textures.values()).reduce((p, texture) => p || texture.dirty, false);
-        // this.textures.dirty;
     }
 
     // check size change at start of requestFrame
@@ -438,22 +468,15 @@ export default class GlslCanvas extends Subscriber {
             // Lookup the size the browser is displaying the canvas in CSS pixels
             // and compute a size needed to make our drawingbuffer match it in
             // device pixels.
-            const BW = Math.floor(W * this.pixelRatio);
-            const BH = Math.floor(H * this.pixelRatio);
-            // Check if the canvas is not the same size.
+            const BW = Math.floor(W * this.devicePixelRatio);
+            const BH = Math.floor(H * this.devicePixelRatio);
             if (gl.canvas.width !== BW ||
                 gl.canvas.height !== BH) {
-                // Make the canvas the same size
                 gl.canvas.width = BW;
                 gl.canvas.height = BH;
                 // Set the viewport to match
                 // gl.viewport(0, 0, BW, BH);
             }
-            /*
-            this.buffers.forEach((buffer: IOBuffer) => {
-                buffer.resize(gl, BW, BH);
-            });            
-            */
             for (const key in this.buffers.values) {
                 const buffer: IOBuffer = this.buffers.values[key];
                 buffer.resize(gl, BW, BH);
@@ -509,22 +532,12 @@ export default class GlslCanvas extends Subscriber {
             const buffer: IOBuffer = this.buffers.values[key];
             this.uniforms.create(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, buffer.input.index);
         }
-        /*
-        this.buffers.forEach((buffer: IOBuffer) => {
-            this.uniforms.create(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, buffer.input.index);
-        });
-        */
         if (hasTextures) {
             this.textureList.forEach(x => {
                 this.loadTexture(x.key, x.url);
             });
+            this.textureList = [];
         }
-        /*
-        while (this.textureList.length > 0) {
-            const x = this.textureList.shift();
-            this.loadTexture(x.key, x.url);
-        }
-        */
     }
 
     parseTextures(fragmentString: string): boolean {
@@ -589,37 +602,27 @@ export default class GlslCanvas extends Subscriber {
             this.uniforms.update(UniformMethod.Uniform4f, UniformType.Float, 'u_date', date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001);
         }
         if (this.uniforms.has('u_mouse')) {
-            const rect = this.rect;
             const mouse = this.mouse;
+            this.uniforms.update(UniformMethod.Uniform2f, UniformType.FloatVec2, 'u_mouse', mouse.x, mouse.y);
+            /*
+            const rect = this.rect;
             if (mouse.x >= rect.left && mouse.x <= rect.right &&
                 mouse.y >= rect.top && mouse.y <= rect.bottom) {
-                const MX = (mouse.x - rect.left) * this.pixelRatio;
-                const MY = (this.canvas.height - (mouse.y - rect.top) * this.pixelRatio);
+                const MX = (mouse.x - rect.left) * this.devicePixelRatio;
+                const MY = (this.canvas.height - (mouse.y - rect.top) * this.devicePixelRatio);
                 this.uniforms.update(UniformMethod.Uniform2f, UniformType.FloatVec2, 'u_mouse', MX, MY);
             }
+            */
         }
         for (const key in this.buffers.values) {
             const buffer: IOBuffer = this.buffers.values[key];
             this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, buffer.input.index);
         }
-        /*
-        this.buffers.forEach((buffer: IOBuffer) => {
-            this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, buffer.input.index);
-        });
-        */
         for (const key in this.textures.values) {
             const texture: Texture = this.textures.values[key];
             texture.tryUpdate(gl);
-            // console.log(texture.key, texture.index);
             this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, texture.key, texture.index);
         }
-        /*
-        this.textures.forEach((texture: Texture) => {
-            texture.tryUpdate(gl);
-            // console.log(texture.key, texture.index);
-            this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, texture.key, texture.index);
-        });
-        */
     }
 
     render(): void {
@@ -627,12 +630,6 @@ export default class GlslCanvas extends Subscriber {
         const BW = gl.drawingBufferWidth;
         const BH = gl.drawingBufferHeight;
         this.updateUniforms();
-        /*
-        this.buffers.forEach((buffer: IOBuffer) => {
-            this.uniforms.apply(gl, buffer.program);
-            buffer.render(gl, BW, BH);
-        });
-        */
         for (const key in this.buffers.values) {
             const buffer: IOBuffer = this.buffers.values[key];
             this.uniforms.apply(gl, buffer.program);

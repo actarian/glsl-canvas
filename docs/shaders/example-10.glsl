@@ -1,41 +1,30 @@
 
-
-// Author: Luca Zampetti
-
 #ifdef GL_ES
-precision mediump float;
+precision highp float;
 #endif
 
 uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+uniform float u_time;
 uniform sampler2D u_video;
 uniform vec2 u_videoResolution;
-uniform vec3 u_color;
-uniform float u_threshold;
-uniform float u_smoothing;
+uniform float u_x;
+uniform float u_y;
+
+vec3 pixellate(vec2 uv, vec3 color) {
+    float size = 30.0 * u_y / u_resolution.y;
+    if (size > 0.0) {
+        float dx = size / u_resolution.x;
+        float dy = size / u_resolution.y;
+        uv = vec2(dx * (floor(uv.x / dx) + 0.5), dy * (floor(uv.y / dy) + 0.5));
+        return texture2D(u_video, uv).rgb;
+    }
+    return color;
+}
 
 void main() {
-    vec2 st = gl_FragCoord.xy / u_resolution.xy;
-	vec4 color = texture2D(u_video, st);
-
-/*
-    vec3 u_color = vec3(76.0/255.0, 229.0/255.0, 45.0/255.0);
-    float u_threshold = 0.35;
-    float u_smoothing = 0.001;
-*/
-
-    float Y = 0.2989 * u_color.r + 0.5866 * u_color.g + 0.1145 * u_color.b;
-    float Cr = 0.7132 * (u_color.r - Y);
-    float Cb = 0.5647 * (u_color.b - Y);
-
-    float videoY = 0.2989 * color.r + 0.5866 * color.g + 0.1145 * color.b;
-    float videoCr = 0.7132 * (color.r - videoY);
-    float videoCb = 0.5647 * (color.b - videoY);
-
-    float mask = distance(vec2(videoCr, videoCb), vec2(Cr, Cb));
-
-    float alpha = smoothstep(u_threshold, u_threshold + u_smoothing, mask);
-
-    // vec3 post = mix(color.rgb, vec3(1.0), color.a * alpha);
-    // gl_FragColor = vec4(vec3(u_threshold), 1.0); 
-    gl_FragColor = vec4(mix(vec3(1.0), color.rgb, color.a * alpha), 1.0);    
+   	vec2 uv = gl_FragCoord.xy / u_resolution.xy; 
+    vec3 video = texture2D(u_video, uv).rgb;
+    vec3 color = gl_FragCoord.x < u_x ? pixellate(uv, video) : video;
+    gl_FragColor = vec4(color, 1.0);
 }

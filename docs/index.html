@@ -73,10 +73,12 @@
             <h4>video source</h4>
             <video id="video-4" muted loop playsinline autoplay controls src="data/moon.mp4"></video>
         </div>
+        <!--
         <div class="example">
             <h4>video source</h4>
-            <video id="video-10" muted loop playsinline autoplay controls src="data/greenscreen.mp4"></video>
+            <video id="video-11" muted loop playsinline autoplay controls src="data/greenscreen.mp4"></video>
         </div>
+        -->
     </div>
 </body>
 
@@ -93,7 +95,7 @@
             });
             switch (i) {
                 case 3:
-                    canvas.on('mouseover', function () {
+                    canvas.on('over', function () {
                         if (canvas.uniforms.get('u_texture').texture.url === 'data/mars.jpg') {
                             canvas.setUniform('u_texture', 'data/moon.jpg');
                         } else {
@@ -125,19 +127,24 @@
                     canvas.setUniform('u_texture', ['data/moon.jpg', 'data/mars.jpg']);
                     break;
                 case 10:
+                    canvas.setUniform('u_video', '#video-4');
+                    canvas.on('move', function (mouse) {
+                        canvas.setUniforms({
+                            u_x: mouse.x + 0.001,
+                            u_y: mouse.y + 0.001,
+                        });
+                    });
+                    break;
                     /*
-                    canvas.setUniform('u_video', '#video-10');
-                    canvas.setUniform('u_color', 76.0 / 255.0, 229.0 / 255.0, 45.0 / 255.0);
-                    canvas.setUniform('u_threshold', 0.35);
-                    canvas.setUniform('u_smoothing', 0.001);
-                    */
+                case 11:
                     canvas.setUniforms({
-                        u_video: '#video-10',
+                        u_video: '#video-11',
                         u_color: [76.0 / 255.0, 229.0 / 255.0, 45.0 / 255.0],
                         u_threshold: 0.35,
                         u_smoothing: 0.001,
                     });
                     break;
+                    */
             }
             return canvas;
         });

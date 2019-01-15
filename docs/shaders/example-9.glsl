@@ -1,7 +1,7 @@
 // Author: Patricio Gonzalez Vivo
 
 #ifdef GL_ES
-precision mediump float;
+precision highp float;
 #endif
 
 #define PI 3.1415926535

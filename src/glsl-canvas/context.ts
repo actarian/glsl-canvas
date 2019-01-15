@@ -1,5 +1,4 @@
 
-
 export const ContextDefaultVertex = `
 #ifdef GL_ES
 precision mediump float;
