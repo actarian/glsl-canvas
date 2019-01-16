@@ -1368,20 +1368,27 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           }
         };
 
-        var touchstart = function touchstart(e) {
-          _this3.play();
-
-          _this3.trigger('over', e);
-
-          document.addEventListener('touchend', touchend);
-        };
-
         var touchend = function touchend(e) {
           _this3.pause();
 
           _this3.trigger('out', e);
 
           document.removeEventListener('touchend', touchend);
+        };
+
+        var touchstart = function touchstart(e) {
+          _this3.play();
+
+          _this3.trigger('over', e);
+
+          document.addEventListener('touchend', touchend);
+          document.removeEventListener('mousemove', mousemove);
+
+          if (_this3.canvas.hasAttribute('controls')) {
+            _this3.canvas.removeEventListener('mouseover', mouseover);
+
+            _this3.canvas.removeEventListener('mouseout', mouseout);
+          }
         };
 
         var loop = function loop(time) {
@@ -1876,15 +1883,6 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
       key: "version",
       value: function version() {
         return '0.2.0';
-      }
-    }, {
-      key: "isDifferent",
-      value: function isDifferent(a, b) {
-        if (a && b) {
-          return a.toString() !== b.toString();
-        }
-
-        return false;
       }
     }, {
       key: "of",

@@ -134,13 +134,6 @@ export default class GlslCanvas extends Subscriber {
         return '0.2.0';
     }
 
-    static isDifferent(a: any, b: any): boolean {
-        if (a && b) {
-            return a.toString() !== b.toString();
-        }
-        return false;
-    }
-
     static of(canvas: HTMLCanvasElement): GlslCanvas {
         return GlslCanvas.items.find(x => x.canvas === canvas) || new GlslCanvas(canvas);
     }
@@ -241,16 +234,21 @@ export default class GlslCanvas extends Subscriber {
             }
         };
 
-        const touchstart = (e: TouchEvent) => {
-            this.play();
-            this.trigger('over', e);
-            document.addEventListener('touchend', touchend);
-        };
-
         const touchend = (e: TouchEvent) => {
             this.pause();
             this.trigger('out', e);
             document.removeEventListener('touchend', touchend);
+        };
+
+        const touchstart = (e: TouchEvent) => {
+            this.play();
+            this.trigger('over', e);
+            document.addEventListener('touchend', touchend);
+            document.removeEventListener('mousemove', mousemove);
+            if (this.canvas.hasAttribute('controls')) {
+                this.canvas.removeEventListener('mouseover', mouseover);
+                this.canvas.removeEventListener('mouseout', mouseout);
+            }
         };
 
         const loop: FrameRequestCallback = (time: number) => {
