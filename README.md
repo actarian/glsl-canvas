@@ -19,6 +19,10 @@ npm install
 ```bash
 gulp
 ```
+* Run gulp for build
+```bash
+gulp build --target build
+```
 * Push to your local fork and make your pull request
 
 Thank you
