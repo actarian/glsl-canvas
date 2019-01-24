@@ -21,7 +21,7 @@ gulp
 ```
 * Run gulp for build
 ```bash
-gulp build --target build
+gulp build --target dist
 ```
 * Push to your local fork and make your pull request
 

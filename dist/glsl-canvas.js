@@ -1223,7 +1223,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
       _this.dirty = true;
       _this.visible = false;
 
-      _this.removeListeners = function () {};
+      _this._removeListeners = function () {};
 
       if (!canvas) {
         return _possibleConstructorReturn(_this);
@@ -1247,14 +1247,14 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
       _this.devicePixelRatio = window.devicePixelRatio || 1;
       canvas.style.backgroundColor = contextOptions.backgroundColor || 'rgba(0,0,0,0)';
 
-      _this.getShaders().then(function (success) {
+      _this._getShaders().then(function (success) {
         _this.load();
 
         if (!_this.program) {
           return;
         }
 
-        _this.addListeners();
+        _this._addListeners();
 
         _this.loop(); // this.animated = false;
 
@@ -1267,8 +1267,8 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     }
 
     _createClass(GlslCanvas, [{
-      key: "getShaders",
-      value: function getShaders() {
+      key: "_getShaders",
+      value: function _getShaders() {
         var _this2 = this;
 
         return new Promise(function (resolve, reject) {
@@ -1311,8 +1311,8 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         });
       }
     }, {
-      key: "addListeners",
-      value: function addListeners() {
+      key: "_addListeners",
+      value: function _addListeners() {
         var _this3 = this;
 
         /*
@@ -1423,7 +1423,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           }
         }
 
-        this.removeListeners = function () {
+        this._removeListeners = function () {
           // window.removeEventListener('resize', resize);
           window.removeEventListener('scroll', scroll);
           document.removeEventListener('mousemove', mousemove);
@@ -1441,156 +1441,27 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         };
       }
     }, {
-      key: "load",
-      value: function load(fragmentString, vertexString) {
-        if (vertexString) {
-          this.vertexString = vertexString;
-        }
-
-        if (fragmentString) {
-          this.fragmentString = fragmentString;
-        }
-
-        var gl = this.gl;
-        var vertexShader, fragmentShader;
-
-        try {
-          vertexShader = context_1.default.createShader(gl, this.vertexString, gl.VERTEX_SHADER);
-          fragmentShader = context_1.default.createShader(gl, this.fragmentString, gl.FRAGMENT_SHADER); // If Fragment shader fails load a empty one to sign the error
-
-          if (!fragmentShader) {
-            fragmentShader = context_1.default.createShader(gl, context_1.ContextDefaultFragment, gl.FRAGMENT_SHADER);
-            this.valid = false;
-          } else {
-            this.valid = true;
-          }
-        } catch (e) {
-          console.log(e);
-          this.trigger('error', e);
-          return;
-        } // Create and use program
-
-
-        var program = context_1.default.createProgram(gl, [vertexShader, fragmentShader]); //, [0,1],['a_texcoord','a_position']);
-
-        gl.useProgram(program); // Delete shaders
-        // gl.detachShader(program, vertexShader);
-        // gl.detachShader(program, fragmentShader);
-
-        gl.deleteShader(vertexShader);
-        gl.deleteShader(fragmentShader);
-        this.program = program;
-
-        if (this.valid) {
-          this.buffers = buffers_1.default.getBuffers(gl, this.fragmentString, this.vertexString);
-          this.vertexBuffers = context_1.default.createVertexBuffers(gl, program);
-          this.createUniforms();
-        } // Trigger event
-
-
-        this.trigger('load', this);
-      }
-    }, {
-      key: "test",
-      value: function test(fragmentString, vertexString) {
-        var _this4 = this;
-
-        return new Promise(function (resolve, reject) {
-          var vertex = _this4.vertexString;
-          var fragment = _this4.fragmentString;
-          var paused = _this4.timer.paused; // Thanks to @thespite for the help here
-          // https://www.khronos.org/registry/webgl/extensions/EXT_disjoint_timer_query/
-
-          var extension = _this4.gl.getExtension('EXT_disjoint_timer_query');
-
-          var query = extension.createQueryEXT();
-          var wasValid = _this4.valid;
-
-          if (fragmentString || vertexString) {
-            _this4.load(fragmentString, vertexString);
-
-            wasValid = _this4.valid;
-
-            _this4.render();
-          }
-
-          _this4.timer.paused = true;
-          extension.beginQueryEXT(extension.TIME_ELAPSED_EXT, query);
-
-          _this4.render();
-
-          extension.endQueryEXT(extension.TIME_ELAPSED_EXT);
-
-          var waitForTest = function waitForTest() {
-            _this4.render();
-
-            var available = extension.getQueryObjectEXT(query, extension.QUERY_RESULT_AVAILABLE_EXT);
-
-            var disjoint = _this4.gl.getParameter(extension.GPU_DISJOINT_EXT);
-
-            if (available && !disjoint) {
-              var result = {
-                wasValid: wasValid,
-                fragment: fragmentString || _this4.fragmentString,
-                vertex: vertexString || _this4.vertexString,
-                timeElapsedMs: extension.getQueryObjectEXT(query, extension.QUERY_RESULT_EXT) / 1000000.0
-              };
-              _this4.timer.paused = paused;
-
-              if (fragmentString || vertexString) {
-                _this4.load(fragment, vertex);
-              }
-
-              resolve(result);
-            } else {
-              window.requestAnimationFrame(waitForTest);
-            }
-          };
-
-          waitForTest();
-        });
-      }
-    }, {
-      key: "destroy",
-      value: function destroy() {
-        this.removeListeners();
-        this.animated = false;
-        this.valid = false;
-        var gl = this.gl;
-        gl.useProgram(null);
-        gl.deleteProgram(this.program);
-
-        for (var key in this.buffers.values) {
-          var buffer = this.buffers.values[key];
-          buffer.destroy(gl);
-        }
-
-        for (var _key in this.textures.values) {
-          var texture = this.textures.values[_key];
-          texture.destroy(gl);
-        }
-
-        this.buffers = null;
-        this.textures = null;
-        this.uniforms = null;
-        this.program = null;
-        this.gl = null;
-        GlslCanvas.items.splice(GlslCanvas.items.indexOf(this), 1);
-      }
-    }, {
-      key: "setUniformArray",
-      value: function setUniformArray(key, values) {
+      key: "_setUniform",
+      value: function _setUniform(key, values) {
         var _uniforms_1$default,
-            _this5 = this;
+            _this4 = this;
 
         var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var type = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
 
         var uniform = (_uniforms_1$default = uniforms_1.default).parseUniform.apply(_uniforms_1$default, [key].concat(_toConsumableArray(values)));
 
         if (Array.isArray(uniform)) {
           uniform.forEach(function (x) {
-            return _this5.loadTexture(x.key, x.values[0]);
-          }, options);
+            return _this4.loadTexture(x.key, x.values[0], options);
+          });
+          /*
+          if (Uniforms.isArrayOfSampler2D(uniform)) {
+              uniform.forEach((x) => this.loadTexture(x.key, x.values[0], options));
+          } else {
+              uniform.forEach((x) => this.uniforms.set(x.key, x.values[0]));
+          }
+          */
         } else if (uniform) {
           switch (uniform.type) {
             case uniforms_1.UniformType.Sampler2D:
@@ -1603,76 +1474,25 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         }
       }
     }, {
-      key: "setUniform",
-      value: function setUniform(key) {
-        for (var _len = arguments.length, values = new Array(_len > 1 ? _len - 1 : 0), _key2 = 1; _key2 < _len; _key2++) {
-          values[_key2 - 1] = arguments[_key2];
-        }
-
-        return this.setUniformArray(key, values);
-      }
-    }, {
-      key: "setTexture",
-      value: function setTexture(key, urlElementOrData) {
-        var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-        return this.setUniformArray(key, [urlElementOrData], options);
-      }
-    }, {
-      key: "setUniforms",
-      value: function setUniforms(values) {
-        for (var key in values) {
-          this.setUniform(key, values[key]);
-        }
-      }
-    }, {
-      key: "pause",
-      value: function pause() {
-        if (this.valid) {
-          this.timer.pause();
-          this.canvas.classList.add('paused');
-          this.trigger('pause');
-        }
-      }
-    }, {
-      key: "play",
-      value: function play() {
-        if (this.valid) {
-          this.timer.play();
-          this.canvas.classList.remove('paused');
-          this.trigger('play');
-        }
-      }
-    }, {
-      key: "toggle",
-      value: function toggle() {
-        if (this.valid) {
-          if (this.timer.paused) {
-            this.play();
-          } else {
-            this.pause();
-          }
-        }
-      }
-    }, {
-      key: "isVisible",
-      value: function isVisible() {
+      key: "_isVisible",
+      value: function _isVisible() {
         var rect = this.rect;
         return rect.top + rect.height > 0 && rect.top < (window.innerHeight || document.documentElement.clientHeight);
       }
     }, {
-      key: "isAnimated",
-      value: function isAnimated() {
+      key: "_isAnimated",
+      value: function _isAnimated() {
         return (this.animated || this.textures.animated) && !this.timer.paused;
       }
     }, {
-      key: "isDirty",
-      value: function isDirty() {
+      key: "_isDirty",
+      value: function _isDirty() {
         return this.dirty || this.uniforms.dirty || this.textures.dirty;
       } // check size change at start of requestFrame
 
     }, {
-      key: "sizeDidChanged",
-      value: function sizeDidChanged() {
+      key: "_sizeDidChanged",
+      value: function _sizeDidChanged() {
         var gl = this.gl;
         var W = Math.ceil(this.canvas.clientWidth),
             H = Math.ceil(this.canvas.clientHeight);
@@ -1711,18 +1531,52 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         }
       }
     }, {
-      key: "checkRender",
-      value: function checkRender() {
-        if (this.isVisible() && (this.sizeDidChanged() || this.isAnimated() || this.isDirty())) {
-          this.render();
-          this.canvas.classList.add('playing');
-        } else {
-          this.canvas.classList.remove('playing');
+      key: "_parseTextures",
+      value: function _parseTextures(fragmentString) {
+        var _this5 = this;
+
+        var regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\:\/\/|\.|\-|\_]*)|\s*)/gm;
+        var matches;
+
+        while ((matches = regexp.exec(fragmentString)) !== null) {
+          var key = matches[1];
+
+          if (matches[3]) {
+            var ext = matches[3].split('.').pop().toLowerCase();
+            var url = matches[3];
+
+            if (url && textures_1.TextureExtensions.indexOf(ext) !== -1) {
+              this.textureList.push({
+                key: key,
+                url: url
+              });
+            }
+          } else if (!this.buffers.has(key)) {
+            // create empty texture
+            this.textureList.push({
+              key: key,
+              url: null
+            });
+          }
         }
+
+        if (this.canvas.hasAttribute('data-textures')) {
+          var urls = this.canvas.getAttribute('data-textures').split(',');
+          urls.forEach(function (url, i) {
+            var key = 'u_texture' + i;
+
+            _this5.textureList.push({
+              key: key,
+              url: url
+            });
+          });
+        }
+
+        return this.textureList.length > 0;
       }
     }, {
-      key: "createUniforms",
-      value: function createUniforms() {
+      key: "_createUniforms",
+      value: function _createUniforms() {
         var _this6 = this;
 
         var gl = this.gl;
@@ -1734,7 +1588,9 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         var hasTime = (fragmentString.match(/u_time/g) || []).length > 1;
         var hasDate = (fragmentString.match(/u_date/g) || []).length > 1;
         var hasMouse = (fragmentString.match(/u_mouse/g) || []).length > 1;
-        var hasTextures = this.parseTextures(fragmentString);
+
+        var hasTextures = this._parseTextures(fragmentString);
+
         this.animated = hasTime || hasDate || hasMouse;
 
         if (this.animated) {
@@ -1775,80 +1631,8 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         }
       }
     }, {
-      key: "parseTextures",
-      value: function parseTextures(fragmentString) {
-        var _this7 = this;
-
-        var regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\:\/\/|\.|\-|\_]*)|\s*)/gm;
-        var matches;
-
-        while ((matches = regexp.exec(fragmentString)) !== null) {
-          var key = matches[1];
-
-          if (matches[3]) {
-            var ext = matches[3].split('.').pop().toLowerCase();
-            var url = matches[3];
-
-            if (url && textures_1.TextureExtensions.indexOf(ext) !== -1) {
-              this.textureList.push({
-                key: key,
-                url: url
-              });
-            }
-          } else if (!this.buffers.has(key)) {
-            // create empty texture
-            this.textureList.push({
-              key: key,
-              url: null
-            });
-          }
-        }
-
-        if (this.canvas.hasAttribute('data-textures')) {
-          var urls = this.canvas.getAttribute('data-textures').split(',');
-          urls.forEach(function (url, i) {
-            var key = 'u_tex' + i;
-
-            _this7.textureList.push({
-              key: key,
-              url: url
-            });
-          });
-        }
-
-        return this.textureList.length > 0;
-      }
-    }, {
-      key: "loadTexture",
-      value: function loadTexture(key, urlElementOrData) {
-        var _this8 = this;
-
-        var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-
-        if (this.valid) {
-          return this.textures.createOrUpdate(this.gl, key, urlElementOrData, this.buffers.count, options).then(function (texture) {
-            var index = texture.index;
-
-            var uniform = _this8.uniforms.createTexture(key, index);
-
-            uniform.texture = texture;
-            var keyResolution = key.indexOf('[') !== -1 ? key.replace('[', 'Resolution[') : key + 'Resolution';
-
-            var uniformResolution = _this8.uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.FloatVec2, keyResolution, texture.width, texture.height); // console.log('loadTexture', key, url, index, texture.width, texture.height);
-
-
-            return texture;
-          });
-        } else {
-          this.textureList.push({
-            key: key,
-            url: urlElementOrData
-          });
-        }
-      }
-    }, {
-      key: "updateUniforms",
-      value: function updateUniforms() {
+      key: "_updateUniforms",
+      value: function _updateUniforms() {
         var gl = this.gl;
         var BW = gl.drawingBufferWidth;
         var BH = gl.drawingBufferHeight;
@@ -1887,10 +1671,242 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           this.uniforms.update(uniforms_1.UniformMethod.Uniform1i, uniforms_1.UniformType.Sampler2D, buffer.key, buffer.input.index);
         }
 
-        for (var _key3 in this.textures.values) {
-          var texture = this.textures.values[_key3];
+        for (var _key in this.textures.values) {
+          var texture = this.textures.values[_key];
           texture.tryUpdate(gl);
           this.uniforms.update(uniforms_1.UniformMethod.Uniform1i, uniforms_1.UniformType.Sampler2D, texture.key, texture.index);
+        }
+      }
+    }, {
+      key: "load",
+      value: function load(fragmentString, vertexString) {
+        if (vertexString) {
+          this.vertexString = vertexString;
+        }
+
+        if (fragmentString) {
+          this.fragmentString = fragmentString;
+        }
+
+        var gl = this.gl;
+        var vertexShader, fragmentShader;
+
+        try {
+          vertexShader = context_1.default.createShader(gl, this.vertexString, gl.VERTEX_SHADER);
+          fragmentShader = context_1.default.createShader(gl, this.fragmentString, gl.FRAGMENT_SHADER); // If Fragment shader fails load a empty one to sign the error
+
+          if (!fragmentShader) {
+            fragmentShader = context_1.default.createShader(gl, context_1.ContextDefaultFragment, gl.FRAGMENT_SHADER);
+            this.valid = false;
+          } else {
+            this.valid = true;
+          }
+        } catch (e) {
+          this.trigger('error', e);
+          return;
+        } // Create and use program
+
+
+        var program = context_1.default.createProgram(gl, [vertexShader, fragmentShader]); //, [0,1],['a_texcoord','a_position']);
+
+        gl.useProgram(program); // Delete shaders
+        // gl.detachShader(program, vertexShader);
+        // gl.detachShader(program, fragmentShader);
+
+        gl.deleteShader(vertexShader);
+        gl.deleteShader(fragmentShader);
+        this.program = program;
+
+        if (this.valid) {
+          this.buffers = buffers_1.default.getBuffers(gl, this.fragmentString, this.vertexString);
+          this.vertexBuffers = context_1.default.createVertexBuffers(gl, program);
+
+          this._createUniforms();
+        } // Trigger event
+
+
+        this.trigger('load', this);
+      }
+    }, {
+      key: "test",
+      value: function test(fragmentString, vertexString) {
+        var _this7 = this;
+
+        return new Promise(function (resolve, reject) {
+          var vertex = _this7.vertexString;
+          var fragment = _this7.fragmentString;
+          var paused = _this7.timer.paused; // Thanks to @thespite for the help here
+          // https://www.khronos.org/registry/webgl/extensions/EXT_disjoint_timer_query/
+
+          var extension = _this7.gl.getExtension('EXT_disjoint_timer_query');
+
+          var query = extension.createQueryEXT();
+          var wasValid = _this7.valid;
+
+          if (fragmentString || vertexString) {
+            _this7.load(fragmentString, vertexString);
+
+            wasValid = _this7.valid;
+
+            _this7.render();
+          }
+
+          _this7.timer.paused = true;
+          extension.beginQueryEXT(extension.TIME_ELAPSED_EXT, query);
+
+          _this7.render();
+
+          extension.endQueryEXT(extension.TIME_ELAPSED_EXT);
+
+          var waitForTest = function waitForTest() {
+            _this7.render();
+
+            var available = extension.getQueryObjectEXT(query, extension.QUERY_RESULT_AVAILABLE_EXT);
+
+            var disjoint = _this7.gl.getParameter(extension.GPU_DISJOINT_EXT);
+
+            if (available && !disjoint) {
+              var result = {
+                wasValid: wasValid,
+                fragment: fragmentString || _this7.fragmentString,
+                vertex: vertexString || _this7.vertexString,
+                timeElapsedMs: extension.getQueryObjectEXT(query, extension.QUERY_RESULT_EXT) / 1000000.0
+              };
+              _this7.timer.paused = paused;
+
+              if (fragmentString || vertexString) {
+                _this7.load(fragment, vertex);
+              }
+
+              resolve(result);
+            } else {
+              window.requestAnimationFrame(waitForTest);
+            }
+          };
+
+          waitForTest();
+        });
+      }
+    }, {
+      key: "destroy",
+      value: function destroy() {
+        this._removeListeners();
+
+        this.animated = false;
+        this.valid = false;
+        var gl = this.gl;
+        gl.useProgram(null);
+        gl.deleteProgram(this.program);
+
+        for (var key in this.buffers.values) {
+          var buffer = this.buffers.values[key];
+          buffer.destroy(gl);
+        }
+
+        for (var _key2 in this.textures.values) {
+          var texture = this.textures.values[_key2];
+          texture.destroy(gl);
+        }
+
+        this.buffers = null;
+        this.textures = null;
+        this.uniforms = null;
+        this.program = null;
+        this.gl = null;
+        GlslCanvas.items.splice(GlslCanvas.items.indexOf(this), 1);
+      }
+    }, {
+      key: "loadTexture",
+      value: function loadTexture(key, urlElementOrData) {
+        var _this8 = this;
+
+        var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+        if (this.valid) {
+          return this.textures.createOrUpdate(this.gl, key, urlElementOrData, this.buffers.count, options).then(function (texture) {
+            var index = texture.index;
+
+            var uniform = _this8.uniforms.createTexture(key, index);
+
+            uniform.texture = texture;
+            var keyResolution = key.indexOf('[') !== -1 ? key.replace('[', 'Resolution[') : key + 'Resolution';
+
+            var uniformResolution = _this8.uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.FloatVec2, keyResolution, texture.width, texture.height); // console.log('loadTexture', key, url, index, texture.width, texture.height);
+
+
+            return texture;
+          });
+        } else {
+          this.textureList.push({
+            key: key,
+            url: urlElementOrData
+          });
+        }
+      }
+    }, {
+      key: "setTexture",
+      value: function setTexture(key, urlElementOrData) {
+        var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+        return this._setUniform(key, [urlElementOrData], options);
+      }
+    }, {
+      key: "setUniform",
+      value: function setUniform(key) {
+        for (var _len = arguments.length, values = new Array(_len > 1 ? _len - 1 : 0), _key3 = 1; _key3 < _len; _key3++) {
+          values[_key3 - 1] = arguments[_key3];
+        }
+
+        return this._setUniform(key, values);
+      }
+    }, {
+      key: "setUniformOfInt",
+      value: function setUniformOfInt(key, values) {
+        return this._setUniform(key, values, null, uniforms_1.UniformType.Int);
+      }
+    }, {
+      key: "setUniforms",
+      value: function setUniforms(values) {
+        for (var key in values) {
+          this.setUniform(key, values[key]);
+        }
+      }
+    }, {
+      key: "pause",
+      value: function pause() {
+        if (this.valid) {
+          this.timer.pause();
+          this.canvas.classList.add('paused');
+          this.trigger('pause');
+        }
+      }
+    }, {
+      key: "play",
+      value: function play() {
+        if (this.valid) {
+          this.timer.play();
+          this.canvas.classList.remove('paused');
+          this.trigger('play');
+        }
+      }
+    }, {
+      key: "toggle",
+      value: function toggle() {
+        if (this.valid) {
+          if (this.timer.paused) {
+            this.play();
+          } else {
+            this.pause();
+          }
+        }
+      }
+    }, {
+      key: "checkRender",
+      value: function checkRender() {
+        if (this._isVisible() && (this._sizeDidChanged() || this._isAnimated() || this._isDirty())) {
+          this.render();
+          this.canvas.classList.add('playing');
+        } else {
+          this.canvas.classList.remove('playing');
         }
       }
     }, {
@@ -1899,7 +1915,8 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         var gl = this.gl;
         var BW = gl.drawingBufferWidth;
         var BH = gl.drawingBufferHeight;
-        this.updateUniforms();
+
+        this._updateUniforms();
 
         for (var key in this.buffers.values) {
           var buffer = this.buffers.values[key];
@@ -1949,7 +1966,9 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
   window.GlslCanvas = window.GlslCanvas || GlslCanvas; // (<any>(window)).GlslCanvas = GlslCanvas;
 
   if (document) {
-    document.addEventListener("DOMContentLoaded", GlslCanvas.loadAll);
+    document.addEventListener("DOMContentLoaded", function () {
+      GlslCanvas.loadAll();
+    });
   }
 });
 
@@ -2242,6 +2261,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
       var _this;
 
       var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : new TextureOptions();
+      var workpath = arguments.length > 4 ? arguments[4] : undefined;
 
       _classCallCheck(this, Texture);
 
@@ -2253,6 +2273,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
       _this.key = key;
       _this.index = index;
       _this.options = options;
+      _this.workpath = workpath;
 
       _this.create(gl);
 
@@ -2308,6 +2329,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         this.source = url;
         this.sourceType = TextureSourceType.Url;
         this.options = Object.assign(this.options, options);
+        var src = url.indexOf(':/') === -1 && this.workpath ? "".concat(this.workpath, "/").concat(url) : url;
         var ext = url.split('.').pop().toLowerCase();
         var isVideo = exports.TextureVideoExtensions.indexOf(ext) !== -1;
         var element;
@@ -2320,7 +2342,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
           element.setAttribute('playsinline', 'true');
           element.autoplay = true;
           element.muted = true;
-          element.src = url;
+          element.src = src;
         } else {
           element = new Image();
           promise = this.setElement(gl, element, options);
@@ -2329,7 +2351,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
             element.crossOrigin = 'anonymous';
           }
 
-          element.src = url;
+          element.src = src;
         }
 
         return promise;
@@ -2952,7 +2974,8 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
       key: "apply",
       value: function apply(gl, program) {
         for (var key in this.values) {
-          this.values[key].apply(gl, program);
+          // if (typeof this.values[key].apply === 'function') {
+          this.values[key].apply(gl, program); // }
         } // this.forEach(uniform => uniform.apply(gl, program));
 
       }
@@ -2982,6 +3005,13 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
       value: function isArrayOfTexture(array) {
         return array.reduce(function (flag, value) {
           return flag && textures_1.Texture.isTexture(value);
+        }, true);
+      }
+    }, {
+      key: "isArrayOfSampler2D",
+      value: function isArrayOfSampler2D(array) {
+        return array.reduce(function (flag, value) {
+          return flag && value.type === UniformType.Sampler2D;
         }, true);
       }
     }, {
