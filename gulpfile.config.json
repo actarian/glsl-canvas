@@ -18,7 +18,7 @@
 				"minify": true
 			}]
 		},
-		"build": {
+		"dist": {
 			"compile": [{
 				"input": "src/glsl-canvas/glsl-canvas.ts",
 				"output": "dist/glsl-canvas.js",

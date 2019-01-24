@@ -17,6 +17,7 @@
 			"ie 11"
 		]
 	},
+	"main": "dist/glsl-canvas.js",
 	"scripts": {
 		"start": "gulp"
 	},

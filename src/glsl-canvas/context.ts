@@ -29,6 +29,7 @@ void main(){
 
 export interface IContextOptions {
     backgroundColor?: string;
+    workpath?: string;
     vertexString?: string;
     fragmentString?: string;
     alpha?: GLboolean;

@@ -5,7 +5,7 @@ import Buffers, { IOBuffer } from './buffers';
 import Common from './common';
 import Context, { ContextDefaultFragment, ContextDefaultVertex, ContextVertexBuffers, IContextOptions } from './context';
 import Subscriber from './subscriber';
-import Textures, { Texture, TextureData, TextureExtensions } from './textures';
+import Textures, { Texture, TextureData, TextureExtensions, TextureOptions } from './textures';
 import Uniforms, { IUniformOption, Uniform, UniformMethod, UniformType } from './uniforms';
 
 export interface IPoint {
@@ -100,8 +100,8 @@ export default class GlslCanvas extends Subscriber {
             return;
         }
         this.canvas = canvas;
-        this.width = canvas.clientWidth;
-        this.height = canvas.clientHeight;
+        this.width = 0; // canvas.clientWidth;
+        this.height = 0; // canvas.clientHeight;
         this.rect = canvas.getBoundingClientRect();
         this.vertexString = contextOptions.vertexString || ContextDefaultVertex;
         this.fragmentString = contextOptions.fragmentString || ContextDefaultFragment;
@@ -182,10 +182,12 @@ export default class GlslCanvas extends Subscriber {
     }
 
     addListeners(): void {
+        /*
         const resize = (e: Event) => {
             this.rect = this.canvas.getBoundingClientRect();
             this.trigger('resize', e);
         };
+        */
 
         const scroll = (e: Event) => {
             this.rect = this.canvas.getBoundingClientRect();
@@ -258,7 +260,7 @@ export default class GlslCanvas extends Subscriber {
 
         this.loop = loop;
 
-        window.addEventListener('resize', resize);
+        // window.addEventListener('resize', resize);
         window.addEventListener('scroll', scroll);
         document.addEventListener('mousemove', mousemove, false);
         document.addEventListener('touchmove', touchmove);
@@ -273,7 +275,7 @@ export default class GlslCanvas extends Subscriber {
         }
 
         this.removeListeners = () => {
-            window.removeEventListener('resize', resize);
+            // window.removeEventListener('resize', resize);
             window.removeEventListener('scroll', scroll);
             document.removeEventListener('mousemove', mousemove);
             document.removeEventListener('touchmove', touchmove);
@@ -297,14 +299,21 @@ export default class GlslCanvas extends Subscriber {
             this.fragmentString = fragmentString;
         }
         const gl = this.gl;
-        const vertexShader = Context.createShader(gl, this.vertexString, gl.VERTEX_SHADER);
-        let fragmentShader = Context.createShader(gl, this.fragmentString, gl.FRAGMENT_SHADER);
-        // If Fragment shader fails load a empty one to sign the error
-        if (!fragmentShader) {
-            fragmentShader = Context.createShader(gl, ContextDefaultFragment, gl.FRAGMENT_SHADER);
-            this.valid = false;
-        } else {
-            this.valid = true;
+        let vertexShader, fragmentShader;
+        try {
+            vertexShader = Context.createShader(gl, this.vertexString, gl.VERTEX_SHADER);
+            fragmentShader = Context.createShader(gl, this.fragmentString, gl.FRAGMENT_SHADER);
+            // If Fragment shader fails load a empty one to sign the error
+            if (!fragmentShader) {
+                fragmentShader = Context.createShader(gl, ContextDefaultFragment, gl.FRAGMENT_SHADER);
+                this.valid = false;
+            } else {
+                this.valid = true;
+            }
+        } catch (e) {
+            console.log(e);
+            this.trigger('error', e);
+            return;
         }
         // Create and use program
         const program = Context.createProgram(gl, [vertexShader, fragmentShader]); //, [0,1],['a_texcoord','a_position']);
@@ -393,10 +402,10 @@ export default class GlslCanvas extends Subscriber {
         GlslCanvas.items.splice(GlslCanvas.items.indexOf(this), 1);
     }
 
-    setUniform(key: string, ...values: any[]): void {
+    setUniformArray(key: string, values: any[], options: any = null): void {
         const uniform: Uniform | Uniform[] = Uniforms.parseUniform(key, ...values);
         if (Array.isArray(uniform)) {
-            uniform.forEach((x) => this.loadTexture(x.key, x.values[0]));
+            uniform.forEach((x) => this.loadTexture(x.key, x.values[0]), options);
         } else if (uniform) {
             switch (uniform.type) {
                 case UniformType.Sampler2D:
@@ -406,6 +415,18 @@ export default class GlslCanvas extends Subscriber {
                     this.uniforms.set(key, uniform);
             }
         }
+    }
+
+    setUniform(key: string, ...values: any[]): void {
+        return this.setUniformArray(key, values);
+    }
+
+    setTexture(
+        key: string,
+        urlElementOrData: string | HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | Element | TextureData,
+        options: TextureOptions = {}
+    ): void {
+        return this.setUniformArray(key, [urlElementOrData], options);
     }
 
     setUniforms(values: IUniformOption): void {
@@ -456,9 +477,8 @@ export default class GlslCanvas extends Subscriber {
     // check size change at start of requestFrame
     sizeDidChanged(): boolean {
         const gl = this.gl;
-        const rect = this.rect;
-        const W = rect.width,
-            H = rect.height;
+        const W = Math.ceil(this.canvas.clientWidth),
+            H = Math.ceil(this.canvas.clientHeight);
         if (this.width !== W ||
             this.height !== H) {
             this.width = W;
@@ -466,8 +486,11 @@ export default class GlslCanvas extends Subscriber {
             // Lookup the size the browser is displaying the canvas in CSS pixels
             // and compute a size needed to make our drawingbuffer match it in
             // device pixels.
-            const BW = Math.floor(W * this.devicePixelRatio);
-            const BH = Math.floor(H * this.devicePixelRatio);
+            const BW = Math.ceil(W * this.devicePixelRatio);
+            const BH = Math.ceil(H * this.devicePixelRatio);
+            this.canvas.width = BW;
+            this.canvas.height = BH;
+            /*
             if (gl.canvas.width !== BW ||
                 gl.canvas.height !== BH) {
                 gl.canvas.width = BW;
@@ -475,10 +498,13 @@ export default class GlslCanvas extends Subscriber {
                 // Set the viewport to match
                 // gl.viewport(0, 0, BW, BH);
             }
+            */
             for (const key in this.buffers.values) {
                 const buffer: IOBuffer = this.buffers.values[key];
                 buffer.resize(gl, BW, BH);
             }
+            this.rect = this.canvas.getBoundingClientRect();
+            this.trigger('resize');
             // gl.useProgram(this.program);
             return true;
         } else {
@@ -566,10 +592,11 @@ export default class GlslCanvas extends Subscriber {
 
     loadTexture(
         key: string,
-        urlElementOrData: string | HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | Element | TextureData
+        urlElementOrData: string | HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | Element | TextureData,
+        options: TextureOptions = {}
     ): Promise<Texture> {
         if (this.valid) {
-            return this.textures.createOrUpdate(this.gl, key, urlElementOrData, this.buffers.count).then(texture => {
+            return this.textures.createOrUpdate(this.gl, key, urlElementOrData, this.buffers.count, options).then(texture => {
                 const index = texture.index;
                 const uniform = this.uniforms.createTexture(key, index);
                 uniform.texture = texture;

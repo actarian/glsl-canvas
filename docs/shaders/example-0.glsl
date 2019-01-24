@@ -15,5 +15,6 @@ void main() {
 		abs(cos(u_time*0.2)) * st.y,
 		abs(sin(u_time)) * st.y
 	);
+	vec3 a = vec2(1.0);
 	gl_FragColor = vec4(color,1.0);
 }
