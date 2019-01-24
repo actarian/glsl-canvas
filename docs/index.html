@@ -2,140 +2,140 @@
 <html>
 
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=2,user-scalable=yes">
-    <title>GlslCanvas</title>
-    <link rel="stylesheet" type="text/css" href="css/docs.min.css">
-    <script type="text/javascript" src="js/vendors.js"></script>
-    <script type="text/javascript" src="js/glsl-canvas.js"></script>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=2,user-scalable=yes">
+	<title>GlslCanvas</title>
+	<link rel="stylesheet" type="text/css" href="css/docs.min.css">
+	<script type="text/javascript" src="js/vendors.js"></script>
+	<script type="text/javascript" src="js/glsl-canvas.js"></script>
 </head>
 
 <body>
-    <div class="examples">
-        <div class="example">
-            <h4>fragment via attribute</h4>
-            <canvas class="glsl-canvas" controls data-fragment-url="shaders/example-0.glsl"></canvas>
-            <button type="button" class="btn btn-toggle">toggle</button>
-        </div>
-        <div class="example">
-            <h4>buffers</h4>
-            <canvas class="glsl-canvas" controls data-fragment-url="shaders/example-1.glsl"></canvas>
-            <button type="button" class="btn btn-toggle">toggle</button>
-        </div>
-        <div class="example">
-            <h4>texture url in fragment shader</h4>
-            <canvas class="glsl-canvas" controls data-fragment-url="shaders/example-2.glsl"></canvas>
-            <button type="button" class="btn btn-toggle">toggle</button>
-        </div>
-        <div class="example">
-            <h4>update texture uniform</h4>
-            <canvas class="glsl-canvas" controls data-fragment-url="shaders/example-3.glsl"></canvas>
-            <button type="button" class="btn btn-toggle">toggle</button>
-        </div>
-        <div class="example">
-            <h4>video texture</h4>
-            <canvas class="glsl-canvas" controls data-fragment-url="shaders/example-4.glsl"></canvas>
-            <button type="button" class="btn btn-toggle">toggle</button>
-        </div>
-        <div class="example">
-            <h4>animation</h4>
-            <canvas class="glsl-canvas" controls data-fragment-url="shaders/example-5.glsl"></canvas>
-            <button type="button" class="btn btn-toggle">toggle</button>
-        </div>
-        <div class="example">
-            <h4>vec2 update</h4>
-            <canvas class="glsl-canvas" controls data-fragment-url="shaders/example-6.glsl"></canvas>
-            <button type="button" class="btn btn-toggle">toggle</button>
-        </div>
-        <div class="example">
-            <h4>vec3 update</h4>
-            <canvas class="glsl-canvas" controls data-fragment-url="shaders/example-7.glsl"></canvas>
-            <button type="button" class="btn btn-toggle">toggle</button>
-        </div>
-        <div class="example">
-            <h4>vec4 update</h4>
-            <canvas class="glsl-canvas" controls data-fragment-url="shaders/example-8.glsl"></canvas>
-            <button type="button" class="btn btn-toggle">toggle</button>
-        </div>
-        <div class="example">
-            <h4>texture array</h4>
-            <canvas class="glsl-canvas" controls data-fragment-url="shaders/example-9.glsl"></canvas>
-            <button type="button" class="btn btn-toggle">toggle</button>
-        </div>
-        <div class="example">
-            <h4>set multiple uniforms</h4>
-            <canvas class="glsl-canvas" controls data-fragment-url="shaders/example-10.glsl"></canvas>
-            <button type="button" class="btn btn-toggle">toggle</button>
-        </div>
-    </div>
-    <div class="examples">
-        <div class="example">
-            <h4>video source</h4>
-            <video id="video-4" muted loop playsinline autoplay controls src="data/moon.mp4"></video>
-        </div>
-        <!--
+	<div class="examples">
+		<div class="example">
+			<h4>fragment via attribute</h4>
+			<canvas class="glsl-canvas" controls data-fragment-url="shaders/example-0.glsl"></canvas>
+			<button type="button" class="btn btn-toggle">toggle</button>
+		</div>
+		<div class="example">
+			<h4>buffers</h4>
+			<canvas class="glsl-canvas" controls data-fragment-url="shaders/example-1.glsl"></canvas>
+			<button type="button" class="btn btn-toggle">toggle</button>
+		</div>
+		<div class="example">
+			<h4>texture url in fragment shader</h4>
+			<canvas class="glsl-canvas" controls data-fragment-url="shaders/example-2.glsl"></canvas>
+			<button type="button" class="btn btn-toggle">toggle</button>
+		</div>
+		<div class="example">
+			<h4>update texture uniform</h4>
+			<canvas class="glsl-canvas" controls data-fragment-url="shaders/example-3.glsl"></canvas>
+			<button type="button" class="btn btn-toggle">toggle</button>
+		</div>
+		<div class="example">
+			<h4>video texture</h4>
+			<canvas class="glsl-canvas" controls data-fragment-url="shaders/example-4.glsl"></canvas>
+			<button type="button" class="btn btn-toggle">toggle</button>
+		</div>
+		<div class="example">
+			<h4>animation</h4>
+			<canvas class="glsl-canvas" controls data-fragment-url="shaders/example-5.glsl"></canvas>
+			<button type="button" class="btn btn-toggle">toggle</button>
+		</div>
+		<div class="example">
+			<h4>vec2 update</h4>
+			<canvas class="glsl-canvas" controls data-fragment-url="shaders/example-6.glsl"></canvas>
+			<button type="button" class="btn btn-toggle">toggle</button>
+		</div>
+		<div class="example">
+			<h4>vec3 update</h4>
+			<canvas class="glsl-canvas" controls data-fragment-url="shaders/example-7.glsl"></canvas>
+			<button type="button" class="btn btn-toggle">toggle</button>
+		</div>
+		<div class="example">
+			<h4>vec4 update</h4>
+			<canvas class="glsl-canvas" controls data-fragment-url="shaders/example-8.glsl"></canvas>
+			<button type="button" class="btn btn-toggle">toggle</button>
+		</div>
+		<div class="example">
+			<h4>texture array</h4>
+			<canvas class="glsl-canvas" controls data-fragment-url="shaders/example-9.glsl"></canvas>
+			<button type="button" class="btn btn-toggle">toggle</button>
+		</div>
+		<div class="example">
+			<h4>set multiple uniforms</h4>
+			<canvas class="glsl-canvas" controls data-fragment-url="shaders/example-10.glsl"></canvas>
+			<button type="button" class="btn btn-toggle">toggle</button>
+		</div>
+	</div>
+	<div class="examples">
+		<div class="example">
+			<h4>video source</h4>
+			<video id="video-4" muted loop playsinline autoplay controls src="data/moon.mp4"></video>
+		</div>
+		<!--
         <div class="example">
             <h4>video source</h4>
             <video id="video-11" muted loop playsinline autoplay controls src="data/greenscreen.mp4"></video>
         </div>
         -->
-    </div>
+	</div>
 </body>
 
 <script>
-    var stats = new Stats();
-    stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
-    document.body.appendChild(stats.dom);
-    var canvases = [].slice.call(document.querySelectorAll('.glsl-canvas'))
-        .map(function (element, i) {
-            var canvas = GlslCanvas.of(element);
-            canvas.on('render', function () {
-                stats.end();
-                stats.begin();
-            });
-            switch (i) {
-                case 3:
-                    canvas.on('over', function () {
-                        if (canvas.uniforms.get('u_texture').texture.url === 'data/mars.jpg') {
-                            canvas.setUniform('u_texture', 'data/moon.jpg');
-                        } else {
-                            canvas.setUniform('u_texture', 'data/mars.jpg');
-                        }
-                    });
-                    break;
-                case 4:
-                    canvas.setUniform('u_video', '#video-4');
-                    break;
-                case 6:
-                    canvas.on('render', function () {
-                        canvas.setUniform('u_pos', Math.random() - 0.5, Math.random() - 0.5);
-                    });
-                    break;
-                case 7:
-                    canvas.on('render', function () {
-                        canvas.setUniform('u_pos', Math.random() - 0.5, Math.random() - 0.5);
-                        canvas.setUniform('u_col', Math.random(), Math.random(), Math.random());
-                    });
-                    break;
-                case 8:
-                    canvas.on('render', function () {
-                        canvas.setUniform('u_pos', Math.random() - 0.5, Math.random() - 0.5);
-                        canvas.setUniform('u_col', [Math.random(), Math.random(), Math.random(), Math.random()]);
-                    });
-                    break;
-                case 9:
-                    canvas.setUniform('u_texture', ['data/moon.jpg', 'data/mars.jpg']);
-                    break;
-                case 10:
-                    canvas.setUniform('u_video', '#video-4');
-                    canvas.on('move', function (mouse) {
-                        canvas.setUniforms({
-                            u_x: mouse.x + 0.001,
-                            u_y: mouse.y + 0.001,
-                        });
-                    });
-                    break;
-                    /*
+	var stats = new Stats();
+	stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+	document.body.appendChild(stats.dom);
+	var canvases = [].slice.call(document.querySelectorAll('.glsl-canvas'))
+		.map(function(element, i) {
+			var canvas = GlslCanvas.of(element);
+			canvas.on('render', function() {
+				stats.end();
+				stats.begin();
+			});
+			switch (i) {
+				case 3:
+					canvas.on('over', function() {
+						if (canvas.uniforms.get('u_texture').texture.url === 'data/mars.jpg') {
+							canvas.setUniform('u_texture', 'data/moon.jpg');
+						} else {
+							canvas.setUniform('u_texture', 'data/mars.jpg');
+						}
+					});
+					break;
+				case 4:
+					canvas.setUniform('u_video', '#video-4');
+					break;
+				case 6:
+					canvas.on('render', function() {
+						canvas.setUniform('u_pos', Math.random() - 0.5, Math.random() - 0.5);
+					});
+					break;
+				case 7:
+					canvas.on('render', function() {
+						canvas.setUniform('u_pos', Math.random() - 0.5, Math.random() - 0.5);
+						canvas.setUniform('u_col', Math.random(), Math.random(), Math.random());
+					});
+					break;
+				case 8:
+					canvas.on('render', function() {
+						canvas.setUniform('u_pos', Math.random() - 0.5, Math.random() - 0.5);
+						canvas.setUniform('u_col', [Math.random(), Math.random(), Math.random(), Math.random()]);
+					});
+					break;
+				case 9:
+					canvas.setUniform('u_texture', ['data/moon.jpg', 'data/mars.jpg']);
+					break;
+				case 10:
+					canvas.setUniform('u_video', '#video-4');
+					canvas.on('move', function(mouse) {
+						canvas.setUniforms({
+							u_x: mouse.x + 0.001,
+							u_y: mouse.y + 0.001,
+						});
+					});
+					break;
+					/*
                 case 11:
                     canvas.setUniforms({
                         u_video: '#video-11',
@@ -145,18 +145,19 @@
                     });
                     break;
                     */
-            }
-            return canvas;
-        });
-    var buttons = [].slice.call(document.querySelectorAll('.btn-toggle'))
-        .forEach(function (button, i) {
-            button.addEventListener('click', function () {
-                var canvas = canvases[i];
-                if (canvas) {
-                    canvas.toggle();
-                }
-            });
-        });
+			}
+			return canvas;
+		});
+	var buttons = [].slice.call(document.querySelectorAll('.btn-toggle'))
+		.forEach(function(button, i) {
+			button.addEventListener('click', function() {
+				var canvas = canvases[i];
+				if (canvas) {
+					canvas.toggle();
+				}
+			});
+		});
+
 </script>
 
 </html>
