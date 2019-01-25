@@ -321,11 +321,14 @@ export class Texture extends Subscriber {
 		}
 		const powerOf2 = Texture.isPowerOf2(this.width) && Texture.isPowerOf2(this.height);
 		let filtering = options.filtering || TextureFilteringType.MipMap;
-		let wrapS = options.TEXTURE_WRAP_S || (options.repeat && gl.REPEAT) || gl.CLAMP_TO_EDGE;
-		let wrapT = options.TEXTURE_WRAP_T || (options.repeat && gl.REPEAT) || gl.CLAMP_TO_EDGE;
+		let wrapS = options.TEXTURE_WRAP_S || (options.repeat ? gl.REPEAT : gl.CLAMP_TO_EDGE);
+		let wrapT = options.TEXTURE_WRAP_T || (options.repeat ? gl.REPEAT : gl.CLAMP_TO_EDGE);
 		if (!powerOf2) {
 			filtering = filtering === TextureFilteringType.MipMap ? TextureFilteringType.Linear : filtering;
 			wrapS = wrapT = gl.CLAMP_TO_EDGE;
+			if (options.repeat || options.TEXTURE_WRAP_S || options.TEXTURE_WRAP_T) {
+				console.warn('GlslCanvas: cannot repeat texture ${options.url} cause is not power of 2.');
+			}
 		}
 		this.powerOf2 = powerOf2;
 		this.filtering = filtering;

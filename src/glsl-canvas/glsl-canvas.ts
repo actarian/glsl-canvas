@@ -294,7 +294,6 @@ export default class GlslCanvas extends Subscriber {
 	): void {
 		const uniform: Uniform | Uniform[] = Uniforms.parseUniform(key, values, type);
 		if (Array.isArray(uniform)) {
-			// uniform.forEach((x) => this.loadTexture(x.key, x.values[0], options));
 			if (Uniforms.isArrayOfSampler2D(uniform)) {
 				uniform.forEach((x) => this.loadTexture(x.key, x.values[0], options));
 			} else {
@@ -354,23 +353,23 @@ export default class GlslCanvas extends Subscriber {
 		} else {
 			this.canvas.classList.remove('animated');
 		}
-		this.uniforms.create(UniformMethod.Uniform2f, UniformType.FloatVec2, 'u_resolution', BW, BH);
+		this.uniforms.create(UniformMethod.Uniform2f, UniformType.Float, 'u_resolution', [BW, BH]);
 		if (hasDelta) {
-			this.uniforms.create(UniformMethod.Uniform1f, UniformType.Float, 'u_delta', timer.delta / 1000.0);
+			this.uniforms.create(UniformMethod.Uniform1f, UniformType.Float, 'u_delta', [timer.delta / 1000.0]);
 		}
 		if (hasTime) {
-			this.uniforms.create(UniformMethod.Uniform1f, UniformType.Float, 'u_time', timer.current / 1000.0);
+			this.uniforms.create(UniformMethod.Uniform1f, UniformType.Float, 'u_time', [timer.current / 1000.0]);
 		}
 		if (hasDate) {
 			const date = new Date();
-			this.uniforms.create(UniformMethod.Uniform4f, UniformType.Float, 'u_date', date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001);
+			this.uniforms.create(UniformMethod.Uniform4f, UniformType.Float, 'u_date', [date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001]);
 		}
 		if (hasMouse) {
-			this.uniforms.create(UniformMethod.Uniform2f, UniformType.FloatVec2, 'u_mouse', 0, 0);
+			this.uniforms.create(UniformMethod.Uniform2f, UniformType.Float, 'u_mouse', [0, 0]);
 		}
 		for (const key in this.buffers.values) {
 			const buffer: IOBuffer = this.buffers.values[key];
-			this.uniforms.create(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, buffer.input.index);
+			this.uniforms.create(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, [buffer.input.index]);
 		}
 		if (hasTextures) {
 			this.textureList.filter(x => x.url).forEach(x => {
@@ -385,38 +384,38 @@ export default class GlslCanvas extends Subscriber {
 		const BW = gl.drawingBufferWidth;
 		const BH = gl.drawingBufferHeight;
 		const timer = this.timer.next();
-		this.uniforms.update(UniformMethod.Uniform2f, UniformType.FloatVec2, 'u_resolution', BW, BH);
+		this.uniforms.update(UniformMethod.Uniform2f, UniformType.Float, 'u_resolution', [BW, BH]);
 		if (this.uniforms.has('u_delta')) {
-			this.uniforms.update(UniformMethod.Uniform1f, UniformType.Float, 'u_delta', timer.delta / 1000.0);
+			this.uniforms.update(UniformMethod.Uniform1f, UniformType.Float, 'u_delta', [timer.delta / 1000.0]);
 		}
 		if (this.uniforms.has('u_time')) {
-			this.uniforms.update(UniformMethod.Uniform1f, UniformType.Float, 'u_time', timer.current / 1000.0);
+			this.uniforms.update(UniformMethod.Uniform1f, UniformType.Float, 'u_time', [timer.current / 1000.0]);
 		}
 		if (this.uniforms.has('u_date')) {
 			const date = new Date();
-			this.uniforms.update(UniformMethod.Uniform4f, UniformType.Float, 'u_date', date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001);
+			this.uniforms.update(UniformMethod.Uniform4f, UniformType.Float, 'u_date', [date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001]);
 		}
 		if (this.uniforms.has('u_mouse')) {
 			const mouse = this.mouse;
-			this.uniforms.update(UniformMethod.Uniform2f, UniformType.FloatVec2, 'u_mouse', mouse.x, mouse.y);
+			this.uniforms.update(UniformMethod.Uniform2f, UniformType.Float, 'u_mouse', [mouse.x, mouse.y]);
             /*
             const rect = this.rect;
             if (mouse.x >= rect.left && mouse.x <= rect.right &&
                 mouse.y >= rect.top && mouse.y <= rect.bottom) {
                 const MX = (mouse.x - rect.left) * this.devicePixelRatio;
                 const MY = (this.canvas.height - (mouse.y - rect.top) * this.devicePixelRatio);
-                this.uniforms.update(UniformMethod.Uniform2f, UniformType.FloatVec2, 'u_mouse', MX, MY);
+                this.uniforms.update(UniformMethod.Uniform2f, UniformType.Float, 'u_mouse', [MX, MY]);
             }
             */
 		}
 		for (const key in this.buffers.values) {
 			const buffer: IOBuffer = this.buffers.values[key];
-			this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, buffer.input.index);
+			this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, [buffer.input.index]);
 		}
 		for (const key in this.textures.values) {
 			const texture: Texture = this.textures.values[key];
 			texture.tryUpdate(gl);
-			this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, texture.key, texture.index);
+			this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, texture.key, [texture.index]);
 		}
 	}
 
@@ -590,13 +589,14 @@ export default class GlslCanvas extends Subscriber {
 		options: TextureOptions = {}
 	) {
 		if (this.valid) {
+			// console.log(key, urlElementOrData);
 			this.textures.createOrUpdate(this.gl, key, urlElementOrData, this.buffers.count, options).then(
 				texture => {
 					const index = texture.index;
 					const uniform = this.uniforms.createTexture(key, index);
 					uniform.texture = texture;
 					const keyResolution = key.indexOf('[') !== -1 ? key.replace('[', 'Resolution[') : key + 'Resolution';
-					const uniformResolution = this.uniforms.create(UniformMethod.Uniform2f, UniformType.FloatVec2, keyResolution, texture.width, texture.height);
+					const uniformResolution = this.uniforms.create(UniformMethod.Uniform2f, UniformType.Float, keyResolution, [texture.width, texture.height]);
 					// console.log('loadTexture', key, url, index, texture.width, texture.height);
 					return texture;
 				},

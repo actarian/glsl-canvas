@@ -10,7 +10,8 @@ precision highp float;
 uniform vec2 u_resolution;
 uniform vec2 u_mouse;
 uniform float u_time;
-uniform sampler2D u_texture_0;
+uniform sampler2D u_texture;
+uniform vec2 u_textureResolution;
 uniform vec3 u_color;
 
 /***   c o n s t a n t s   ***/
@@ -40,7 +41,7 @@ float random(in vec2 p) {
 float noise(vec2 p) {
     vec2 ua = p + u_time * 0.02;
     vec2 ub = p * 0.8 + u_time * 0.04;
-    float n = texture2D(u_texture_0, ua).r * texture2D(u_texture_0, ub).r;
+    float n = texture2D(u_texture, ua).r * texture2D(u_texture, ub).r;
     return n;
 }
 vec2 coord(in vec2 p) {
@@ -61,7 +62,6 @@ vec2 coord(in vec2 p) {
 #define mx coord(u_mouse)
 #define ee noise(gl_FragCoord.xy / u_resolution.xy)
 #define rx 1.0 / min(u_resolution.x, u_resolution.y)
-// #define rx ee * 0.05 + 1.0 / min(u_resolution.x, u_resolution.y)
 
 mat2 rotate2d(float a){
     return mat2(cos(a), -sin(a), sin(a), cos(a));
@@ -104,13 +104,13 @@ float sHex(in vec2 p, in float w) {
     float d = max((q.x * 0.866025 + q.y * 0.5), q.y) - w * 0.5; // * 0.4330125
     return d * 2.0;
 }
-float hex(in vec2 p, in float w) {    
+float hex(in vec2 p, in float w) {
     float d = sHex(p, w);
     return fill(d);
 }
 float hex(in vec2 p, in float w, in float t) {
     float d = sHex(p, w);
-    return stroke(d, t);    
+    return stroke(d, t);
 }
 
 float sLine(in vec2 a, in vec2 b) {
@@ -140,13 +140,13 @@ float sPie(in vec2 p, in float w, in float s, in float e) {
     float d = length(p);
     return 1.0 - (a - d * 2.0) - w;
 }
-float pie(in vec2 p, in float w, in float s, in float e) {    
+float pie(in vec2 p, in float w, in float s, in float e) {
     float d = sPie(p, w, s, e);
     return fill(d);
 }
 float pie(in vec2 p, in float w, in float s, in float e, in float t) {
     float d = sPie(p, w, s, e);
-    return stroke(d, t);    
+    return stroke(d, t);
 }
 
 float sPlot(vec2 p, float y){
@@ -172,7 +172,7 @@ float poly(in vec2 p, in float w, in int sides, in float t) {
     return stroke(d, t);
 }
 
-float sRect(in vec2 p, in vec2 w) {    
+float sRect(in vec2 p, in vec2 w) {
     float d = max(abs(p.x / w.x), abs(p.y / w.y)) * 2.0;
     float m = max(w.x, w.y);
     return d * m - m;
@@ -217,14 +217,14 @@ float sSpiral(in vec2 p, in float turns) {
     float d = abs(sin(fract(log(r) * (turns / 5.0) + a * 0.159)));
     return d - 0.5;
 }
-float spiral(in vec2 p, in float turns) {    
+float spiral(in vec2 p, in float turns) {
     float d = sSpiral(p, turns);
     return fill(d);
 }
 
-float sStar(in vec2 p, in float w, in int sides) {    
-    float r = 0.5; float s = max(5.0, float(sides)); float m = 0.5 / s; float x = PI_TWO / s * (2.0 - mod(s, 2.0)); 
-    float segment = (atan(p.y, p.x) - x) / TWO_PI * s;    
+float sStar(in vec2 p, in float w, in int sides) {
+    float r = 0.5; float s = max(5.0, float(sides)); float m = 0.5 / s; float x = PI_TWO / s * (2.0 - mod(s, 2.0));
+    float segment = (atan(p.y, p.x) - x) / TWO_PI * s;
     float a = ((floor(segment) + r) / s + mix(m, -m, step(r, fract(segment)))) * TWO_PI;
     float d = abs(dot(vec2(cos(a + x), sin(a + x)), p)) + m;
     return (d - rx) * 2.0 - w;
@@ -233,7 +233,7 @@ float star(in vec2 p, in float w, in int sides) {
     float d = sStar(p, w, sides);
     return fill(d);
 }
-float star(in vec2 p, in float w, in int sides, float t) {    
+float star(in vec2 p, in float w, in int sides, float t) {
     float d = sStar(p, w, sides);
     return stroke(d, t);
 }
@@ -315,7 +315,7 @@ float easeElasticIn(float t) {
     if (t == 0.0) { return 0.0; }
     if (t == 1.0) { return 1.0; }
     float p = 0.3;
-    float a = 1.0; 
+    float a = 1.0;
     float s = p / 4.0;
     return -(a * pow(2.0, 10.0 * (t -= 1.0)) * sin((t - s) * TWO_PI / p));
 }
@@ -323,7 +323,7 @@ float easeElasticOut(float t) {
     if (t == 0.0) { return 0.0; }
     if (t == 1.0) { return 1.0; }
     float p = 0.3;
-    float a = 1.0; 
+    float a = 1.0;
     float s = p / 4.0;
     return (a * pow(2.0, -10.0 * t) * sin((t - s) * TWO_PI / p) + 1.0);
 }
@@ -331,7 +331,7 @@ float easeElasticInOut(float t) {
     if (t == 0.0) { return 0.0; }
     if ((t / 2.0) == 2.0) { return 1.0; }
     float p = (0.3 * 1.5);
-    float a = 1.0; 
+    float a = 1.0;
     float s = p / 4.0;
     if (t < 1.0) {
         return -0.5 * (a * pow(2.0, 10.0 * (t -= 1.0)) * sin((t - s) * TWO_PI / p));
@@ -413,15 +413,11 @@ bool between(in float duration) {
 }
 
 void main() {
-    // vec2 p = st - ee * 0.2;
     vec2 p = st;
     float v = 0.0;
     float v2 = 0.0;
-
     object.color = BLACK;
-    
     totalTime(12.0);
-        
     if (between(0.5)) {
         v = easeElasticOut(animation.pow);
         object.distance = circle(p, 0.1 + 0.1 * v);
@@ -522,20 +518,8 @@ void main() {
         object.distance = star(p + vec2(0.0, mix(0.0, 0.5, v)), 0.5, 6, 0.04) * (1.0 - animation.pow);
         object.color = WHITE;
     }
-
-    /*
-    vec3 color = BLACK + 0.015;
-    // object.color = WHITE;
-    object.color = vec3(0.0, 0.6, 0.9);
-    // object.color += vec3(abs(sin(p.x)), abs(cos(u_time * 0.1)), abs(cos(p.y)));
-    // color = mix(color, WHITE, grid(0.1));
-    object.color += ee * 0.1 - random(st) * length(st) * 0.5;
-    */
-
-    vec3 color = vec3(0.0, 0.6, 0.9);
-    color += ee * 0.1 - random(st) * length(st) * 0.5;
-    
+	vec3 color = vec3(0.0, 0.6, 0.9);
+    color += ee * 0.9 - random(st) * length(st) * 0.5;
     color = mix(color, object.color, object.distance);
-    
     gl_FragColor = vec4(color, 1.0);
 }

@@ -1441,7 +1441,6 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         var uniform = uniforms_1.default.parseUniform(key, values, type);
 
         if (Array.isArray(uniform)) {
-          // uniform.forEach((x) => this.loadTexture(x.key, x.values[0], options));
           if (uniforms_1.default.isArrayOfSampler2D(uniform)) {
             uniform.forEach(function (x) {
               return _this4.loadTexture(x.key, x.values[0], options);
@@ -1529,28 +1528,28 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           this.canvas.classList.remove('animated');
         }
 
-        this.uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.FloatVec2, 'u_resolution', BW, BH);
+        this.uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.Float, 'u_resolution', [BW, BH]);
 
         if (hasDelta) {
-          this.uniforms.create(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_delta', timer.delta / 1000.0);
+          this.uniforms.create(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_delta', [timer.delta / 1000.0]);
         }
 
         if (hasTime) {
-          this.uniforms.create(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_time', timer.current / 1000.0);
+          this.uniforms.create(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_time', [timer.current / 1000.0]);
         }
 
         if (hasDate) {
           var date = new Date();
-          this.uniforms.create(uniforms_1.UniformMethod.Uniform4f, uniforms_1.UniformType.Float, 'u_date', date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001);
+          this.uniforms.create(uniforms_1.UniformMethod.Uniform4f, uniforms_1.UniformType.Float, 'u_date', [date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001]);
         }
 
         if (hasMouse) {
-          this.uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.FloatVec2, 'u_mouse', 0, 0);
+          this.uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.Float, 'u_mouse', [0, 0]);
         }
 
         for (var key in this.buffers.values) {
           var buffer = this.buffers.values[key];
-          this.uniforms.create(uniforms_1.UniformMethod.Uniform1i, uniforms_1.UniformType.Sampler2D, buffer.key, buffer.input.index);
+          this.uniforms.create(uniforms_1.UniformMethod.Uniform1i, uniforms_1.UniformType.Sampler2D, buffer.key, [buffer.input.index]);
         }
 
         if (hasTextures) {
@@ -1569,44 +1568,44 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         var BW = gl.drawingBufferWidth;
         var BH = gl.drawingBufferHeight;
         var timer = this.timer.next();
-        this.uniforms.update(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.FloatVec2, 'u_resolution', BW, BH);
+        this.uniforms.update(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.Float, 'u_resolution', [BW, BH]);
 
         if (this.uniforms.has('u_delta')) {
-          this.uniforms.update(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_delta', timer.delta / 1000.0);
+          this.uniforms.update(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_delta', [timer.delta / 1000.0]);
         }
 
         if (this.uniforms.has('u_time')) {
-          this.uniforms.update(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_time', timer.current / 1000.0);
+          this.uniforms.update(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_time', [timer.current / 1000.0]);
         }
 
         if (this.uniforms.has('u_date')) {
           var date = new Date();
-          this.uniforms.update(uniforms_1.UniformMethod.Uniform4f, uniforms_1.UniformType.Float, 'u_date', date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001);
+          this.uniforms.update(uniforms_1.UniformMethod.Uniform4f, uniforms_1.UniformType.Float, 'u_date', [date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001]);
         }
 
         if (this.uniforms.has('u_mouse')) {
           var mouse = this.mouse;
-          this.uniforms.update(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.FloatVec2, 'u_mouse', mouse.x, mouse.y);
+          this.uniforms.update(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.Float, 'u_mouse', [mouse.x, mouse.y]);
           /*
           const rect = this.rect;
           if (mouse.x >= rect.left && mouse.x <= rect.right &&
               mouse.y >= rect.top && mouse.y <= rect.bottom) {
               const MX = (mouse.x - rect.left) * this.devicePixelRatio;
               const MY = (this.canvas.height - (mouse.y - rect.top) * this.devicePixelRatio);
-              this.uniforms.update(UniformMethod.Uniform2f, UniformType.FloatVec2, 'u_mouse', MX, MY);
+              this.uniforms.update(UniformMethod.Uniform2f, UniformType.Float, 'u_mouse', [MX, MY]);
           }
           */
         }
 
         for (var key in this.buffers.values) {
           var buffer = this.buffers.values[key];
-          this.uniforms.update(uniforms_1.UniformMethod.Uniform1i, uniforms_1.UniformType.Sampler2D, buffer.key, buffer.input.index);
+          this.uniforms.update(uniforms_1.UniformMethod.Uniform1i, uniforms_1.UniformType.Sampler2D, buffer.key, [buffer.input.index]);
         }
 
         for (var _key in this.textures.values) {
           var texture = this.textures.values[_key];
           texture.tryUpdate(gl);
-          this.uniforms.update(uniforms_1.UniformMethod.Uniform1i, uniforms_1.UniformType.Sampler2D, texture.key, texture.index);
+          this.uniforms.update(uniforms_1.UniformMethod.Uniform1i, uniforms_1.UniformType.Sampler2D, texture.key, [texture.index]);
         }
       }
     }, {
@@ -1810,6 +1809,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
         if (this.valid) {
+          // console.log(key, urlElementOrData);
           this.textures.createOrUpdate(this.gl, key, urlElementOrData, this.buffers.count, options).then(function (texture) {
             var index = texture.index;
 
@@ -1818,7 +1818,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
             uniform.texture = texture;
             var keyResolution = key.indexOf('[') !== -1 ? key.replace('[', 'Resolution[') : key + 'Resolution';
 
-            var uniformResolution = _this8.uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.FloatVec2, keyResolution, texture.width, texture.height); // console.log('loadTexture', key, url, index, texture.width, texture.height);
+            var uniformResolution = _this8.uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.Float, keyResolution, [texture.width, texture.height]); // console.log('loadTexture', key, url, index, texture.width, texture.height);
 
 
             return texture;
@@ -2484,12 +2484,16 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 
         var powerOf2 = Texture.isPowerOf2(this.width) && Texture.isPowerOf2(this.height);
         var filtering = options.filtering || TextureFilteringType.MipMap;
-        var wrapS = options.TEXTURE_WRAP_S || options.repeat && gl.REPEAT || gl.CLAMP_TO_EDGE;
-        var wrapT = options.TEXTURE_WRAP_T || options.repeat && gl.REPEAT || gl.CLAMP_TO_EDGE;
+        var wrapS = options.TEXTURE_WRAP_S || (options.repeat ? gl.REPEAT : gl.CLAMP_TO_EDGE);
+        var wrapT = options.TEXTURE_WRAP_T || (options.repeat ? gl.REPEAT : gl.CLAMP_TO_EDGE);
 
         if (!powerOf2) {
           filtering = filtering === TextureFilteringType.MipMap ? TextureFilteringType.Linear : filtering;
           wrapS = wrapT = gl.CLAMP_TO_EDGE;
+
+          if (options.repeat || options.TEXTURE_WRAP_S || options.TEXTURE_WRAP_T) {
+            console.warn('GlslCanvas: cannot repeat texture ${options.url} cause is not power of 2.');
+          }
         }
 
         this.powerOf2 = powerOf2;
@@ -2754,37 +2758,19 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
   (function (UniformType) {
     UniformType[UniformType["Unknown"] = 0] = "Unknown";
     UniformType[UniformType["Float"] = 1] = "Float";
-    UniformType[UniformType["FloatArray"] = 2] = "FloatArray";
-    UniformType[UniformType["FloatVec2"] = 3] = "FloatVec2";
-    UniformType[UniformType["FloatVec2Array"] = 4] = "FloatVec2Array";
-    UniformType[UniformType["FloatVec3"] = 5] = "FloatVec3";
-    UniformType[UniformType["FloatVec3Array"] = 6] = "FloatVec3Array";
-    UniformType[UniformType["FloatVec4"] = 7] = "FloatVec4";
-    UniformType[UniformType["FloatVec4Array"] = 8] = "FloatVec4Array";
-    UniformType[UniformType["Int"] = 9] = "Int";
-    UniformType[UniformType["IntArray"] = 10] = "IntArray";
-    UniformType[UniformType["IntVec2"] = 11] = "IntVec2";
-    UniformType[UniformType["IntVec2Array"] = 12] = "IntVec2Array";
-    UniformType[UniformType["IntVec3"] = 13] = "IntVec3";
-    UniformType[UniformType["IntVec3Array"] = 14] = "IntVec3Array";
-    UniformType[UniformType["IntVec4"] = 15] = "IntVec4";
-    UniformType[UniformType["IntVec4Array"] = 16] = "IntVec4Array";
-    UniformType[UniformType["Bool"] = 17] = "Bool";
-    UniformType[UniformType["BoolArray"] = 18] = "BoolArray";
-    UniformType[UniformType["BoolVec2"] = 19] = "BoolVec2";
-    UniformType[UniformType["BoolVec2Array"] = 20] = "BoolVec2Array";
-    UniformType[UniformType["BoolVec3"] = 21] = "BoolVec3";
-    UniformType[UniformType["BoolVec3Array"] = 22] = "BoolVec3Array";
-    UniformType[UniformType["BoolVec4"] = 23] = "BoolVec4";
-    UniformType[UniformType["BoolVec4Array"] = 24] = "BoolVec4Array";
-    UniformType[UniformType["Sampler2D"] = 25] = "Sampler2D";
-    UniformType[UniformType["Sampler2DArray"] = 26] = "Sampler2DArray";
-    UniformType[UniformType["SamplerCube"] = 27] = "SamplerCube";
-    UniformType[UniformType["SamplerCubeArray"] = 28] = "SamplerCubeArray";
-    UniformType[UniformType["Matrix2fv"] = 29] = "Matrix2fv";
-    UniformType[UniformType["Matrix3fv"] = 30] = "Matrix3fv";
-    UniformType[UniformType["Matrix4fv"] = 31] = "Matrix4fv";
+    UniformType[UniformType["Int"] = 2] = "Int";
+    UniformType[UniformType["Bool"] = 3] = "Bool";
+    UniformType[UniformType["Sampler2D"] = 4] = "Sampler2D";
+    UniformType[UniformType["SamplerCube"] = 5] = "SamplerCube";
+    UniformType[UniformType["Matrix2fv"] = 6] = "Matrix2fv";
+    UniformType[UniformType["Matrix3fv"] = 7] = "Matrix3fv";
+    UniformType[UniformType["Matrix4fv"] = 8] = "Matrix4fv";
   })(UniformType = exports.UniformType || (exports.UniformType = {}));
+
+  var METHODS_INT = [UniformMethod.Uniform1i, UniformMethod.Uniform2i, UniformMethod.Uniform3i, UniformMethod.Uniform4i];
+  var METHODS_FLOAT = [UniformMethod.Uniform1f, UniformMethod.Uniform2f, UniformMethod.Uniform3f, UniformMethod.Uniform4f];
+  var METHODS_INTV = [UniformMethod.Uniform1iv, UniformMethod.Uniform2iv, UniformMethod.Uniform3iv, UniformMethod.Uniform4iv];
+  var METHODS_FLOATV = [UniformMethod.Uniform1fv, UniformMethod.Uniform2fv, UniformMethod.Uniform3fv, UniformMethod.Uniform4fv];
 
   var Uniform = function Uniform(options) {
     var _this = this;
@@ -2849,21 +2835,8 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 
 
     _createClass(Uniforms, [{
-      key: "clean",
-      value: function clean() {
-        for (var key in this.values) {
-          this.values[key].dirty = false;
-        }
-
-        this.dirty = false;
-      }
-    }, {
       key: "create",
-      value: function create(method, type, key) {
-        for (var _len = arguments.length, values = new Array(_len > 3 ? _len - 3 : 0), _key = 3; _key < _len; _key++) {
-          values[_key - 3] = arguments[_key];
-        }
-
+      value: function create(method, type, key, values) {
         var uniform = new Uniform({
           method: method,
           type: type,
@@ -2882,7 +2855,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         if (key.indexOf(']') !== -1) {
           uniform = new UniformTexture({
             method: UniformMethod.Uniform1iv,
-            type: UniformType.Sampler2DArray,
+            type: UniformType.Sampler2D,
             key: key,
             values: [[index]]
           });
@@ -2901,12 +2874,8 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
       }
     }, {
       key: "update",
-      value: function update(method, type, key) {
+      value: function update(method, type, key, values) {
         var uniform = this.get(key);
-
-        for (var _len2 = arguments.length, values = new Array(_len2 > 3 ? _len2 - 3 : 0), _key2 = 3; _key2 < _len2; _key2++) {
-          values[_key2 - 3] = arguments[_key2];
-        }
 
         if (uniform && (uniform.method !== method || uniform.type !== type || Uniforms.isDifferent(uniform.values, values))) {
           uniform.method = method;
@@ -2918,15 +2887,11 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
       }
     }, {
       key: "createOrUpdate",
-      value: function createOrUpdate(method, type, key) {
-        for (var _len3 = arguments.length, values = new Array(_len3 > 3 ? _len3 - 3 : 0), _key3 = 3; _key3 < _len3; _key3++) {
-          values[_key3 - 3] = arguments[_key3];
-        }
-
+      value: function createOrUpdate(method, type, key, values) {
         if (this.has(key)) {
-          this.update.apply(this, [method, type, key].concat(values));
+          this.update(method, type, key, values);
         } else {
-          this.create.apply(this, [method, type, key].concat(values));
+          this.create(method, type, key, values);
         }
       }
     }, {
@@ -2937,6 +2902,15 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
           this.values[key].apply(gl, program); // }
         } // this.forEach(uniform => uniform.apply(gl, program));
 
+      }
+    }, {
+      key: "clean",
+      value: function clean() {
+        for (var key in this.values) {
+          this.values[key].dirty = false;
+        }
+
+        this.dirty = false;
       }
     }], [{
       key: "isDifferent",
@@ -2977,7 +2951,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
       key: "isArrayOfSampler2D",
       value: function isArrayOfSampler2D(array) {
         return array.reduce(function (flag, value) {
-          return flag && value.type === UniformType.Sampler2DArray;
+          return flag && value.type === UniformType.Sampler2D;
         }, true);
       }
     }, {
@@ -3005,17 +2979,13 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         var subject = isVector ? values[0] : values;
         var length = subject.length;
         var i = length - 1;
-        var methodsInt = [UniformMethod.Uniform1i, UniformMethod.Uniform2i, UniformMethod.Uniform3i, UniformMethod.Uniform4i];
-        var methodsFloat = [UniformMethod.Uniform1f, UniformMethod.Uniform2f, UniformMethod.Uniform3f, UniformMethod.Uniform4f];
-        var methodsIntV = [UniformMethod.Uniform1iv, UniformMethod.Uniform2iv, UniformMethod.Uniform3iv, UniformMethod.Uniform4iv];
-        var methodsFloatV = [UniformMethod.Uniform1fv, UniformMethod.Uniform2fv, UniformMethod.Uniform3fv, UniformMethod.Uniform4fv];
 
         switch (type) {
           case UniformType.Float:
             if (isVector) {
-              method = i < methodsFloatV.length ? methodsFloatV[i] : UniformMethod.Unknown;
+              method = i < METHODS_FLOATV.length ? METHODS_FLOATV[i] : UniformMethod.Unknown;
             } else {
-              method = i < methodsFloat.length ? methodsFloat[i] : UniformMethod.Uniform1fv;
+              method = i < METHODS_FLOAT.length ? METHODS_FLOAT[i] : UniformMethod.Uniform1fv;
             }
 
             break;
@@ -3023,9 +2993,9 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
           case UniformType.Int:
           case UniformType.Bool:
             if (isVector) {
-              method = i < methodsIntV.length ? methodsIntV[i] : UniformMethod.Unknown;
+              method = i < METHODS_INTV.length ? METHODS_INTV[i] : UniformMethod.Unknown;
             } else {
-              method = i < methodsInt.length ? methodsInt[i] : UniformMethod.Uniform1iv;
+              method = i < METHODS_INT.length ? METHODS_INT[i] : UniformMethod.Uniform1iv;
             }
 
             break;
@@ -3051,328 +3021,27 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         var method = Uniforms.getMethod_(type, values);
 
         if (type !== UniformType.Unknown && method !== UniformMethod.Unknown) {
-          console.log('Uniforms.parseUniform', key, UniformType[type], method);
-          uniform = new Uniform({
-            method: method,
-            type: type,
-            key: key,
-            values: values
-          });
+          // console.log('Uniforms.parseUniform', key, UniformType[type], method, values);
+          if (type === UniformType.Sampler2D && method === UniformMethod.Uniform1iv) {
+            return values[0].map(function (texture, index) {
+              return new Uniform({
+                method: method,
+                type: type,
+                key: "".concat(key, "[").concat(index, "]"),
+                values: [texture]
+              });
+            });
+          } else {
+            uniform = new Uniform({
+              method: method,
+              type: type,
+              key: key,
+              values: values
+            });
+          }
         } else {
           console.error('Uniforms.parseUniform.Unknown', key, values);
-        }
-
-        return this.parseUniform__bak(key, values);
-        return uniform;
-      }
-    }, {
-      key: "parseUniform__bak",
-      value: function parseUniform__bak(key, values) {
-        var uniform;
-
-        if (Uniforms.isArrayOfInteger(values)) {
-          switch (values.length) {
-            case 1:
-              uniform = new Uniform({
-                method: UniformMethod.Uniform1i,
-                type: UniformType.Int,
-                key: key,
-                values: values
-              });
-              break;
-
-            case 2:
-              uniform = new Uniform({
-                method: UniformMethod.Uniform2i,
-                type: UniformType.IntVec2,
-                key: key,
-                values: values
-              });
-              break;
-
-            case 3:
-              uniform = new Uniform({
-                method: UniformMethod.Uniform3i,
-                type: UniformType.IntVec3,
-                key: key,
-                values: values
-              });
-              break;
-
-            case 4:
-              uniform = new Uniform({
-                method: UniformMethod.Uniform4i,
-                type: UniformType.IntVec4,
-                key: key,
-                values: values
-              });
-              break;
-          }
-        } else if (Uniforms.isArrayOfNumber(values)) {
-          switch (values.length) {
-            case 1:
-              uniform = new Uniform({
-                method: UniformMethod.Uniform1f,
-                type: UniformType.Float,
-                key: key,
-                values: values
-              });
-              break;
-
-            case 2:
-              uniform = new Uniform({
-                method: UniformMethod.Uniform2f,
-                type: UniformType.FloatVec2,
-                key: key,
-                values: values
-              });
-              break;
-
-            case 3:
-              uniform = new Uniform({
-                method: UniformMethod.Uniform3f,
-                type: UniformType.FloatVec3,
-                key: key,
-                values: values
-              });
-              break;
-
-            case 4:
-              uniform = new Uniform({
-                method: UniformMethod.Uniform4f,
-                type: UniformType.FloatVec4,
-                key: key,
-                values: values
-              });
-              break;
-          }
-        } else if (Uniforms.isArrayOfBoolean(values)) {
-          switch (values.length) {
-            case 1:
-              uniform = new Uniform({
-                method: UniformMethod.Uniform1i,
-                type: UniformType.Bool,
-                key: key,
-                values: values
-              });
-              break;
-
-            case 2:
-              uniform = new Uniform({
-                method: UniformMethod.Uniform2i,
-                type: UniformType.BoolVec2,
-                key: key,
-                values: values
-              });
-              break;
-
-            case 3:
-              uniform = new Uniform({
-                method: UniformMethod.Uniform3i,
-                type: UniformType.BoolVec3,
-                key: key,
-                values: values
-              });
-              break;
-
-            case 4:
-              uniform = new Uniform({
-                method: UniformMethod.Uniform4i,
-                type: UniformType.BoolVec4,
-                key: key,
-                values: values
-              });
-              break;
-          }
-        } else if (values.length === 1) {
-          var value = values[0];
-
-          if (textures_1.Texture.isTexture(value)) {
-            uniform = new Uniform({
-              method: UniformMethod.Uniform1i,
-              type: UniformType.Sampler2D,
-              key: key,
-              values: value // !!!
-
-            });
-          } else if (Array.isArray(value)) {
-            if (Uniforms.isArrayOfInteger(value)) {
-              switch (value.length) {
-                case 1:
-                  uniform = new Uniform({
-                    method: UniformMethod.Uniform1iv,
-                    type: UniformType.IntArray,
-                    key: key,
-                    values: values
-                  });
-                  break;
-
-                case 2:
-                  uniform = new Uniform({
-                    method: UniformMethod.Uniform2iv,
-                    type: UniformType.IntVec2Array,
-                    key: key,
-                    values: values
-                  });
-                  break;
-
-                case 3:
-                  uniform = new Uniform({
-                    method: UniformMethod.Uniform3iv,
-                    type: UniformType.IntVec3Array,
-                    key: key,
-                    values: values
-                  });
-                  break;
-
-                case 4:
-                  uniform = new Uniform({
-                    method: UniformMethod.Uniform4iv,
-                    type: UniformType.IntVec4Array,
-                    key: key,
-                    values: values
-                  });
-                  break;
-              }
-            } else if (Uniforms.isArrayOfNumber(value)) {
-              switch (value.length) {
-                case 1:
-                  uniform = new Uniform({
-                    method: UniformMethod.Uniform1fv,
-                    type: UniformType.FloatArray,
-                    key: key,
-                    values: values
-                  });
-                  break;
-
-                case 2:
-                  uniform = new Uniform({
-                    method: UniformMethod.Uniform2fv,
-                    type: UniformType.FloatVec2Array,
-                    key: key,
-                    values: values
-                  });
-                  break;
-
-                case 3:
-                  uniform = new Uniform({
-                    method: UniformMethod.Uniform3fv,
-                    type: UniformType.FloatVec3Array,
-                    key: key,
-                    values: values
-                  });
-                  break;
-
-                case 4:
-                  uniform = new Uniform({
-                    method: UniformMethod.Uniform4fv,
-                    type: UniformType.FloatVec4Array,
-                    key: key,
-                    values: values
-                  });
-                  break;
-              }
-            } else if (Uniforms.isArrayOfBoolean(value)) {
-              switch (value.length) {
-                case 1:
-                  uniform = new Uniform({
-                    method: UniformMethod.Uniform1iv,
-                    type: UniformType.BoolArray,
-                    key: key,
-                    values: values
-                  });
-                  break;
-
-                case 2:
-                  uniform = new Uniform({
-                    method: UniformMethod.Uniform2i,
-                    type: UniformType.BoolVec2Array,
-                    key: key,
-                    values: values
-                  });
-                  break;
-
-                case 3:
-                  uniform = new Uniform({
-                    method: UniformMethod.Uniform3i,
-                    type: UniformType.BoolVec3Array,
-                    key: key,
-                    values: values
-                  });
-                  break;
-
-                case 4:
-                  uniform = new Uniform({
-                    method: UniformMethod.Uniform4i,
-                    type: UniformType.BoolVec4Array,
-                    key: key,
-                    values: values
-                  });
-                  break;
-              }
-            } else if (Uniforms.isArrayOfTexture(value)) {
-              var uniforms = value.map(function (texture, index) {
-                return new Uniform({
-                  method: UniformMethod.Uniform1iv,
-                  type: UniformType.Sampler2DArray,
-                  key: key + '[' + index + ']',
-                  values: [texture]
-                });
-              });
-              return uniforms;
-            }
-          }
-        }
-        /*
-            } else if (Array.isArray(value[0]) && typeof value[0][0] === 'number') {
-                // Array of arrays - but only arrays of vectors are allowed in this case
-                // float vectors (vec2, vec3, vec4)
-                if (value[0].length >= 2 && value[0].length <= 4) {
-                    // Set each vector in the array
-                    for (let u = 0; u < value.length; u++) {
-                        switch (value.length) {
-                            case 2:
-                                uniform = new Uniform({
-                                    method: UniformMethod.Uniform2fv,
-                                    type: UniformType.FloatVec2,
-                                    key: key + '[' + u + ']',
-                                    values: value
-                                });
-                                break;
-                            case 3:
-                                uniform = new Uniform({
-                                    method: UniformMethod.Uniform3fv,
-                                    type: UniformType.FloatVec3,
-                                    key: key + '[' + u + ']',
-                                    values: value
-                                });
-                                break;
-                            case 4:
-                                uniform = new Uniform({
-                                    method: UniformMethod.Uniform4fv,
-                                    type: UniformType.FloatVec4,
-                                    key: key + '[' + u + ']',
-                                    values: value
-                                });
-                                break;
-                        }
-                    }
-                }
-                // else error?
-            } else if (typeof value[0] === 'object') {
-                // Array of structures
-                for (let u = 0; u < value.length; u++) {
-                    // Set each struct in the array
-                    // !!! uniform = new Uniform(...Uniforms.parseUniforms(value[u], key + '[' + u + ']'));
-                }
-            }
-        } else if (typeof value === 'object') {
-            // Structure
-            // Set each field in the struct
-            // !!! uniform = new Uniform(...Uniforms.parseUniforms(value, key));
-        }
-        // TODO: support other non-float types? (int, etc.)
-        */
+        } // return this.parseUniform__bak(key, values);
 
 
         return uniform;
