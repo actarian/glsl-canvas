@@ -5,6 +5,7 @@ import { Texture } from './textures';
 export interface IUniformOption { [key: string]: any[]; }
 
 export enum UniformMethod {
+	Unknown = 0,
 	Uniform1i = 'uniform1i', // (intUniformLoc,   v);                 // for int
 	// Uniform1i  = 'uniform1i', // (boolUniformLoc,   v);                // for bool
 	// Uniform1i  = 'uniform1i', // (sampler2DUniformLoc,   v);           // for sampler2D
@@ -36,14 +37,7 @@ export enum UniformMethod {
 }
 
 export enum UniformType {
-	Int = 0,
-	IntArray,
-	IntVec2,
-	IntVec2Array,
-	IntVec3,
-	IntVec3Array,
-	IntVec4,
-	IntVec4Array,
+	Unknown = 0,
 	Float,
 	FloatArray,
 	FloatVec2,
@@ -52,6 +46,14 @@ export enum UniformType {
 	FloatVec3Array,
 	FloatVec4,
 	FloatVec4Array,
+	Int,
+	IntArray,
+	IntVec2,
+	IntVec2Array,
+	IntVec3,
+	IntVec3Array,
+	IntVec4,
+	IntVec4Array,
 	Bool,
 	BoolArray,
 	BoolVec2,
@@ -93,22 +95,6 @@ export class Uniform {
 		}
 	}
 
-	static Differs(a: any[], b: any[]) {
-		return a.length !== b.length ||
-			a.reduce((f: boolean, v: any, i: number) => {
-				return f || v !== b[i];
-			}, false);
-	}
-
-    /*
-	static isDifferent(a: any, b: any): boolean {
-        if (a && b) {
-            return a.toString() !== b.toString();
-        }
-        return false;
-    }
-	*/
-
 }
 
 export class UniformTexture extends Uniform {
@@ -124,6 +110,20 @@ export class UniformTexture extends Uniform {
 export default class Uniforms extends IterableStringMap<Uniform> {
 
 	dirty: boolean = false;
+
+	/*
+	// slow
+	static isDifferent(a: any, b: any): boolean {
+        return JSON.stringify(a) !== JSON.stringify(b);
+    }
+	*/
+
+	static isDifferent(a: any[], b: any[]) {
+		return a.length !== b.length ||
+			a.reduce((f: boolean, v: any, i: number) => {
+				return f || v !== b[i];
+			}, false);
+	}
 
 	static isArrayOfInteger(array: any[]): boolean {
 		return array.reduce((flag: boolean, value: any) => {
@@ -155,7 +155,89 @@ export default class Uniforms extends IterableStringMap<Uniform> {
 		}, true);
 	}
 
-	static parseUniform(key: string, values: any[]): Uniform | Uniform[] {
+	private static getType_(
+		values: any[],
+	): UniformType {
+		let type = UniformType.Unknown;
+		const isVector = values.length === 1 && Array.isArray(values[0]);
+		const subject = isVector ? values[0] : values;
+		if (Uniforms.isArrayOfNumber(subject)) {
+			type = UniformType.Float;
+		} else if (Uniforms.isArrayOfBoolean(subject)) {
+			type = UniformType.Bool;
+		} else if (Uniforms.isArrayOfTexture(subject)) {
+			type = UniformType.Sampler2D;
+		}
+		return type;
+	}
+
+	private static getMethod_(
+		type: UniformType,
+		values: any[],
+	): UniformMethod {
+		let method = UniformMethod.Unknown;
+		const isVector = values.length === 1 && Array.isArray(values[0]);
+		const subject = isVector ? values[0] : values;
+		const length = subject.length;
+		const i = length - 1;
+		const methodsInt = [UniformMethod.Uniform1i, UniformMethod.Uniform2i, UniformMethod.Uniform3i, UniformMethod.Uniform4i];
+		const methodsFloat = [UniformMethod.Uniform1f, UniformMethod.Uniform2f, UniformMethod.Uniform3f, UniformMethod.Uniform4f];
+		const methodsIntV = [UniformMethod.Uniform1iv, UniformMethod.Uniform2iv, UniformMethod.Uniform3iv, UniformMethod.Uniform4iv];
+		const methodsFloatV = [UniformMethod.Uniform1fv, UniformMethod.Uniform2fv, UniformMethod.Uniform3fv, UniformMethod.Uniform4fv];
+		switch (type) {
+			case UniformType.Float:
+				if (isVector) {
+					method = i < methodsFloatV.length ? methodsFloatV[i] : UniformMethod.Unknown;
+				} else {
+					method = i < methodsFloat.length ? methodsFloat[i] : UniformMethod.Uniform1fv;
+				}
+				break;
+			case UniformType.Int:
+			case UniformType.Bool:
+				if (isVector) {
+					method = i < methodsIntV.length ? methodsIntV[i] : UniformMethod.Unknown;
+				} else {
+					method = i < methodsInt.length ? methodsInt[i] : UniformMethod.Uniform1iv;
+				}
+				break;
+			case UniformType.Sampler2D:
+				if (isVector) {
+					method = UniformMethod.Uniform1iv;
+				} else {
+					method = length === 1 ? UniformMethod.Uniform1i : UniformMethod.Uniform1iv;
+				}
+				break;
+		}
+		return method;
+	}
+
+	static parseUniform(
+		key: string,
+		values: any[],
+		type: UniformType = null
+	): Uniform | Uniform[] {
+		let uniform: Uniform;
+		type = type || Uniforms.getType_(values);
+		const method = Uniforms.getMethod_(type, values);
+		if (type !== UniformType.Unknown && method !== UniformMethod.Unknown) {
+			console.log('Uniforms.parseUniform', key, UniformType[type], method);
+			uniform = new Uniform({
+				method: method,
+				type: type,
+				key: key,
+				values: values
+			});
+		} else {
+			console.error('Uniforms.parseUniform.Unknown', key, values);
+		}
+		return this.parseUniform__bak(key, values);
+		return uniform;
+	}
+
+	static parseUniform__bak(
+		key: string,
+		values: any[],
+	): Uniform | Uniform[] {
 		let uniform: Uniform;
 		if (Uniforms.isArrayOfInteger(values)) {
 			switch (values.length) {
@@ -444,39 +526,12 @@ export default class Uniforms extends IterableStringMap<Uniform> {
 		return uniform;
 	}
 
-    /*
-    static parseUniforms(values: any, prefix?: string): Map<string, Uniform> {
-        const uniforms = new Map<string, Uniform>();
-        for (let key in values) {
-            const value = values[key];
-            if (prefix) {
-                key = prefix + '.' + key;
-            }
-            const uniform: Uniform = Uniforms.parseUniform(key, value);
-            if (uniform) {
-                uniforms.set(key, uniform);
-            }
-        }
-        return uniforms;
-    }
-    */
-
 	clean() {
 		for (const key in this.values) {
 			this.values[key].dirty = false;
 		}
 		this.dirty = false;
 	}
-
-    /*
-    setParse(key: string, ...values: any[]): Uniform {
-        const uniform: Uniform = Uniforms.parseUniform(key, ...values);
-        if (uniform) {
-            this.set(key, uniform);
-        }
-        return uniform;
-    }
-    */
 
 	create(method: UniformMethod, type: UniformType, key: string, ...values: any[]): Uniform {
 		const uniform = new Uniform({
@@ -517,7 +572,7 @@ export default class Uniforms extends IterableStringMap<Uniform> {
 		if (uniform &&
 			(uniform.method !== method ||
 				uniform.type !== type ||
-				Uniform.Differs(uniform.values, values)
+				Uniforms.isDifferent(uniform.values, values)
 			)) {
 			uniform.method = method;
 			uniform.type = type;

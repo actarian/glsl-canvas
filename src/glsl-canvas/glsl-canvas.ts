@@ -83,7 +83,7 @@ export default class GlslCanvas extends Subscriber {
 	visible: boolean = false;
 
 	loop: Function;
-	private _removeListeners: Function = () => { };
+	private removeListeners_: Function = () => { };
 
 	constructor(
 		canvas: HTMLCanvasElement,
@@ -111,18 +111,17 @@ export default class GlslCanvas extends Subscriber {
 		this.gl = gl;
 		this.devicePixelRatio = window.devicePixelRatio || 1;
 		canvas.style.backgroundColor = contextOptions.backgroundColor || 'rgba(0,0,0,0)';
-		this._getShaders().then(
+		this.getShaders_().then(
 			(success) => {
 				this.load();
 				if (!this.program) {
 					return;
 				}
-				this._addListeners();
+				this.addListeners_();
 				this.loop();
-				// this.animated = false;
 			},
 			(error) => {
-				console.log('GlslCanvas._getShaders.error', error);
+				console.log('GlslCanvas.getShaders_.error', error);
 			});
 		GlslCanvas.items.push(this);
 	}
@@ -142,7 +141,7 @@ export default class GlslCanvas extends Subscriber {
 		return canvases.map(x => GlslCanvas.of(x));
 	}
 
-	private _getShaders(): Promise<string[]> {
+	private getShaders_(): Promise<string[]> {
 		return new Promise((resolve, reject) => {
 			const canvas = this.canvas;
 			const urls: any = {};
@@ -180,7 +179,7 @@ export default class GlslCanvas extends Subscriber {
 		});
 	}
 
-	private _addListeners(): void {
+	private addListeners_(): void {
         /*
         const resize = (e: Event) => {
             this.rect = this.canvas.getBoundingClientRect();
@@ -273,7 +272,7 @@ export default class GlslCanvas extends Subscriber {
 			}
 		}
 
-		this._removeListeners = () => {
+		this.removeListeners_ = () => {
 			// window.removeEventListener('resize', resize);
 			window.removeEventListener('scroll', scroll);
 			document.removeEventListener('mousemove', mousemove);
@@ -287,13 +286,13 @@ export default class GlslCanvas extends Subscriber {
 		}
 	}
 
-	private _setUniform(
+	private setUniform_(
 		key: string,
 		values: any[],
 		options: TextureOptions = {},
 		type: UniformType = null
 	): void {
-		const uniform: Uniform | Uniform[] = Uniforms.parseUniform(key, values);
+		const uniform: Uniform | Uniform[] = Uniforms.parseUniform(key, values, type);
 		if (Array.isArray(uniform)) {
 			// uniform.forEach((x) => this.loadTexture(x.key, x.values[0], options));
 			if (Uniforms.isArrayOfSampler2D(uniform)) {
@@ -312,58 +311,7 @@ export default class GlslCanvas extends Subscriber {
 		}
 	}
 
-	private _isVisible(): boolean {
-		const rect = this.rect;
-		return (rect.top + rect.height) > 0 && rect.top < (window.innerHeight || document.documentElement.clientHeight);
-	}
-
-	private _isAnimated(): boolean {
-		return (this.animated || this.textures.animated) && !this.timer.paused;
-	}
-
-	private _isDirty(): boolean {
-		return this.dirty || this.uniforms.dirty || this.textures.dirty;
-	}
-
-	// check size change at start of requestFrame
-	private _sizeDidChanged(): boolean {
-		const gl = this.gl;
-		const W = Math.ceil(this.canvas.clientWidth),
-			H = Math.ceil(this.canvas.clientHeight);
-		if (this.width !== W ||
-			this.height !== H) {
-			this.width = W;
-			this.height = H;
-			// Lookup the size the browser is displaying the canvas in CSS pixels
-			// and compute a size needed to make our drawingbuffer match it in
-			// device pixels.
-			const BW = Math.ceil(W * this.devicePixelRatio);
-			const BH = Math.ceil(H * this.devicePixelRatio);
-			this.canvas.width = BW;
-			this.canvas.height = BH;
-            /*
-            if (gl.canvas.width !== BW ||
-                gl.canvas.height !== BH) {
-                gl.canvas.width = BW;
-                gl.canvas.height = BH;
-                // Set the viewport to match
-                // gl.viewport(0, 0, BW, BH);
-            }
-            */
-			for (const key in this.buffers.values) {
-				const buffer: IOBuffer = this.buffers.values[key];
-				buffer.resize(gl, BW, BH);
-			}
-			this.rect = this.canvas.getBoundingClientRect();
-			this.trigger('resize');
-			// gl.useProgram(this.program);
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	private _parseTextures(fragmentString: string): boolean {
+	private parseTextures_(fragmentString: string): boolean {
 		const regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\:\/\/|\.|\-|\_]*)|\s*)/gm;
 		let matches;
 		while ((matches = regexp.exec(fragmentString)) !== null) {
@@ -389,7 +337,7 @@ export default class GlslCanvas extends Subscriber {
 		return this.textureList.length > 0;
 	}
 
-	private _createUniforms(): void {
+	private createUniforms_(): void {
 		const gl = this.gl;
 		const fragmentString = this.fragmentString;
 		const BW = gl.drawingBufferWidth;
@@ -399,7 +347,7 @@ export default class GlslCanvas extends Subscriber {
 		const hasTime = (fragmentString.match(/u_time/g) || []).length > 1;
 		const hasDate = (fragmentString.match(/u_date/g) || []).length > 1;
 		const hasMouse = (fragmentString.match(/u_mouse/g) || []).length > 1;
-		const hasTextures = this._parseTextures(fragmentString);
+		const hasTextures = this.parseTextures_(fragmentString);
 		this.animated = hasTime || hasDate || hasMouse;
 		if (this.animated) {
 			this.canvas.classList.add('animated');
@@ -425,14 +373,14 @@ export default class GlslCanvas extends Subscriber {
 			this.uniforms.create(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, buffer.input.index);
 		}
 		if (hasTextures) {
-			this.textureList.forEach(x => {
+			this.textureList.filter(x => x.url).forEach(x => {
 				this.setTexture(x.key, x.url, x.options);
 			});
 			this.textureList = [];
 		}
 	}
 
-	private _updateUniforms(): void {
+	private updateUniforms_(): void {
 		const gl = this.gl;
 		const BW = gl.drawingBufferWidth;
 		const BH = gl.drawingBufferHeight;
@@ -469,6 +417,57 @@ export default class GlslCanvas extends Subscriber {
 			const texture: Texture = this.textures.values[key];
 			texture.tryUpdate(gl);
 			this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, texture.key, texture.index);
+		}
+	}
+
+	private isVisible_(): boolean {
+		const rect = this.rect;
+		return (rect.top + rect.height) > 0 && rect.top < (window.innerHeight || document.documentElement.clientHeight);
+	}
+
+	private isAnimated_(): boolean {
+		return (this.animated || this.textures.animated) && !this.timer.paused;
+	}
+
+	private isDirty_(): boolean {
+		return this.dirty || this.uniforms.dirty || this.textures.dirty;
+	}
+
+	// check size change at start of requestFrame
+	private sizeDidChanged_(): boolean {
+		const gl = this.gl;
+		const W = Math.ceil(this.canvas.clientWidth),
+			H = Math.ceil(this.canvas.clientHeight);
+		if (this.width !== W ||
+			this.height !== H) {
+			this.width = W;
+			this.height = H;
+			// Lookup the size the browser is displaying the canvas in CSS pixels
+			// and compute a size needed to make our drawingbuffer match it in
+			// device pixels.
+			const BW = Math.ceil(W * this.devicePixelRatio);
+			const BH = Math.ceil(H * this.devicePixelRatio);
+			this.canvas.width = BW;
+			this.canvas.height = BH;
+            /*
+            if (gl.canvas.width !== BW ||
+                gl.canvas.height !== BH) {
+                gl.canvas.width = BW;
+                gl.canvas.height = BH;
+                // Set the viewport to match
+                // gl.viewport(0, 0, BW, BH);
+            }
+            */
+			for (const key in this.buffers.values) {
+				const buffer: IOBuffer = this.buffers.values[key];
+				buffer.resize(gl, BW, BH);
+			}
+			this.rect = this.canvas.getBoundingClientRect();
+			this.trigger('resize');
+			// gl.useProgram(this.program);
+			return true;
+		} else {
+			return false;
 		}
 	}
 
@@ -510,7 +509,7 @@ export default class GlslCanvas extends Subscriber {
 		if (this.valid) {
 			this.buffers = Buffers.getBuffers(gl, this.fragmentString, this.vertexString);
 			this.vertexBuffers = Context.createVertexBuffers(gl, program);
-			this._createUniforms();
+			this.createUniforms_();
 		}
 		// Trigger event
 		this.trigger('load', this);
@@ -563,7 +562,7 @@ export default class GlslCanvas extends Subscriber {
 	}
 
 	destroy(): void {
-		this._removeListeners();
+		this.removeListeners_();
 		this.animated = false;
 		this.valid = false;
 		const gl = this.gl;
@@ -614,15 +613,15 @@ export default class GlslCanvas extends Subscriber {
 		urlElementOrData: string | HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | Element | TextureData,
 		options: TextureOptions = {}
 	): void {
-		return this._setUniform(key, [urlElementOrData], options);
+		return this.setUniform_(key, [urlElementOrData], options);
 	}
 
 	setUniform(key: string, ...values: any[]): void {
-		return this._setUniform(key, values);
+		return this.setUniform_(key, values);
 	}
 
 	setUniformOfInt(key: string, values: any[]): void {
-		return this._setUniform(key, values, null, UniformType.Int);
+		return this.setUniform_(key, values, null, UniformType.Int);
 	}
 
 	setUniforms(values: IUniformOption): void {
@@ -658,7 +657,7 @@ export default class GlslCanvas extends Subscriber {
 	}
 
 	checkRender(): void {
-		if (this._isVisible() && (this._sizeDidChanged() || this._isAnimated() || this._isDirty())) {
+		if (this.isVisible_() && (this.sizeDidChanged_() || this.isAnimated_() || this.isDirty_())) {
 			this.render();
 			this.canvas.classList.add('playing');
 		} else {
@@ -670,7 +669,7 @@ export default class GlslCanvas extends Subscriber {
 		const gl = this.gl;
 		const BW = gl.drawingBufferWidth;
 		const BH = gl.drawingBufferHeight;
-		this._updateUniforms();
+		this.updateUniforms_();
 		for (const key in this.buffers.values) {
 			const buffer: IOBuffer = this.buffers.values[key];
 			this.uniforms.apply(gl, buffer.program);

@@ -1215,7 +1215,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
       _this.dirty = true;
       _this.visible = false;
 
-      _this._removeListeners = function () {};
+      _this.removeListeners_ = function () {};
 
       if (!canvas) {
         return _possibleConstructorReturn(_this);
@@ -1239,19 +1239,18 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
       _this.devicePixelRatio = window.devicePixelRatio || 1;
       canvas.style.backgroundColor = contextOptions.backgroundColor || 'rgba(0,0,0,0)';
 
-      _this._getShaders().then(function (success) {
+      _this.getShaders_().then(function (success) {
         _this.load();
 
         if (!_this.program) {
           return;
         }
 
-        _this._addListeners();
+        _this.addListeners_();
 
-        _this.loop(); // this.animated = false;
-
+        _this.loop();
       }, function (error) {
-        console.log('GlslCanvas._getShaders.error', error);
+        console.log('GlslCanvas.getShaders_.error', error);
       });
 
       GlslCanvas.items.push(_assertThisInitialized(_assertThisInitialized(_this)));
@@ -1259,8 +1258,8 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     }
 
     _createClass(GlslCanvas, [{
-      key: "_getShaders",
-      value: function _getShaders() {
+      key: "getShaders_",
+      value: function getShaders_() {
         var _this2 = this;
 
         return new Promise(function (resolve, reject) {
@@ -1303,8 +1302,8 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         });
       }
     }, {
-      key: "_addListeners",
-      value: function _addListeners() {
+      key: "addListeners_",
+      value: function addListeners_() {
         var _this3 = this;
 
         /*
@@ -1415,7 +1414,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           }
         }
 
-        this._removeListeners = function () {
+        this.removeListeners_ = function () {
           // window.removeEventListener('resize', resize);
           window.removeEventListener('scroll', scroll);
           document.removeEventListener('mousemove', mousemove);
@@ -1433,13 +1432,13 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         };
       }
     }, {
-      key: "_setUniform",
-      value: function _setUniform(key, values) {
+      key: "setUniform_",
+      value: function setUniform_(key, values) {
         var _this4 = this;
 
         var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
         var type = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
-        var uniform = uniforms_1.default.parseUniform(key, values);
+        var uniform = uniforms_1.default.parseUniform(key, values, type);
 
         if (Array.isArray(uniform)) {
           // uniform.forEach((x) => this.loadTexture(x.key, x.values[0], options));
@@ -1464,65 +1463,8 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         }
       }
     }, {
-      key: "_isVisible",
-      value: function _isVisible() {
-        var rect = this.rect;
-        return rect.top + rect.height > 0 && rect.top < (window.innerHeight || document.documentElement.clientHeight);
-      }
-    }, {
-      key: "_isAnimated",
-      value: function _isAnimated() {
-        return (this.animated || this.textures.animated) && !this.timer.paused;
-      }
-    }, {
-      key: "_isDirty",
-      value: function _isDirty() {
-        return this.dirty || this.uniforms.dirty || this.textures.dirty;
-      } // check size change at start of requestFrame
-
-    }, {
-      key: "_sizeDidChanged",
-      value: function _sizeDidChanged() {
-        var gl = this.gl;
-        var W = Math.ceil(this.canvas.clientWidth),
-            H = Math.ceil(this.canvas.clientHeight);
-
-        if (this.width !== W || this.height !== H) {
-          this.width = W;
-          this.height = H; // Lookup the size the browser is displaying the canvas in CSS pixels
-          // and compute a size needed to make our drawingbuffer match it in
-          // device pixels.
-
-          var BW = Math.ceil(W * this.devicePixelRatio);
-          var BH = Math.ceil(H * this.devicePixelRatio);
-          this.canvas.width = BW;
-          this.canvas.height = BH;
-          /*
-          if (gl.canvas.width !== BW ||
-              gl.canvas.height !== BH) {
-              gl.canvas.width = BW;
-              gl.canvas.height = BH;
-              // Set the viewport to match
-              // gl.viewport(0, 0, BW, BH);
-          }
-          */
-
-          for (var key in this.buffers.values) {
-            var buffer = this.buffers.values[key];
-            buffer.resize(gl, BW, BH);
-          }
-
-          this.rect = this.canvas.getBoundingClientRect();
-          this.trigger('resize'); // gl.useProgram(this.program);
-
-          return true;
-        } else {
-          return false;
-        }
-      }
-    }, {
-      key: "_parseTextures",
-      value: function _parseTextures(fragmentString) {
+      key: "parseTextures_",
+      value: function parseTextures_(fragmentString) {
         var _this5 = this;
 
         var regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\:\/\/|\.|\-|\_]*)|\s*)/gm;
@@ -1565,8 +1507,8 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         return this.textureList.length > 0;
       }
     }, {
-      key: "_createUniforms",
-      value: function _createUniforms() {
+      key: "createUniforms_",
+      value: function createUniforms_() {
         var _this6 = this;
 
         var gl = this.gl;
@@ -1578,9 +1520,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         var hasTime = (fragmentString.match(/u_time/g) || []).length > 1;
         var hasDate = (fragmentString.match(/u_date/g) || []).length > 1;
         var hasMouse = (fragmentString.match(/u_mouse/g) || []).length > 1;
-
-        var hasTextures = this._parseTextures(fragmentString);
-
+        var hasTextures = this.parseTextures_(fragmentString);
         this.animated = hasTime || hasDate || hasMouse;
 
         if (this.animated) {
@@ -1614,15 +1554,17 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         }
 
         if (hasTextures) {
-          this.textureList.forEach(function (x) {
+          this.textureList.filter(function (x) {
+            return x.url;
+          }).forEach(function (x) {
             _this6.setTexture(x.key, x.url, x.options);
           });
           this.textureList = [];
         }
       }
     }, {
-      key: "_updateUniforms",
-      value: function _updateUniforms() {
+      key: "updateUniforms_",
+      value: function updateUniforms_() {
         var gl = this.gl;
         var BW = gl.drawingBufferWidth;
         var BH = gl.drawingBufferHeight;
@@ -1668,6 +1610,63 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         }
       }
     }, {
+      key: "isVisible_",
+      value: function isVisible_() {
+        var rect = this.rect;
+        return rect.top + rect.height > 0 && rect.top < (window.innerHeight || document.documentElement.clientHeight);
+      }
+    }, {
+      key: "isAnimated_",
+      value: function isAnimated_() {
+        return (this.animated || this.textures.animated) && !this.timer.paused;
+      }
+    }, {
+      key: "isDirty_",
+      value: function isDirty_() {
+        return this.dirty || this.uniforms.dirty || this.textures.dirty;
+      } // check size change at start of requestFrame
+
+    }, {
+      key: "sizeDidChanged_",
+      value: function sizeDidChanged_() {
+        var gl = this.gl;
+        var W = Math.ceil(this.canvas.clientWidth),
+            H = Math.ceil(this.canvas.clientHeight);
+
+        if (this.width !== W || this.height !== H) {
+          this.width = W;
+          this.height = H; // Lookup the size the browser is displaying the canvas in CSS pixels
+          // and compute a size needed to make our drawingbuffer match it in
+          // device pixels.
+
+          var BW = Math.ceil(W * this.devicePixelRatio);
+          var BH = Math.ceil(H * this.devicePixelRatio);
+          this.canvas.width = BW;
+          this.canvas.height = BH;
+          /*
+          if (gl.canvas.width !== BW ||
+              gl.canvas.height !== BH) {
+              gl.canvas.width = BW;
+              gl.canvas.height = BH;
+              // Set the viewport to match
+              // gl.viewport(0, 0, BW, BH);
+          }
+          */
+
+          for (var key in this.buffers.values) {
+            var buffer = this.buffers.values[key];
+            buffer.resize(gl, BW, BH);
+          }
+
+          this.rect = this.canvas.getBoundingClientRect();
+          this.trigger('resize'); // gl.useProgram(this.program);
+
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }, {
       key: "load",
       value: function load(fragmentString, vertexString) {
         if (vertexString) {
@@ -1710,8 +1709,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         if (this.valid) {
           this.buffers = buffers_1.default.getBuffers(gl, this.fragmentString, this.vertexString);
           this.vertexBuffers = context_1.default.createVertexBuffers(gl, program);
-
-          this._createUniforms();
+          this.createUniforms_();
         } // Trigger event
 
 
@@ -1780,8 +1778,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     }, {
       key: "destroy",
       value: function destroy() {
-        this._removeListeners();
-
+        this.removeListeners_();
         this.animated = false;
         this.valid = false;
         var gl = this.gl;
@@ -1840,7 +1837,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
       key: "setTexture",
       value: function setTexture(key, urlElementOrData) {
         var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-        return this._setUniform(key, [urlElementOrData], options);
+        return this.setUniform_(key, [urlElementOrData], options);
       }
     }, {
       key: "setUniform",
@@ -1849,12 +1846,12 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           values[_key3 - 1] = arguments[_key3];
         }
 
-        return this._setUniform(key, values);
+        return this.setUniform_(key, values);
       }
     }, {
       key: "setUniformOfInt",
       value: function setUniformOfInt(key, values) {
-        return this._setUniform(key, values, null, uniforms_1.UniformType.Int);
+        return this.setUniform_(key, values, null, uniforms_1.UniformType.Int);
       }
     }, {
       key: "setUniforms",
@@ -1895,7 +1892,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     }, {
       key: "checkRender",
       value: function checkRender() {
-        if (this._isVisible() && (this._sizeDidChanged() || this._isAnimated() || this._isDirty())) {
+        if (this.isVisible_() && (this.sizeDidChanged_() || this.isAnimated_() || this.isDirty_())) {
           this.render();
           this.canvas.classList.add('playing');
         } else {
@@ -1908,8 +1905,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         var gl = this.gl;
         var BW = gl.drawingBufferWidth;
         var BH = gl.drawingBufferHeight;
-
-        this._updateUniforms();
+        this.updateUniforms_();
 
         for (var key in this.buffers.values) {
           var buffer = this.buffers.values[key];
@@ -2677,6 +2673,10 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 },{"./iterable":8,"./subscriber":9}],11:[function(require,module,exports){
 "use strict";
 
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
 function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
@@ -2688,10 +2688,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
@@ -2722,6 +2718,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
   var UniformMethod;
 
   (function (UniformMethod) {
+    UniformMethod[UniformMethod["Unknown"] = 0] = "Unknown";
     UniformMethod["Uniform1i"] = "uniform1i"; // Uniform1i  = 'uniform1i', // (boolUniformLoc,   v);                // for bool
     // Uniform1i  = 'uniform1i', // (sampler2DUniformLoc,   v);           // for sampler2D
     // Uniform1i  = 'uniform1i', // (samplerCubeUniformLoc,   v);         // for samplerCube
@@ -2755,75 +2752,61 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
   var UniformType;
 
   (function (UniformType) {
-    UniformType[UniformType["Int"] = 0] = "Int";
-    UniformType[UniformType["IntArray"] = 1] = "IntArray";
-    UniformType[UniformType["IntVec2"] = 2] = "IntVec2";
-    UniformType[UniformType["IntVec2Array"] = 3] = "IntVec2Array";
-    UniformType[UniformType["IntVec3"] = 4] = "IntVec3";
-    UniformType[UniformType["IntVec3Array"] = 5] = "IntVec3Array";
-    UniformType[UniformType["IntVec4"] = 6] = "IntVec4";
-    UniformType[UniformType["IntVec4Array"] = 7] = "IntVec4Array";
-    UniformType[UniformType["Float"] = 8] = "Float";
-    UniformType[UniformType["FloatArray"] = 9] = "FloatArray";
-    UniformType[UniformType["FloatVec2"] = 10] = "FloatVec2";
-    UniformType[UniformType["FloatVec2Array"] = 11] = "FloatVec2Array";
-    UniformType[UniformType["FloatVec3"] = 12] = "FloatVec3";
-    UniformType[UniformType["FloatVec3Array"] = 13] = "FloatVec3Array";
-    UniformType[UniformType["FloatVec4"] = 14] = "FloatVec4";
-    UniformType[UniformType["FloatVec4Array"] = 15] = "FloatVec4Array";
-    UniformType[UniformType["Bool"] = 16] = "Bool";
-    UniformType[UniformType["BoolArray"] = 17] = "BoolArray";
-    UniformType[UniformType["BoolVec2"] = 18] = "BoolVec2";
-    UniformType[UniformType["BoolVec2Array"] = 19] = "BoolVec2Array";
-    UniformType[UniformType["BoolVec3"] = 20] = "BoolVec3";
-    UniformType[UniformType["BoolVec3Array"] = 21] = "BoolVec3Array";
-    UniformType[UniformType["BoolVec4"] = 22] = "BoolVec4";
-    UniformType[UniformType["BoolVec4Array"] = 23] = "BoolVec4Array";
-    UniformType[UniformType["Sampler2D"] = 24] = "Sampler2D";
-    UniformType[UniformType["Sampler2DArray"] = 25] = "Sampler2DArray";
-    UniformType[UniformType["SamplerCube"] = 26] = "SamplerCube";
-    UniformType[UniformType["SamplerCubeArray"] = 27] = "SamplerCubeArray";
-    UniformType[UniformType["Matrix2fv"] = 28] = "Matrix2fv";
-    UniformType[UniformType["Matrix3fv"] = 29] = "Matrix3fv";
-    UniformType[UniformType["Matrix4fv"] = 30] = "Matrix4fv";
+    UniformType[UniformType["Unknown"] = 0] = "Unknown";
+    UniformType[UniformType["Float"] = 1] = "Float";
+    UniformType[UniformType["FloatArray"] = 2] = "FloatArray";
+    UniformType[UniformType["FloatVec2"] = 3] = "FloatVec2";
+    UniformType[UniformType["FloatVec2Array"] = 4] = "FloatVec2Array";
+    UniformType[UniformType["FloatVec3"] = 5] = "FloatVec3";
+    UniformType[UniformType["FloatVec3Array"] = 6] = "FloatVec3Array";
+    UniformType[UniformType["FloatVec4"] = 7] = "FloatVec4";
+    UniformType[UniformType["FloatVec4Array"] = 8] = "FloatVec4Array";
+    UniformType[UniformType["Int"] = 9] = "Int";
+    UniformType[UniformType["IntArray"] = 10] = "IntArray";
+    UniformType[UniformType["IntVec2"] = 11] = "IntVec2";
+    UniformType[UniformType["IntVec2Array"] = 12] = "IntVec2Array";
+    UniformType[UniformType["IntVec3"] = 13] = "IntVec3";
+    UniformType[UniformType["IntVec3Array"] = 14] = "IntVec3Array";
+    UniformType[UniformType["IntVec4"] = 15] = "IntVec4";
+    UniformType[UniformType["IntVec4Array"] = 16] = "IntVec4Array";
+    UniformType[UniformType["Bool"] = 17] = "Bool";
+    UniformType[UniformType["BoolArray"] = 18] = "BoolArray";
+    UniformType[UniformType["BoolVec2"] = 19] = "BoolVec2";
+    UniformType[UniformType["BoolVec2Array"] = 20] = "BoolVec2Array";
+    UniformType[UniformType["BoolVec3"] = 21] = "BoolVec3";
+    UniformType[UniformType["BoolVec3Array"] = 22] = "BoolVec3Array";
+    UniformType[UniformType["BoolVec4"] = 23] = "BoolVec4";
+    UniformType[UniformType["BoolVec4Array"] = 24] = "BoolVec4Array";
+    UniformType[UniformType["Sampler2D"] = 25] = "Sampler2D";
+    UniformType[UniformType["Sampler2DArray"] = 26] = "Sampler2DArray";
+    UniformType[UniformType["SamplerCube"] = 27] = "SamplerCube";
+    UniformType[UniformType["SamplerCubeArray"] = 28] = "SamplerCubeArray";
+    UniformType[UniformType["Matrix2fv"] = 29] = "Matrix2fv";
+    UniformType[UniformType["Matrix3fv"] = 30] = "Matrix3fv";
+    UniformType[UniformType["Matrix4fv"] = 31] = "Matrix4fv";
   })(UniformType = exports.UniformType || (exports.UniformType = {}));
 
-  var Uniform =
-  /*#__PURE__*/
-  function () {
-    function Uniform(options) {
-      var _this = this;
+  var Uniform = function Uniform(options) {
+    var _this = this;
 
-      _classCallCheck(this, Uniform);
+    _classCallCheck(this, Uniform);
 
-      this.dirty = true;
+    this.dirty = true;
 
-      if (options) {
-        Object.assign(this, options);
-      }
-
-      this.apply = function (gl, program) {
-        if (_this.dirty) {
-          gl.useProgram(program);
-          var location = gl.getUniformLocation(program, _this.key); // console.log(this.key, this.method, this.values);
-          // (gl as any)[this.method].apply(gl, [location].concat(this.values));
-
-          gl[_this.method].apply(gl, [location].concat(_this.values));
-        }
-      };
+    if (options) {
+      Object.assign(this, options);
     }
 
-    _createClass(Uniform, null, [{
-      key: "Differs",
-      value: function Differs(a, b) {
-        return a.length !== b.length || a.reduce(function (f, v, i) {
-          return f || v !== b[i];
-        }, false);
-      }
-    }]);
+    this.apply = function (gl, program) {
+      if (_this.dirty) {
+        gl.useProgram(program);
+        var location = gl.getUniformLocation(program, _this.key); // console.log(this.key, this.method, this.values);
+        // (gl as any)[this.method].apply(gl, [location].concat(this.values));
 
-    return Uniform;
-  }();
+        gl[_this.method].apply(gl, [location].concat(_this.values));
+      }
+    };
+  };
 
   exports.Uniform = Uniform;
 
@@ -2857,26 +2840,16 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
       _this2.dirty = false;
       return _this2;
     }
+    /*
+    // slow
+    static isDifferent(a: any, b: any): boolean {
+        return JSON.stringify(a) !== JSON.stringify(b);
+    }
+    */
+
 
     _createClass(Uniforms, [{
       key: "clean",
-
-      /*
-      static parseUniforms(values: any, prefix?: string): Map<string, Uniform> {
-          const uniforms = new Map<string, Uniform>();
-          for (let key in values) {
-              const value = values[key];
-              if (prefix) {
-                  key = prefix + '.' + key;
-              }
-              const uniform: Uniform = Uniforms.parseUniform(key, value);
-              if (uniform) {
-                  uniforms.set(key, uniform);
-              }
-          }
-          return uniforms;
-      }
-      */
       value: function clean() {
         for (var key in this.values) {
           this.values[key].dirty = false;
@@ -2884,16 +2857,6 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 
         this.dirty = false;
       }
-      /*
-      setParse(key: string, ...values: any[]): Uniform {
-          const uniform: Uniform = Uniforms.parseUniform(key, ...values);
-          if (uniform) {
-              this.set(key, uniform);
-          }
-          return uniform;
-      }
-      */
-
     }, {
       key: "create",
       value: function create(method, type, key) {
@@ -2945,7 +2908,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
           values[_key2 - 3] = arguments[_key2];
         }
 
-        if (uniform && (uniform.method !== method || uniform.type !== type || Uniform.Differs(uniform.values, values))) {
+        if (uniform && (uniform.method !== method || uniform.type !== type || Uniforms.isDifferent(uniform.values, values))) {
           uniform.method = method;
           uniform.type = type;
           uniform.values = values;
@@ -2976,6 +2939,13 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 
       }
     }], [{
+      key: "isDifferent",
+      value: function isDifferent(a, b) {
+        return a.length !== b.length || a.reduce(function (f, v, i) {
+          return f || v !== b[i];
+        }, false);
+      }
+    }, {
       key: "isArrayOfInteger",
       value: function isArrayOfInteger(array) {
         return array.reduce(function (flag, value) {
@@ -3011,8 +2981,93 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         }, true);
       }
     }, {
+      key: "getType_",
+      value: function getType_(values) {
+        var type = UniformType.Unknown;
+        var isVector = values.length === 1 && Array.isArray(values[0]);
+        var subject = isVector ? values[0] : values;
+
+        if (Uniforms.isArrayOfNumber(subject)) {
+          type = UniformType.Float;
+        } else if (Uniforms.isArrayOfBoolean(subject)) {
+          type = UniformType.Bool;
+        } else if (Uniforms.isArrayOfTexture(subject)) {
+          type = UniformType.Sampler2D;
+        }
+
+        return type;
+      }
+    }, {
+      key: "getMethod_",
+      value: function getMethod_(type, values) {
+        var method = UniformMethod.Unknown;
+        var isVector = values.length === 1 && Array.isArray(values[0]);
+        var subject = isVector ? values[0] : values;
+        var length = subject.length;
+        var i = length - 1;
+        var methodsInt = [UniformMethod.Uniform1i, UniformMethod.Uniform2i, UniformMethod.Uniform3i, UniformMethod.Uniform4i];
+        var methodsFloat = [UniformMethod.Uniform1f, UniformMethod.Uniform2f, UniformMethod.Uniform3f, UniformMethod.Uniform4f];
+        var methodsIntV = [UniformMethod.Uniform1iv, UniformMethod.Uniform2iv, UniformMethod.Uniform3iv, UniformMethod.Uniform4iv];
+        var methodsFloatV = [UniformMethod.Uniform1fv, UniformMethod.Uniform2fv, UniformMethod.Uniform3fv, UniformMethod.Uniform4fv];
+
+        switch (type) {
+          case UniformType.Float:
+            if (isVector) {
+              method = i < methodsFloatV.length ? methodsFloatV[i] : UniformMethod.Unknown;
+            } else {
+              method = i < methodsFloat.length ? methodsFloat[i] : UniformMethod.Uniform1fv;
+            }
+
+            break;
+
+          case UniformType.Int:
+          case UniformType.Bool:
+            if (isVector) {
+              method = i < methodsIntV.length ? methodsIntV[i] : UniformMethod.Unknown;
+            } else {
+              method = i < methodsInt.length ? methodsInt[i] : UniformMethod.Uniform1iv;
+            }
+
+            break;
+
+          case UniformType.Sampler2D:
+            if (isVector) {
+              method = UniformMethod.Uniform1iv;
+            } else {
+              method = length === 1 ? UniformMethod.Uniform1i : UniformMethod.Uniform1iv;
+            }
+
+            break;
+        }
+
+        return method;
+      }
+    }, {
       key: "parseUniform",
       value: function parseUniform(key, values) {
+        var type = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var uniform;
+        type = type || Uniforms.getType_(values);
+        var method = Uniforms.getMethod_(type, values);
+
+        if (type !== UniformType.Unknown && method !== UniformMethod.Unknown) {
+          console.log('Uniforms.parseUniform', key, UniformType[type], method);
+          uniform = new Uniform({
+            method: method,
+            type: type,
+            key: key,
+            values: values
+          });
+        } else {
+          console.error('Uniforms.parseUniform.Unknown', key, values);
+        }
+
+        return this.parseUniform__bak(key, values);
+        return uniform;
+      }
+    }, {
+      key: "parseUniform__bak",
+      value: function parseUniform__bak(key, values) {
         var uniform;
 
         if (Uniforms.isArrayOfInteger(values)) {
