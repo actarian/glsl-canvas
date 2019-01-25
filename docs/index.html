@@ -98,8 +98,18 @@
 					canvas.on('over', function() {
 						if (canvas.uniforms.get('u_texture').texture.url === 'data/mars.jpg') {
 							canvas.setUniform('u_texture', 'data/moon.jpg');
+							/*
+							canvas.setTexture('u_texture', 'data/moon.jpg', {
+								filtering: 'mipmap',
+								repeat: true,
+							});
+							*/
 						} else {
-							canvas.setUniform('u_texture', 'data/mars.jpg');
+							// canvas.setUniform('u_texture', 'data/mars.jpg');
+							canvas.setTexture('u_texture', 'data/mars_.jpg', {
+								filtering: 'mipmap',
+								repeat: true,
+							});
 						}
 					});
 					break;

@@ -151,11 +151,11 @@ export default class Uniforms extends IterableStringMap<Uniform> {
 
 	static isArrayOfSampler2D(array: Uniform[]): boolean {
 		return array.reduce((flag: boolean, value: Uniform) => {
-			return flag && value.type === UniformType.Sampler2D;
+			return flag && value.type === UniformType.Sampler2DArray;
 		}, true);
 	}
 
-	static parseUniform(key: string, ...values: any[]): Uniform | Uniform[] {
+	static parseUniform(key: string, values: any[]): Uniform | Uniform[] {
 		let uniform: Uniform;
 		if (Uniforms.isArrayOfInteger(values)) {
 			switch (values.length) {

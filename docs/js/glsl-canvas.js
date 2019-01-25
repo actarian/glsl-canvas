@@ -1066,14 +1066,6 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 },{}],7:[function(require,module,exports){
 "use strict";
 
-function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
-
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
-
-function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
-
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
-
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
@@ -1259,7 +1251,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         _this.loop(); // this.animated = false;
 
       }, function (error) {
-        console.log('error', error);
+        console.log('GlslCanvas._getShaders.error', error);
       });
 
       GlslCanvas.items.push(_assertThisInitialized(_assertThisInitialized(_this)));
@@ -1443,29 +1435,27 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     }, {
       key: "_setUniform",
       value: function _setUniform(key, values) {
-        var _uniforms_1$default,
-            _this4 = this;
+        var _this4 = this;
 
-        var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+        var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
         var type = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
-
-        var uniform = (_uniforms_1$default = uniforms_1.default).parseUniform.apply(_uniforms_1$default, [key].concat(_toConsumableArray(values)));
+        var uniform = uniforms_1.default.parseUniform(key, values);
 
         if (Array.isArray(uniform)) {
-          uniform.forEach(function (x) {
-            return _this4.loadTexture(x.key, x.values[0], options);
-          });
-          /*
-          if (Uniforms.isArrayOfSampler2D(uniform)) {
-              uniform.forEach((x) => this.loadTexture(x.key, x.values[0], options));
+          // uniform.forEach((x) => this.loadTexture(x.key, x.values[0], options));
+          if (uniforms_1.default.isArrayOfSampler2D(uniform)) {
+            uniform.forEach(function (x) {
+              return _this4.loadTexture(x.key, x.values[0], options);
+            });
           } else {
-              uniform.forEach((x) => this.uniforms.set(x.key, x.values[0]));
+            uniform.forEach(function (x) {
+              return _this4.uniforms.set(x.key, x.values[0]);
+            });
           }
-          */
         } else if (uniform) {
           switch (uniform.type) {
             case uniforms_1.UniformType.Sampler2D:
-              this.loadTexture(key, values[0]);
+              this.loadTexture(key, values[0], options);
               break;
 
             default:
@@ -1625,7 +1615,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
 
         if (hasTextures) {
           this.textureList.forEach(function (x) {
-            _this6.loadTexture(x.key, x.url);
+            _this6.setTexture(x.key, x.url, x.options);
           });
           this.textureList = [];
         }
@@ -1823,7 +1813,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
         if (this.valid) {
-          return this.textures.createOrUpdate(this.gl, key, urlElementOrData, this.buffers.count, options).then(function (texture) {
+          this.textures.createOrUpdate(this.gl, key, urlElementOrData, this.buffers.count, options).then(function (texture) {
             var index = texture.index;
 
             var uniform = _this8.uniforms.createTexture(key, index);
@@ -1835,11 +1825,14 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
 
 
             return texture;
+          }, function (error) {
+            console.log('GlslCanvas.loadTexture.error', error, key, urlElementOrData);
           });
         } else {
           this.textureList.push({
             key: key,
-            url: urlElementOrData
+            url: urlElementOrData,
+            options: options
           });
         }
       }
@@ -2329,14 +2322,16 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         this.source = url;
         this.sourceType = TextureSourceType.Url;
         this.options = Object.assign(this.options, options);
-        var src = url.indexOf(':/') === -1 && this.workpath ? "".concat(this.workpath, "/").concat(url) : url;
+        var src = String(url.indexOf(':/') === -1 && this.workpath !== undefined ? "".concat(this.workpath, "/").concat(url) : url);
         var ext = url.split('.').pop().toLowerCase();
-        var isVideo = exports.TextureVideoExtensions.indexOf(ext) !== -1;
+        var isVideo = exports.TextureVideoExtensions.indexOf(ext) !== -1; // console.log('setUrl', url, src, ext, isVideo);
+
         var element;
         var promise;
 
         if (isVideo) {
-          element = document.createElement('video'); // options.filtering = TextureFilteringType.Nearest;
+          element = document.createElement('video'); // new HTMLVideoElement();
+          // options.filtering = TextureFilteringType.Nearest;
 
           promise = this.setElement(gl, element, options);
           element.setAttribute('playsinline', 'true');
@@ -2344,7 +2339,8 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
           element.muted = true;
           element.src = src;
         } else {
-          element = new Image();
+          element = document.createElement('img'); // new HTMLImageElement();
+
           promise = this.setElement(gl, element, options);
 
           if (!(Texture.isSafari() && url.slice(0, 5) === 'data:')) {
@@ -3011,16 +3007,12 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
       key: "isArrayOfSampler2D",
       value: function isArrayOfSampler2D(array) {
         return array.reduce(function (flag, value) {
-          return flag && value.type === UniformType.Sampler2D;
+          return flag && value.type === UniformType.Sampler2DArray;
         }, true);
       }
     }, {
       key: "parseUniform",
-      value: function parseUniform(key) {
-        for (var _len4 = arguments.length, values = new Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) {
-          values[_key4 - 1] = arguments[_key4];
-        }
-
+      value: function parseUniform(key, values) {
         var uniform;
 
         if (Uniforms.isArrayOfInteger(values)) {

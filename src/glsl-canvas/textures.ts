@@ -168,13 +168,14 @@ export class Texture extends Subscriber {
 		this.source = url;
 		this.sourceType = TextureSourceType.Url;
 		this.options = Object.assign(this.options, options);
-		const src = url.indexOf(':/') === -1 && this.workpath ? `${this.workpath}/${url}` : url;
+		const src = String((url.indexOf(':/') === -1 && this.workpath !== undefined) ? `${this.workpath}/${url}` : url);
 		const ext = url.split('.').pop().toLowerCase();
 		const isVideo = TextureVideoExtensions.indexOf(ext) !== -1;
+		// console.log('setUrl', url, src, ext, isVideo);
 		let element: HTMLVideoElement | HTMLImageElement;
 		let promise: Promise<Texture>;
 		if (isVideo) {
-			element = document.createElement('video');
+			element = document.createElement('video'); // new HTMLVideoElement();
 			// options.filtering = TextureFilteringType.Nearest;
 			promise = this.setElement(gl, element, options);
 			element.setAttribute('playsinline', 'true');
@@ -182,7 +183,7 @@ export class Texture extends Subscriber {
 			element.muted = true;
 			element.src = src;
 		} else {
-			element = new Image();
+			element = document.createElement('img'); // new HTMLImageElement();
 			promise = this.setElement(gl, element, options);
 			if (!(Texture.isSafari() && url.slice(0, 5) === 'data:')) {
 				element.crossOrigin = 'anonymous';
