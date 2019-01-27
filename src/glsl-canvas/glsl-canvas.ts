@@ -2,9 +2,9 @@
 import 'promise-polyfill';
 import Buffers, { IOBuffer } from './buffers';
 import Common from './common';
-import Context, { ContextDefaultFragment, ContextDefaultVertex, ContextVertexBuffers, IContextOptions } from './context';
+import Context, { ContextDefaultFragment, ContextDefaultVertex, ContextOptions, ContextVertexBuffers } from './context';
 import Subscriber from './subscriber';
-import Textures, { Texture, TextureData, TextureExtensions, TextureOptions } from './textures';
+import Textures, { Texture, TextureData, TextureExtensions, TextureInput, TextureOptions } from './textures';
 import Uniforms, { IUniformOption, Uniform, UniformMethod, UniformType } from './uniforms';
 
 export interface IPoint {
@@ -12,7 +12,11 @@ export interface IPoint {
 	y: number,
 }
 
-export class GlslCanvasOptions {
+export class GlslCanvasOptions extends ContextOptions {
+	vertexString?: string;
+	fragmentString?: string;
+	backgroundColor?: string;
+	workpath?: string;
 	onError?: Function;
 }
 
@@ -59,6 +63,7 @@ export class GlslCanvasTimer {
 
 export default class GlslCanvas extends Subscriber {
 
+	options: GlslCanvasOptions;
 	canvas: HTMLCanvasElement;
 	gl: WebGLRenderingContext;
 	program: WebGLProgram;
@@ -69,7 +74,7 @@ export default class GlslCanvas extends Subscriber {
 	uniforms: Uniforms = new Uniforms();
 	buffers: Buffers = new Buffers();
 	textures: Textures = new Textures();
-	textureList: any[] = [];
+	textureList: TextureInput[] = [];
 
 	vertexString: string;
 	fragmentString: string;
@@ -87,30 +92,30 @@ export default class GlslCanvas extends Subscriber {
 
 	constructor(
 		canvas: HTMLCanvasElement,
-		contextOptions: IContextOptions = {
+		options: GlslCanvasOptions = {
 			// alpha: true,
 			// antialias: true,
 			// premultipliedAlpha: true
-		},
-		options: GlslCanvasOptions = {}
+		}
 	) {
 		super();
 		if (!canvas) {
 			return;
 		}
+		this.options = options;
 		this.canvas = canvas;
 		this.width = 0; // canvas.clientWidth;
 		this.height = 0; // canvas.clientHeight;
 		this.rect = canvas.getBoundingClientRect();
-		this.vertexString = contextOptions.vertexString || ContextDefaultVertex;
-		this.fragmentString = contextOptions.fragmentString || ContextDefaultFragment;
-		const gl = Context.tryGetContext(canvas, contextOptions, options.onError);
+		this.vertexString = options.vertexString || ContextDefaultVertex;
+		this.fragmentString = options.fragmentString || ContextDefaultFragment;
+		const gl = Context.tryGetContext(canvas, options, options.onError);
 		if (!gl) {
 			return;
 		}
 		this.gl = gl;
 		this.devicePixelRatio = window.devicePixelRatio || 1;
-		canvas.style.backgroundColor = contextOptions.backgroundColor || 'rgba(0,0,0,0)';
+		canvas.style.backgroundColor = options.backgroundColor || 'rgba(0,0,0,0)';
 		this.getShaders_().then(
 			(success) => {
 				this.load();
@@ -590,7 +595,7 @@ export default class GlslCanvas extends Subscriber {
 	) {
 		if (this.valid) {
 			// console.log(key, urlElementOrData);
-			this.textures.createOrUpdate(this.gl, key, urlElementOrData, this.buffers.count, options).then(
+			this.textures.createOrUpdate(this.gl, key, urlElementOrData, this.buffers.count, options, this.options.workpath).then(
 				texture => {
 					const index = texture.index;
 					const uniform = this.uniforms.createTexture(key, index);

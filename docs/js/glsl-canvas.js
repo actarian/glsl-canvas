@@ -913,6 +913,12 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
   });
   exports.ContextDefaultVertex = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nattribute vec2 a_position;\nattribute vec2 a_texcoord;\n\nvarying vec2 v_texcoord;\n\nvoid main(){\n\tgl_Position = vec4(a_position, 0.0, 1.0);\n\tv_texcoord = a_texcoord;\n}\n";
   exports.ContextDefaultFragment = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nvarying vec2 v_texcoord;\n\nvoid main(){\n\tgl_FragColor = vec4(0.0);\n}\n";
+
+  var ContextOptions = function ContextOptions() {
+    _classCallCheck(this, ContextOptions);
+  };
+
+  exports.ContextOptions = ContextOptions;
   var ContextError;
 
   (function (ContextError) {
@@ -1066,21 +1072,21 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 },{}],7:[function(require,module,exports){
 "use strict";
 
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
-
-function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
@@ -1128,9 +1134,19 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
 
   var uniforms_1 = __importStar(require("./uniforms"));
 
-  var GlslCanvasOptions = function GlslCanvasOptions() {
-    _classCallCheck(this, GlslCanvasOptions);
-  };
+  var GlslCanvasOptions =
+  /*#__PURE__*/
+  function (_context_1$ContextOpt) {
+    _inherits(GlslCanvasOptions, _context_1$ContextOpt);
+
+    function GlslCanvasOptions() {
+      _classCallCheck(this, GlslCanvasOptions);
+
+      return _possibleConstructorReturn(this, _getPrototypeOf(GlslCanvasOptions).apply(this, arguments));
+    }
+
+    return GlslCanvasOptions;
+  }(context_1.ContextOptions);
 
   exports.GlslCanvasOptions = GlslCanvasOptions;
 
@@ -1193,11 +1209,10 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     function GlslCanvas(canvas) {
       var _this;
 
-      var contextOptions = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {// alpha: true,
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {// alpha: true,
         // antialias: true,
         // premultipliedAlpha: true
       };
-      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
       _classCallCheck(this, GlslCanvas);
 
@@ -1221,15 +1236,16 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         return _possibleConstructorReturn(_this);
       }
 
+      _this.options = options;
       _this.canvas = canvas;
       _this.width = 0; // canvas.clientWidth;
 
       _this.height = 0; // canvas.clientHeight;
 
       _this.rect = canvas.getBoundingClientRect();
-      _this.vertexString = contextOptions.vertexString || context_1.ContextDefaultVertex;
-      _this.fragmentString = contextOptions.fragmentString || context_1.ContextDefaultFragment;
-      var gl = context_1.default.tryGetContext(canvas, contextOptions, options.onError);
+      _this.vertexString = options.vertexString || context_1.ContextDefaultVertex;
+      _this.fragmentString = options.fragmentString || context_1.ContextDefaultFragment;
+      var gl = context_1.default.tryGetContext(canvas, options, options.onError);
 
       if (!gl) {
         return _possibleConstructorReturn(_this);
@@ -1237,7 +1253,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
 
       _this.gl = gl;
       _this.devicePixelRatio = window.devicePixelRatio || 1;
-      canvas.style.backgroundColor = contextOptions.backgroundColor || 'rgba(0,0,0,0)';
+      canvas.style.backgroundColor = options.backgroundColor || 'rgba(0,0,0,0)';
 
       _this.getShaders_().then(function (success) {
         _this.load();
@@ -1810,7 +1826,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
 
         if (this.valid) {
           // console.log(key, urlElementOrData);
-          this.textures.createOrUpdate(this.gl, key, urlElementOrData, this.buffers.count, options).then(function (texture) {
+          this.textures.createOrUpdate(this.gl, key, urlElementOrData, this.buffers.count, options, this.options.workpath).then(function (texture) {
             var index = texture.index;
 
             var uniform = _this8.uniforms.createTexture(key, index);
@@ -2229,6 +2245,12 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     TextureFilteringType["Nearest"] = "nearest";
   })(TextureFilteringType || (TextureFilteringType = {}));
 
+  var TextureInput = function TextureInput() {
+    _classCallCheck(this, TextureInput);
+  };
+
+  exports.TextureInput = TextureInput;
+
   var TextureData = function TextureData() {
     _classCallCheck(this, TextureData);
   };
@@ -2320,14 +2342,13 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         this.options = Object.assign(this.options, options);
         var src = String(url.indexOf(':/') === -1 && this.workpath !== undefined ? "".concat(this.workpath, "/").concat(url) : url);
         var ext = url.split('.').pop().toLowerCase();
-        var isVideo = exports.TextureVideoExtensions.indexOf(ext) !== -1; // console.log('setUrl', url, src, ext, isVideo);
-
+        var isVideo = exports.TextureVideoExtensions.indexOf(ext) !== -1;
         var element;
         var promise;
 
         if (isVideo) {
+          console.log('GlslCanvas.setUrl video', src);
           element = document.createElement('video'); // new HTMLVideoElement();
-          // options.filtering = TextureFilteringType.Nearest;
 
           promise = this.setElement(gl, element, options);
           element.setAttribute('playsinline', 'true');
@@ -2335,6 +2356,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
           element.muted = true;
           element.src = src;
         } else {
+          console.log('GlslCanvas.setUrl image', src);
           element = document.createElement('img'); // new HTMLImageElement();
 
           promise = this.setElement(gl, element, options);
@@ -2492,7 +2514,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
           wrapS = wrapT = gl.CLAMP_TO_EDGE;
 
           if (options.repeat || options.TEXTURE_WRAP_S || options.TEXTURE_WRAP_T) {
-            console.warn('GlslCanvas: cannot repeat texture ${options.url} cause is not power of 2.');
+            console.warn("GlslCanvas: cannot repeat texture ".concat(options.url, " cause is not power of 2."));
           }
         }
 
@@ -2613,12 +2635,13 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 
         var index = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
         var options = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
+        var workpath = arguments.length > 5 ? arguments[5] : undefined;
         var texture;
         var textureOptions = Texture.getTextureOptions(urlElementOrData, options);
         texture = this.get(key);
 
         if (!texture) {
-          texture = new Texture(gl, key, index + this.count, textureOptions);
+          texture = new Texture(gl, key, index + this.count, textureOptions, workpath);
           this.count++;
           this.set(key, texture);
         }

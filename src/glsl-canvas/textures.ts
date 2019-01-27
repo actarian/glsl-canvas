@@ -18,6 +18,12 @@ enum TextureFilteringType {
 	Nearest = 'nearest',
 }
 
+export class TextureInput {
+	key: string;
+	url: string | HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | Element | TextureData;
+	options?: TextureOptions;
+}
+
 export class TextureData {
 	data: Uint8Array;
 	width: number;
@@ -171,18 +177,18 @@ export class Texture extends Subscriber {
 		const src = String((url.indexOf(':/') === -1 && this.workpath !== undefined) ? `${this.workpath}/${url}` : url);
 		const ext = url.split('.').pop().toLowerCase();
 		const isVideo = TextureVideoExtensions.indexOf(ext) !== -1;
-		// console.log('setUrl', url, src, ext, isVideo);
 		let element: HTMLVideoElement | HTMLImageElement;
 		let promise: Promise<Texture>;
 		if (isVideo) {
+			console.log('GlslCanvas.setUrl video', src);
 			element = document.createElement('video'); // new HTMLVideoElement();
-			// options.filtering = TextureFilteringType.Nearest;
 			promise = this.setElement(gl, element, options);
 			element.setAttribute('playsinline', 'true');
 			element.autoplay = true;
 			element.muted = true;
 			element.src = src;
 		} else {
+			console.log('GlslCanvas.setUrl image', src);
 			element = document.createElement('img'); // new HTMLImageElement();
 			promise = this.setElement(gl, element, options);
 			if (!(Texture.isSafari() && url.slice(0, 5) === 'data:')) {
@@ -327,7 +333,7 @@ export class Texture extends Subscriber {
 			filtering = filtering === TextureFilteringType.MipMap ? TextureFilteringType.Linear : filtering;
 			wrapS = wrapT = gl.CLAMP_TO_EDGE;
 			if (options.repeat || options.TEXTURE_WRAP_S || options.TEXTURE_WRAP_T) {
-				console.warn('GlslCanvas: cannot repeat texture ${options.url} cause is not power of 2.');
+				console.warn(`GlslCanvas: cannot repeat texture ${options.url} cause is not power of 2.`);
 			}
 		}
 		this.powerOf2 = powerOf2;
@@ -373,13 +379,14 @@ export default class Textures extends IterableStringMap<Texture> {
 		key: string,
 		urlElementOrData: string | HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | Element | TextureData,
 		index: number = 0,
-		options: TextureOptions = {}
+		options: TextureOptions = {},
+		workpath: string,
 	): Promise<Texture> {
 		let texture;
 		const textureOptions = Texture.getTextureOptions(urlElementOrData, options);
 		texture = this.get(key);
 		if (!texture) {
-			texture = new Texture(gl, key, index + this.count, textureOptions);
+			texture = new Texture(gl, key, index + this.count, textureOptions, workpath);
 			this.count++;
 			this.set(key, texture);
 		}
