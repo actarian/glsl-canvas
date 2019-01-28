@@ -17,7 +17,6 @@ const fs = require('fs'),
 	through2 = require('through2'),
 	tfs = require('tfs'),
 	tsify = require('tsify'),
-	uglify = require('gulp-uglify'),
 	webserver = require('gulp-webserver'),
 	yargs = require('yargs');
 
@@ -53,7 +52,7 @@ function compileScss(done) {
 			.pipe(autoprefixer())
 			.pipe(rename(item.output))
 			.pipe(tfsCheckout())
-			.pipe(dest('.', { sourcemaps: '.' }))
+			.pipe(dest('.', item.minify ? null : { sourcemaps: '.' }))
 			.pipe(filter('**/*.css'))
 			.on('end', () => logger.log('compile', item.output))
 			.pipe(gulpif(item.minify, cssmin()))
@@ -103,7 +102,7 @@ function compileJs(done) {
 			))
 			.pipe(rename(item.output))
 			.pipe(tfsCheckout())
-			.pipe(dest('.', { sourcemaps: '.' }))
+			.pipe(dest('.', item.minify ? null : { sourcemaps: '.' }))
 			.pipe(filter('**/*.js'))
 			.on('end', () => logger.log('compile', item.output))
 			.pipe(gulpif(item.minify, terser()))
@@ -154,7 +153,7 @@ function compileTs(done) {
 			}))
 			.pipe(rename(item.output))
 			.pipe(tfsCheckout())
-			.pipe(dest('.', { sourcemaps: '.' }))
+			.pipe(dest('.', item.minify ? null : { sourcemaps: '.' }))
 			.pipe(filter('**/*.js'))
 			.on('end', () => logger.log('compile', item.output))
 			.pipe(gulpif(item.minify, terser()))
