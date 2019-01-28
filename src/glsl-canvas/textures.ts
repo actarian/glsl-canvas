@@ -106,7 +106,7 @@ export class Texture extends Subscriber {
 		urlElementOrData: string | HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | Element | TextureData,
 		options: TextureOptions = {}
 	): TextureOptions {
-		if (typeof urlElementOrData === 'string') {
+		if (typeof urlElementOrData === 'string' && urlElementOrData !== '') {
 			if (Texture.isTextureUrl(urlElementOrData)) {
 				options.url = urlElementOrData;
 				return options;

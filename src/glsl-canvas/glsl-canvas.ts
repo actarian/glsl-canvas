@@ -594,7 +594,7 @@ export default class GlslCanvas extends Subscriber {
 		options: TextureOptions = {}
 	) {
 		if (this.valid) {
-			// console.log(key, urlElementOrData);
+			// console.log('GlslCanvas.loadTexture', key, urlElementOrData);
 			this.textures.createOrUpdate(this.gl, key, urlElementOrData, this.buffers.count, options, this.options.workpath).then(
 				texture => {
 					const index = texture.index;

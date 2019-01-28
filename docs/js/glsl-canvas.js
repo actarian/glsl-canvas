@@ -1825,7 +1825,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
         if (this.valid) {
-          // console.log(key, urlElementOrData);
+          // console.log('GlslCanvas.loadTexture', key, urlElementOrData);
           this.textures.createOrUpdate(this.gl, key, urlElementOrData, this.buffers.count, options, this.options.workpath).then(function (texture) {
             var index = texture.index;
 
@@ -2574,7 +2574,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
       value: function getTextureOptions(urlElementOrData) {
         var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-        if (typeof urlElementOrData === 'string') {
+        if (typeof urlElementOrData === 'string' && urlElementOrData !== '') {
           if (Texture.isTextureUrl(urlElementOrData)) {
             options.url = urlElementOrData;
             return options;
