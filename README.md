@@ -1,4 +1,4 @@
-# glsl-canvas
+# 💎 glsl-canvas
 
 [glsl-canvas-js](https://github.com/actarian/glsl-canvas) is a typescript porting of GlslCanvas, a javascript library that helps you easily load GLSL Fragment and Vertex Shaders into an HTMLCanvasElement. Originally made by [Patricio Gonzalez Vivo](http://patriciogonzalezvivo.com) author of [Book of Shaders](http://thebookofshaders.com) and [GlslEditor](http://editor.thebookofshaders.com).
 
@@ -26,7 +26,7 @@ Add a canvas element on your page with class name ```glsl-canvas``` and assign a
 Or write your shader directly in code using the ```data-fragment``` attribute.
 
 ```html
-<canvas class="glsl-canvas" data-fragment-url="shader.frag" width="500" height="500"></canvas>
+<canvas class="glsl-canvas" data-fragment-url="fragment.glsl" width="500" height="500"></canvas>
 ```
 
 `GlslCanvas` will automatically load a WebGL context in that ```<canvas>``` element, compile the shader and animate it for you.
