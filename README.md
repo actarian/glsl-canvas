@@ -63,7 +63,7 @@ ___
 | `data-vertex`        | load a vertex shader by providing the content of the shader as a string |
 | `data-fragment-url`  | load a fragment shader by providing a valid url |
 | `data-vertex-url`    | load a vertex shader by providing a valid url |
-| `data-textures`      | load a list of texture urls separated by commas (ex: ```data-textures="texture.jpg,normal_map.png,something.jpg"```). Textures will be assigned in order to ```uniform sampler2D``` variables with names following this style: ```u_tex0```, ```u_tex1```, ```u_tex2```, etc. |
+| `data-textures`      | load a list of texture urls separated by commas (ex: ```data-textures="color.jpg,normal.png,bump.jpg"```). Textures will be assigned in order to ```uniform sampler2D``` variables with names following this style: ```u_texture_0```, ```u_texture_1```, ```u_texture_2```, etc. |
 | `controls`           | enable play on over functionality |
 | `data-autoplay`      | enable autoplay with controls feature |
 ___
