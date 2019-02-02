@@ -1410,7 +1410,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         var loop = function loop(time) {
           _this3.checkRender();
 
-          window.requestAnimationFrame(loop);
+          _this3.rafId = window.requestAnimationFrame(loop);
         };
 
         this.loop = loop; // window.addEventListener('resize', resize);
@@ -1431,7 +1431,8 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         }
 
         this.removeListeners_ = function () {
-          // window.removeEventListener('resize', resize);
+          window.cancelAnimationFrame(_this3.rafId); // window.removeEventListener('resize', resize);
+
           window.removeEventListener('scroll', scroll);
           document.removeEventListener('mousemove', mousemove);
           document.removeEventListener('touchmove', touchmove);
@@ -3078,4 +3079,3 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 });
 
 },{"./iterable":8,"./textures":10}]},{},[7]);
-//# sourceMappingURL=glsl-canvas.js.map

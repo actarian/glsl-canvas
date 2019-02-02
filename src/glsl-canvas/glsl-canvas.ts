@@ -87,6 +87,7 @@ export default class GlslCanvas extends Subscriber {
 	dirty: boolean = true;
 	visible: boolean = false;
 
+	rafId: number;
 	loop: Function;
 	private removeListeners_: Function = () => { };
 
@@ -258,7 +259,7 @@ export default class GlslCanvas extends Subscriber {
 
 		const loop: FrameRequestCallback = (time: number) => {
 			this.checkRender();
-			window.requestAnimationFrame(loop);
+			this.rafId = window.requestAnimationFrame(loop);
 		};
 
 		this.loop = loop;
@@ -278,6 +279,7 @@ export default class GlslCanvas extends Subscriber {
 		}
 
 		this.removeListeners_ = () => {
+			window.cancelAnimationFrame(this.rafId);
 			// window.removeEventListener('resize', resize);
 			window.removeEventListener('scroll', scroll);
 			document.removeEventListener('mousemove', mousemove);
