@@ -1,6 +1,6 @@
 {
 	"name": "glsl-canvas-js",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"displayName": "glsl-canvas",
 	"description": "WebGL library to display GLSL fragment shader on canvas",
 	"author": "Luca Zampetti <lzampetti@gmail.com>",

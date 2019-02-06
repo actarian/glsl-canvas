@@ -1,5 +1,6 @@
 
 import IterableStringMap from './iterable';
+import Logger from './logger';
 import { Texture } from './textures';
 
 export interface IUniformOption { [key: string]: any[]; }
@@ -70,7 +71,7 @@ export class Uniform {
 			if (this.dirty) {
 				gl.useProgram(program);
 				const location = gl.getUniformLocation(program, this.key);
-				// console.log(this.key, this.method, this.values);
+				// Logger.log(this.key, this.method, this.values);
 				// (gl as any)[this.method].apply(gl, [location].concat(this.values));
 				(gl as any)[this.method].apply(gl, [location].concat(this.values));
 			}
@@ -198,7 +199,7 @@ export default class Uniforms extends IterableStringMap<Uniform> {
 		type = type || Uniforms.getType_(values);
 		const method = Uniforms.getMethod_(type, values);
 		if (type !== UniformType.Unknown && method !== UniformMethod.Unknown) {
-			// console.log('Uniforms.parseUniform', key, UniformType[type], method, values);
+			// Logger.log('Uniforms.parseUniform', key, UniformType[type], method, values);
 			if (type === UniformType.Sampler2D && method === UniformMethod.Uniform1iv) {
 				return values[0].map((texture: any, index: number) => {
 					return new Uniform({
@@ -217,7 +218,7 @@ export default class Uniforms extends IterableStringMap<Uniform> {
 				});
 			}
 		} else {
-			console.error('Uniforms.parseUniform.Unknown', key, values);
+			Logger.error('Uniforms.parseUniform.Unknown', key, values);
 		}
 		// return this.parseUniform__bak(key, values);
 		return uniform;

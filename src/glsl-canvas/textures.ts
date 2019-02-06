@@ -1,5 +1,6 @@
 // import 'promise-polyfill';
 import IterableStringMap from './iterable';
+import Logger from './logger';
 import Subscriber from './subscriber';
 
 export const TextureImageExtensions = ['jpg', 'jpeg', 'png'];
@@ -113,7 +114,7 @@ export class Texture extends Subscriber {
 			}
 			if (document) {
 				urlElementOrData = document.querySelector(urlElementOrData);
-				// console.log(urlElementOrData);
+				// Logger.log(urlElementOrData);
 			}
 		}
 		if (urlElementOrData instanceof HTMLCanvasElement || urlElementOrData instanceof HTMLImageElement || urlElementOrData instanceof HTMLVideoElement) {
@@ -180,15 +181,28 @@ export class Texture extends Subscriber {
 		let element: HTMLVideoElement | HTMLImageElement;
 		let promise: Promise<Texture>;
 		if (isVideo) {
-			console.log('GlslCanvas.setUrl video', src);
+			Logger.log('GlslCanvas.setUrl video', src);
 			element = document.createElement('video'); // new HTMLVideoElement();
-			promise = this.setElement(gl, element, options);
+			element.setAttribute('preload', 'auto');
+			// element.setAttribute('autoplay', 'true');
+			element.setAttribute('loop', 'true');
+			element.setAttribute('muted', 'true');
 			element.setAttribute('playsinline', 'true');
-			element.autoplay = true;
+			// element.autoplay = true;
+			element.loop = true;
 			element.muted = true;
+			/*
+			if (!(Texture.isSafari() && /(?<!http|https):\//.test(url))) {
+				element.crossOrigin = 'anonymous';
+			}
+			*/
+			promise = this.setElement(gl, element, options);
 			element.src = src;
+			element.addEventListener('canplay', () => {
+				(element as HTMLVideoElement).play();
+			});
 		} else {
-			console.log('GlslCanvas.setUrl image', src);
+			Logger.log('GlslCanvas.setUrl image', src);
 			element = document.createElement('img'); // new HTMLImageElement();
 			promise = this.setElement(gl, element, options);
 			if (!(Texture.isSafari() && url.slice(0, 5) === 'data:')) {
@@ -242,7 +256,7 @@ export class Texture extends Subscriber {
 				}
 			} else {
 				let message = `the 'element' parameter (\`element: ${JSON.stringify(originalElement)}\`) must be a CSS selector string, or a <canvas>, <image> or <video> object`;
-				console.log(`Texture '${this.key}': ${message}`, options);
+				Logger.log(`Texture '${this.key}': ${message}`, options);
 				reject(message);
 			}
 		});
@@ -333,7 +347,7 @@ export class Texture extends Subscriber {
 			filtering = filtering === TextureFilteringType.MipMap ? TextureFilteringType.Linear : filtering;
 			wrapS = wrapT = gl.CLAMP_TO_EDGE;
 			if (options.repeat || options.TEXTURE_WRAP_S || options.TEXTURE_WRAP_T) {
-				console.warn(`GlslCanvas: cannot repeat texture ${options.url} cause is not power of 2.`);
+				Logger.warn(`GlslCanvas: cannot repeat texture ${options.url} cause is not power of 2.`);
 			}
 		}
 		this.powerOf2 = powerOf2;
@@ -395,25 +409,25 @@ export default class Textures extends IterableStringMap<Texture> {
 				(texture) => {
 					if (texture.source instanceof HTMLVideoElement) {
 						const video = texture.source as HTMLVideoElement;
-						// console.log('video', video);
+						// Logger.log('video', video);
 						video.addEventListener('play', () => {
-							// console.log('play', texture.key);
+							// Logger.log('play', texture.key);
 							texture.animated = true;
 							this.animated = true;
 						});
 						video.addEventListener('pause', () => {
-							// console.log('pause', texture.key);
+							// Logger.log('pause', texture.key);
 							texture.animated = false;
 							this.animated = this.reduce((flag: boolean, texture: Texture) => {
 								return flag || texture.animated;
 							}, false);
 						});
 						video.addEventListener('seeked', () => {
-							// console.log('seeked');
+							// Logger.log('seeked');
 							texture.update(gl, texture.options);
 							this.dirty = true;
 						});
-						// console.log('video');
+						// Logger.log('video');
 						/*
 						video.addEventListener('canplaythrough', () => {
 							// !!!

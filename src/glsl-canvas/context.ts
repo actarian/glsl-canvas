@@ -1,3 +1,4 @@
+import Logger from './logger';
 
 export const ContextDefaultVertex = `
 #ifdef GL_ES
@@ -101,7 +102,7 @@ export default class Context {
 		if (!compiled) {
 			// Something went wrong during compilation; get the error
 			Context.lastError = gl.getShaderInfoLog(shader);
-			console.error('*** Error compiling shader ' + shader + ':' + Context.lastError);
+			Logger.error('*** Error compiling shader ' + shader + ':' + Context.lastError);
 			// main.trigger('error', {
 			gl.deleteShader(shader);
 			throw ({
@@ -131,7 +132,7 @@ export default class Context {
 		if (!linked) {
 			// something went wrong with the link
 			Context.lastError = gl.getProgramInfoLog(program);
-			console.log('Error in program linking:' + Context.lastError);
+			Logger.log('Error in program linking:' + Context.lastError);
 			gl.deleteProgram(program);
 			return null;
 		}

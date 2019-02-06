@@ -898,12 +898,18 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
+var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
 (function (factory) {
   if ((typeof module === "undefined" ? "undefined" : _typeof(module)) === "object" && _typeof(module.exports) === "object") {
     var v = factory(require, exports);
     if (v !== undefined) module.exports = v;
   } else if (typeof define === "function" && define.amd) {
-    define(["require", "exports"], factory);
+    define(["require", "exports", "./logger"], factory);
   }
 })(function (require, exports) {
   "use strict";
@@ -911,6 +917,9 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
+
+  var logger_1 = __importDefault(require("./logger"));
+
   exports.ContextDefaultVertex = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nattribute vec2 a_position;\nattribute vec2 a_texcoord;\n\nvarying vec2 v_texcoord;\n\nvoid main(){\n\tgl_Position = vec4(a_position, 0.0, 1.0);\n\tv_texcoord = a_texcoord;\n}\n";
   exports.ContextDefaultFragment = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nvarying vec2 v_texcoord;\n\nvoid main(){\n\tgl_FragColor = vec4(0.0);\n}\n";
 
@@ -999,7 +1008,7 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
         if (!compiled) {
           // Something went wrong during compilation; get the error
           Context.lastError = gl.getShaderInfoLog(shader);
-          console.error('*** Error compiling shader ' + shader + ':' + Context.lastError); // main.trigger('error', {
+          logger_1.default.error('*** Error compiling shader ' + shader + ':' + Context.lastError); // main.trigger('error', {
 
           gl.deleteShader(shader);
           throw {
@@ -1035,7 +1044,7 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
         if (!linked) {
           // something went wrong with the link
           Context.lastError = gl.getProgramInfoLog(program);
-          console.log('Error in program linking:' + Context.lastError);
+          logger_1.default.log('Error in program linking:' + Context.lastError);
           gl.deleteProgram(program);
           return null;
         }
@@ -1069,7 +1078,7 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
   exports.default = Context;
 });
 
-},{}],7:[function(require,module,exports){
+},{"./logger":9}],7:[function(require,module,exports){
 "use strict";
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -1111,7 +1120,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     var v = factory(require, exports);
     if (v !== undefined) module.exports = v;
   } else if (typeof define === "function" && define.amd) {
-    define(["require", "exports", "promise-polyfill", "./buffers", "./common", "./context", "./subscriber", "./textures", "./uniforms"], factory);
+    define(["require", "exports", "promise-polyfill", "./buffers", "./common", "./context", "./logger", "./subscriber", "./textures", "./uniforms"], factory);
   }
 })(function (require, exports) {
   "use strict";
@@ -1127,6 +1136,8 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
   var common_1 = __importDefault(require("./common"));
 
   var context_1 = __importStar(require("./context"));
+
+  var logger_1 = __importDefault(require("./logger"));
 
   var subscriber_1 = __importDefault(require("./subscriber"));
 
@@ -1175,7 +1186,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           var now = this.now();
           this.delay += now - this.previous;
           this.previous = now;
-        } // console.log(this.delay);
+        } // Logger.log(this.delay);
 
 
         this.paused = false;
@@ -1266,7 +1277,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
 
         _this.loop();
       }, function (error) {
-        console.log('GlslCanvas.getShaders_.error', error);
+        logger_1.default.log('GlslCanvas.getShaders_.error', error);
       });
 
       GlslCanvas.items.push(_assertThisInitialized(_assertThisInitialized(_this)));
@@ -1826,7 +1837,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
         if (this.valid) {
-          // console.log('GlslCanvas.loadTexture', key, urlElementOrData);
+          // Logger.log('GlslCanvas.loadTexture', key, urlElementOrData);
           this.textures.createOrUpdate(this.gl, key, urlElementOrData, this.buffers.count, options, this.options.workpath).then(function (texture) {
             var index = texture.index;
 
@@ -1835,12 +1846,21 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
             uniform.texture = texture;
             var keyResolution = key.indexOf('[') !== -1 ? key.replace('[', 'Resolution[') : key + 'Resolution';
 
-            var uniformResolution = _this8.uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.Float, keyResolution, [texture.width, texture.height]); // console.log('loadTexture', key, url, index, texture.width, texture.height);
+            var uniformResolution = _this8.uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.Float, keyResolution, [texture.width, texture.height]); // Logger.log('loadTexture', key, url, index, texture.width, texture.height);
 
 
             return texture;
           }, function (error) {
-            console.log('GlslCanvas.loadTexture.error', error, key, urlElementOrData);
+            var message = Array.isArray(error.path) ? error.path.map(function (x) {
+              return x.error ? x.error.message : '';
+            }).join(', ') : error.message;
+            logger_1.default.log('GlslCanvas.loadTexture.error', key, urlElementOrData, message);
+
+            _this8.trigger('textureError', {
+              key: key,
+              urlElementOrData: urlElementOrData,
+              message: message
+            });
           });
         } else {
           this.textureList.push({
@@ -1967,6 +1987,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     return GlslCanvas;
   }(subscriber_1.default);
 
+  GlslCanvas.logger = logger_1.default;
   GlslCanvas.items = [];
   exports.default = GlslCanvas;
   window.GlslCanvas = window.GlslCanvas || GlslCanvas; // (<any>(window)).GlslCanvas = GlslCanvas;
@@ -1978,7 +1999,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
   }
 });
 
-},{"./buffers":4,"./common":5,"./context":6,"./subscriber":9,"./textures":10,"./uniforms":11,"promise-polyfill":2}],8:[function(require,module,exports){
+},{"./buffers":4,"./common":5,"./context":6,"./logger":9,"./subscriber":10,"./textures":11,"./uniforms":12,"promise-polyfill":2}],8:[function(require,module,exports){
 "use strict";
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -2075,11 +2096,11 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 },{}],9:[function(require,module,exports){
 "use strict";
 
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
@@ -2096,6 +2117,82 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
+
+  var Logger =
+  /*#__PURE__*/
+  function () {
+    function Logger() {
+      _classCallCheck(this, Logger);
+    }
+
+    _createClass(Logger, null, [{
+      key: "log",
+      value: function log() {
+        if (Logger.enabled) {
+          var _console;
+
+          (_console = console).log.apply(_console, arguments);
+        }
+      }
+    }, {
+      key: "warn",
+      value: function warn() {
+        if (Logger.enabled) {
+          var _console2;
+
+          (_console2 = console).warn.apply(_console2, arguments);
+        }
+      }
+    }, {
+      key: "error",
+      value: function error() {
+        if (Logger.enabled) {
+          var _console3;
+
+          (_console3 = console).error.apply(_console3, arguments);
+        }
+      }
+    }]);
+
+    return Logger;
+  }();
+
+  Logger.enabled = false;
+  exports.default = Logger;
+});
+
+},{}],10:[function(require,module,exports){
+"use strict";
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+(function (factory) {
+  if ((typeof module === "undefined" ? "undefined" : _typeof(module)) === "object" && _typeof(module.exports) === "object") {
+    var v = factory(require, exports);
+    if (v !== undefined) module.exports = v;
+  } else if (typeof define === "function" && define.amd) {
+    define(["require", "exports", "./logger"], factory);
+  }
+})(function (require, exports) {
+  "use strict";
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var logger_1 = __importDefault(require("./logger"));
 
   var Listener = function Listener(event, callback) {
     _classCallCheck(this, Listener);
@@ -2119,7 +2216,7 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
       key: "logListeners",
       value: function logListeners() {
         this.listeners.forEach(function (x) {
-          return console.log(x);
+          return logger_1.default.log(x);
         });
       }
     }, {
@@ -2182,7 +2279,7 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
   exports.default = Subscriber;
 });
 
-},{}],10:[function(require,module,exports){
+},{"./logger":9}],11:[function(require,module,exports){
 "use strict";
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -2214,7 +2311,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     var v = factory(require, exports);
     if (v !== undefined) module.exports = v;
   } else if (typeof define === "function" && define.amd) {
-    define(["require", "exports", "./iterable", "./subscriber"], factory);
+    define(["require", "exports", "./iterable", "./logger", "./subscriber"], factory);
   }
 })(function (require, exports) {
   "use strict";
@@ -2224,6 +2321,8 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
   }); // import 'promise-polyfill';
 
   var iterable_1 = __importDefault(require("./iterable"));
+
+  var logger_1 = __importDefault(require("./logger"));
 
   var subscriber_1 = __importDefault(require("./subscriber"));
 
@@ -2348,16 +2447,30 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         var promise;
 
         if (isVideo) {
-          console.log('GlslCanvas.setUrl video', src);
+          logger_1.default.log('GlslCanvas.setUrl video', src);
           element = document.createElement('video'); // new HTMLVideoElement();
 
-          promise = this.setElement(gl, element, options);
-          element.setAttribute('playsinline', 'true');
-          element.autoplay = true;
+          element.setAttribute('preload', 'auto'); // element.setAttribute('autoplay', 'true');
+
+          element.setAttribute('loop', 'true');
+          element.setAttribute('muted', 'true');
+          element.setAttribute('playsinline', 'true'); // element.autoplay = true;
+
+          element.loop = true;
           element.muted = true;
+          /*
+          if (!(Texture.isSafari() && /(?<!http|https):\//.test(url))) {
+              element.crossOrigin = 'anonymous';
+          }
+          */
+
+          promise = this.setElement(gl, element, options);
           element.src = src;
+          element.addEventListener('canplay', function () {
+            element.play();
+          });
         } else {
-          console.log('GlslCanvas.setUrl image', src);
+          logger_1.default.log('GlslCanvas.setUrl image', src);
           element = document.createElement('img'); // new HTMLImageElement();
 
           promise = this.setElement(gl, element, options);
@@ -2421,7 +2534,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
             }
           } else {
             var message = "the 'element' parameter (`element: ".concat(JSON.stringify(originalElement), "`) must be a CSS selector string, or a <canvas>, <image> or <video> object");
-            console.log("Texture '".concat(_this2.key, "': ").concat(message), options);
+            logger_1.default.log("Texture '".concat(_this2.key, "': ").concat(message), options);
             reject(message);
           }
         });
@@ -2515,7 +2628,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
           wrapS = wrapT = gl.CLAMP_TO_EDGE;
 
           if (options.repeat || options.TEXTURE_WRAP_S || options.TEXTURE_WRAP_T) {
-            console.warn("GlslCanvas: cannot repeat texture ".concat(options.url, " cause is not power of 2."));
+            logger_1.default.warn("GlslCanvas: cannot repeat texture ".concat(options.url, " cause is not power of 2."));
           }
         }
 
@@ -2582,7 +2695,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
           }
 
           if (document) {
-            urlElementOrData = document.querySelector(urlElementOrData); // console.log(urlElementOrData);
+            urlElementOrData = document.querySelector(urlElementOrData); // Logger.log(urlElementOrData);
           }
         }
 
@@ -2650,25 +2763,25 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         if (textureOptions !== undefined) {
           return texture.load(gl, textureOptions).then(function (texture) {
             if (texture.source instanceof HTMLVideoElement) {
-              var video = texture.source; // console.log('video', video);
+              var video = texture.source; // Logger.log('video', video);
 
               video.addEventListener('play', function () {
-                // console.log('play', texture.key);
+                // Logger.log('play', texture.key);
                 texture.animated = true;
                 _this4.animated = true;
               });
               video.addEventListener('pause', function () {
-                // console.log('pause', texture.key);
+                // Logger.log('pause', texture.key);
                 texture.animated = false;
                 _this4.animated = _this4.reduce(function (flag, texture) {
                   return flag || texture.animated;
                 }, false);
               });
               video.addEventListener('seeked', function () {
-                // console.log('seeked');
+                // Logger.log('seeked');
                 texture.update(gl, texture.options);
                 _this4.dirty = true;
-              }); // console.log('video');
+              }); // Logger.log('video');
 
               /*
               video.addEventListener('canplaythrough', () => {
@@ -2698,7 +2811,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
   exports.default = Textures;
 });
 
-},{"./iterable":8,"./subscriber":9}],11:[function(require,module,exports){
+},{"./iterable":8,"./logger":9,"./subscriber":10}],12:[function(require,module,exports){
 "use strict";
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -2730,7 +2843,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     var v = factory(require, exports);
     if (v !== undefined) module.exports = v;
   } else if (typeof define === "function" && define.amd) {
-    define(["require", "exports", "./iterable", "./textures"], factory);
+    define(["require", "exports", "./iterable", "./logger", "./textures"], factory);
   }
 })(function (require, exports) {
   "use strict";
@@ -2740,6 +2853,8 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
   });
 
   var iterable_1 = __importDefault(require("./iterable"));
+
+  var logger_1 = __importDefault(require("./logger"));
 
   var textures_1 = require("./textures");
 
@@ -2810,7 +2925,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     this.apply = function (gl, program) {
       if (_this.dirty) {
         gl.useProgram(program);
-        var location = gl.getUniformLocation(program, _this.key); // console.log(this.key, this.method, this.values);
+        var location = gl.getUniformLocation(program, _this.key); // Logger.log(this.key, this.method, this.values);
         // (gl as any)[this.method].apply(gl, [location].concat(this.values));
 
         gl[_this.method].apply(gl, [location].concat(_this.values));
@@ -3045,7 +3160,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         var method = Uniforms.getMethod_(type, values);
 
         if (type !== UniformType.Unknown && method !== UniformMethod.Unknown) {
-          // console.log('Uniforms.parseUniform', key, UniformType[type], method, values);
+          // Logger.log('Uniforms.parseUniform', key, UniformType[type], method, values);
           if (type === UniformType.Sampler2D && method === UniformMethod.Uniform1iv) {
             return values[0].map(function (texture, index) {
               return new Uniform({
@@ -3064,7 +3179,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
             });
           }
         } else {
-          console.error('Uniforms.parseUniform.Unknown', key, values);
+          logger_1.default.error('Uniforms.parseUniform.Unknown', key, values);
         } // return this.parseUniform__bak(key, values);
 
 
@@ -3078,4 +3193,4 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
   exports.default = Uniforms;
 });
 
-},{"./iterable":8,"./textures":10}]},{},[7]);
+},{"./iterable":8,"./logger":9,"./textures":11}]},{},[7]);

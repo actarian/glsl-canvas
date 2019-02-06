@@ -3,6 +3,7 @@ import 'promise-polyfill';
 import Buffers, { IOBuffer } from './buffers';
 import Common from './common';
 import Context, { ContextDefaultFragment, ContextDefaultVertex, ContextOptions, ContextVertexBuffers } from './context';
+import Logger from './logger';
 import Subscriber from './subscriber';
 import Textures, { Texture, TextureData, TextureExtensions, TextureInput, TextureOptions } from './textures';
 import Uniforms, { IUniformOption, Uniform, UniformMethod, UniformType } from './uniforms';
@@ -43,7 +44,7 @@ export class GlslCanvasTimer {
 			this.delay += (now - this.previous);
 			this.previous = now;
 		}
-		// console.log(this.delay);
+		// Logger.log(this.delay);
 		this.paused = false;
 	}
 
@@ -127,11 +128,12 @@ export default class GlslCanvas extends Subscriber {
 				this.loop();
 			},
 			(error) => {
-				console.log('GlslCanvas.getShaders_.error', error);
+				Logger.log('GlslCanvas.getShaders_.error', error);
 			});
 		GlslCanvas.items.push(this);
 	}
 
+	static logger: Logger = Logger;
 	static items: GlslCanvas[] = [];
 
 	static version(): string {
@@ -596,7 +598,7 @@ export default class GlslCanvas extends Subscriber {
 		options: TextureOptions = {}
 	) {
 		if (this.valid) {
-			// console.log('GlslCanvas.loadTexture', key, urlElementOrData);
+			// Logger.log('GlslCanvas.loadTexture', key, urlElementOrData);
 			this.textures.createOrUpdate(this.gl, key, urlElementOrData, this.buffers.count, options, this.options.workpath).then(
 				texture => {
 					const index = texture.index;
@@ -604,11 +606,13 @@ export default class GlslCanvas extends Subscriber {
 					uniform.texture = texture;
 					const keyResolution = key.indexOf('[') !== -1 ? key.replace('[', 'Resolution[') : key + 'Resolution';
 					const uniformResolution = this.uniforms.create(UniformMethod.Uniform2f, UniformType.Float, keyResolution, [texture.width, texture.height]);
-					// console.log('loadTexture', key, url, index, texture.width, texture.height);
+					// Logger.log('loadTexture', key, url, index, texture.width, texture.height);
 					return texture;
 				},
 				error => {
-					console.log('GlslCanvas.loadTexture.error', error, key, urlElementOrData);
+					const message = Array.isArray(error.path) ? error.path.map((x: any) => x.error ? x.error.message : '').join(', ') : error.message;
+					Logger.log('GlslCanvas.loadTexture.error', key, urlElementOrData, message);
+					this.trigger('textureError', { key, urlElementOrData, message });
 				});
 		} else {
 			this.textureList.push({ key, url: urlElementOrData, options });

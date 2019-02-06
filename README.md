@@ -70,15 +70,18 @@ ___
 
 ### Events
 
-| name        | argument              |
-|-------------|-----------------------|
-| `load`      | GlslCanvas instance   |
-| `render`    | GlslCanvas instance   |
-| `over`      | MouseEvent            |
-| `out`       | MouseEvent            |
-| `move`      | { x:, y: }            |
-| `click`     | MouseEvent            |
-___
+| name           | argument              |
+|----------------|-----------------------|
+| `load`         | GlslCanvas instance   |
+| `error`        | Error                 |
+| `textureError` | TextureError          |
+| `render`       | GlslCanvas instance   |
+| `over`         | MouseEvent            |
+| `out`          | MouseEvent            |
+| `move`         | { x:, y: }            |
+| `click`        | MouseEvent            |
+
+---
 
 ### Methods
 
@@ -187,6 +190,12 @@ ___
 Changelog [here](https://github.com/actarian/glsl-canvas/blob/master/CHANGELOG.md).
 
 ---
+
+### 0.1.1
+* Added texture error event.
+* Fixed video texture.
+
+___
 
 ### 0.1.0
 
