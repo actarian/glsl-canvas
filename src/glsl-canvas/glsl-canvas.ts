@@ -515,7 +515,13 @@ export default class GlslCanvas extends Subscriber {
 		gl.deleteShader(fragmentShader);
 		this.program = program;
 		if (this.valid) {
-			this.buffers = Buffers.getBuffers(gl, this.fragmentString, this.vertexString);
+			try {
+				this.buffers = Buffers.getBuffers(gl, this.fragmentString, this.vertexString);
+			} catch (e) {
+				this.valid = false;
+				this.trigger('error', e);
+				return;
+			}
 			this.vertexBuffers = Context.createVertexBuffers(gl, program);
 			this.createUniforms_();
 		}

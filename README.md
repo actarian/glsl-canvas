@@ -191,6 +191,11 @@ Changelog [here](https://github.com/actarian/glsl-canvas/blob/master/CHANGELOG.m
 
 ---
 
+### 0.1.2
+* Added buffer error event.
+
+---
+
 ### 0.1.1
 * Added texture error event.
 * Fixed video texture.

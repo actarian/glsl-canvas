@@ -1734,7 +1734,14 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         this.program = program;
 
         if (this.valid) {
-          this.buffers = buffers_1.default.getBuffers(gl, this.fragmentString, this.vertexString);
+          try {
+            this.buffers = buffers_1.default.getBuffers(gl, this.fragmentString, this.vertexString);
+          } catch (e) {
+            this.valid = false;
+            this.trigger('error', e);
+            return;
+          }
+
           this.vertexBuffers = context_1.default.createVertexBuffers(gl, program);
           this.createUniforms_();
         } // Trigger event
