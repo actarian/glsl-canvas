@@ -3,6 +3,12 @@ All notable changes to the "glsl-canvas" library will be documented in this file
 
 ---
 
+## [0.1.3] - 2019-02-16
+### Fixed
+- u_mouse on retina display.
+
+---
+
 ## [0.1.2] - 2019-02-07
 ### Added
 - Buffer error event.

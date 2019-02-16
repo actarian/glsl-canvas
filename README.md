@@ -191,6 +191,11 @@ Changelog [here](https://github.com/actarian/glsl-canvas/blob/master/CHANGELOG.m
 
 ---
 
+### 0.1.3
+* Fixed u_mouse on retina display.
+
+---
+
 ### 0.1.2
 * Added buffer error event.
 

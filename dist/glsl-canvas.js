@@ -1350,10 +1350,14 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         };
 
         var move = function move(mx, my) {
-          var rect = _this3.rect,
-              gap = 20;
-          var x = Math.max(-gap, Math.min(rect.width + gap, (mx - rect.left) * _this3.devicePixelRatio));
-          var y = Math.max(-gap, Math.min(rect.height + gap, _this3.canvas.height - (my - rect.top) * _this3.devicePixelRatio));
+          /*
+          const rect = this.rect, gap = 20;
+          const x = Math.max(-gap, Math.min(rect.width + gap, (mx - rect.left) * this.devicePixelRatio));
+          const y = Math.max(-gap, Math.min(rect.height + gap, (this.canvas.height - (my - rect.top) * this.devicePixelRatio)));
+          */
+          var rect = _this3.rect;
+          var x = (mx - rect.left) * _this3.devicePixelRatio;
+          var y = (rect.height - (my - rect.top)) * _this3.devicePixelRatio;
 
           if (x !== _this3.mouse.x || y !== _this3.mouse.y) {
             _this3.mouse.x = x;

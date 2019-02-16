@@ -205,9 +205,14 @@ export default class GlslCanvas extends Subscriber {
 		};
 
 		const move = (mx: number, my: number) => {
+			/*
 			const rect = this.rect, gap = 20;
 			const x = Math.max(-gap, Math.min(rect.width + gap, (mx - rect.left) * this.devicePixelRatio));
 			const y = Math.max(-gap, Math.min(rect.height + gap, (this.canvas.height - (my - rect.top) * this.devicePixelRatio)));
+			*/
+			const rect = this.rect;
+			const x = (mx - rect.left) * this.devicePixelRatio;
+			const y = (rect.height - (my - rect.top)) * this.devicePixelRatio;
 			if (x !== this.mouse.x ||
 				y !== this.mouse.y) {
 				this.mouse.x = x;
