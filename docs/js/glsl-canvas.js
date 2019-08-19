@@ -571,6 +571,8 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 
   var iterable_1 = __importDefault(require("./iterable"));
 
+  exports.BuffersDefaultFragment = "\nvoid main(){\n\tgl_FragColor = vec4(1.0);\n}";
+  exports.BuffersDefaultFragment2 = "#version 300 es\n\nprecision mediump float;\n\nout vec4 outColor;\n\nvoid main() {\n\toutColor = vec4(1.0);\n}\n";
   var BufferFloatType;
 
   (function (BufferFloatType) {
@@ -603,7 +605,8 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         var floatType, extension;
 
         if (Buffer.floatType === BufferFloatType.FLOAT) {
-          extension = gl.getExtension('OES_texture_float');
+          var extensionName = gl instanceof WebGL2RenderingContext ? 'EXT_color_buffer_float' : 'OES_texture_float';
+          extension = gl.getExtension(extensionName);
 
           if (extension) {
             floatType = gl.FLOAT;
@@ -612,7 +615,9 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
             return this.getFloatType(gl);
           }
         } else {
-          extension = gl.getExtension('OES_texture_half_float');
+          var _extensionName = gl instanceof WebGL2RenderingContext ? 'EXT_color_buffer_half_float' : 'OES_texture_half_float';
+
+          extension = gl.getExtension(_extensionName);
 
           if (extension) {
             floatType = extension.HALF_FLOAT_OES;
@@ -630,8 +635,11 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         var floatType = this.getFloatType(gl);
         var texture = gl.createTexture();
         gl.activeTexture(gl.TEXTURE0 + index);
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, BW, BH, 0, gl.RGBA, floatType, null);
+        gl.bindTexture(gl.TEXTURE_2D, texture); // They are, GL_ALPHA, GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_RGB and GL_RGBA.
+        // Depending on exactly what you're trying to achieve, you will probably find GL_LUMINANCE or GL_ALPHA can be suitable substitutes.
+        // Alternatively, this extension does support a red (and a red-green) texture, I think it's quite common, but isn't everywhere.
+
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl instanceof WebGL2RenderingContext ? gl.RGBA16F : gl.RGBA, BW, BH, 0, gl.RGBA, floatType, null);
         var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
 
         if (status !== gl.FRAMEBUFFER_COMPLETE) {
@@ -715,11 +723,12 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     _createClass(IOBuffer, [{
       key: "create",
       value: function create(gl, BW, BH) {
+        // console.log('create', this.vertexString, this.fragmentString);
         var vertexShader = context_1.default.createShader(gl, this.vertexString, gl.VERTEX_SHADER);
         var fragmentShader = context_1.default.createShader(gl, this.fragmentString, gl.FRAGMENT_SHADER, 1);
 
         if (!fragmentShader) {
-          fragmentShader = context_1.default.createShader(gl, 'void main(){\n\tgl_FragColor = vec4(1.0);\n}', gl.FRAGMENT_SHADER);
+          fragmentShader = context_1.default.createShader(gl, gl instanceof WebGL2RenderingContext ? exports.BuffersDefaultFragment2 : exports.BuffersDefaultFragment, gl.FRAGMENT_SHADER);
           this.isValid = false;
         } else {
           this.isValid = true;
@@ -796,13 +805,18 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         var count = 0;
 
         if (fragmentString) {
+          if (gl instanceof WebGL2RenderingContext) {
+            fragmentString = fragmentString.replace(/^\#version\s*300\s*es\s*\n/, '');
+          }
+
           var regexp = /(?:^\s*)((?:#if|#elif)(?:\s*)(defined\s*\(\s*BUFFER_)(\d+)(?:\s*\))|(?:#ifdef)(?:\s*BUFFER_)(\d+)(?:\s*))/gm;
           var matches;
 
           while ((matches = regexp.exec(fragmentString)) !== null) {
             var i = matches[3] || matches[4];
             var key = 'u_buffer' + i;
-            var buffer = new IOBuffer(count, key, vertexString, '#define BUFFER_' + i + '\n' + fragmentString);
+            var bufferFragmentString = gl instanceof WebGL2RenderingContext ? "#version 300 es\n#define BUFFER_".concat(i, "\n").concat(fragmentString) : "#define BUFFER_".concat(i, "\n").concat(fragmentString);
+            var buffer = new IOBuffer(count, key, vertexString, bufferFragmentString);
             buffer.create(gl, gl.drawingBufferWidth, gl.drawingBufferHeight);
             buffers.set(key, buffer);
             count += 4;
@@ -922,12 +936,21 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 
   exports.ContextDefaultVertex = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nattribute vec2 a_position;\nattribute vec2 a_texcoord;\n\nvarying vec2 v_texcoord;\n\nvoid main(){\n\tgl_Position = vec4(a_position, 0.0, 1.0);\n\tv_texcoord = a_texcoord;\n}\n";
   exports.ContextDefaultFragment = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nvarying vec2 v_texcoord;\n\nvoid main(){\n\tgl_FragColor = vec4(0.0);\n}\n";
+  exports.ContextDefaultVertex2 = "#version 300 es\n\nin vec2 a_position;\nin vec2 a_texcoord;\n\nout vec2 v_texcoord;\n\nvoid main() {\n\tgl_Position = vec4(a_position, 0.0, 1.0);\n\tv_texcoord = a_texcoord;\n}\n";
+  exports.ContextDefaultFragment2 = "#version 300 es\n\nprecision mediump float;\n\nout vec4 outColor;\n\nvoid main() {\n\toutColor = vec4(0.0);\n}\n";
 
   var ContextOptions = function ContextOptions() {
     _classCallCheck(this, ContextOptions);
   };
 
   exports.ContextOptions = ContextOptions;
+  var ContextVersion;
+
+  (function (ContextVersion) {
+    ContextVersion[ContextVersion["WebGl"] = 1] = "WebGl";
+    ContextVersion[ContextVersion["WebGl2"] = 2] = "WebGl2";
+  })(ContextVersion = exports.ContextVersion || (exports.ContextVersion = {}));
+
   var ContextError;
 
   (function (ContextError) {
@@ -949,6 +972,115 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     }
 
     _createClass(Context, null, [{
+      key: "getContext_",
+      value: function getContext_(canvas, options) {
+        var names = ['webgl', 'experimental-webgl'];
+        var context = null;
+
+        for (var i = 0; i < names.length; ++i) {
+          try {
+            context = canvas.getContext(names[i], options);
+          } catch (e) {
+            if (context) {
+              break;
+            }
+          }
+        }
+
+        return context;
+      }
+    }, {
+      key: "getContext2_",
+      value: function getContext2_(canvas, options) {
+        var context = null;
+
+        try {
+          context = canvas.getContext('webgl2', options);
+        } catch (e) {}
+
+        return context;
+      }
+    }, {
+      key: "getVersion",
+      value: function getVersion(context) {
+        return context instanceof WebGL2RenderingContext ? ContextVersion.WebGl2 : ContextVersion.WebGl;
+      }
+    }, {
+      key: "isWebGl",
+      value: function isWebGl(context) {
+        return context instanceof WebGLRenderingContext;
+      }
+    }, {
+      key: "isWebGl2",
+      value: function isWebGl2(context) {
+        return context instanceof WebGL2RenderingContext;
+      }
+    }, {
+      key: "inferVersion",
+      value: function inferVersion(vertexString, fragmentString) {
+        var source = vertexString || fragmentString;
+
+        if (source) {
+          return source.indexOf('#version 300 es') === 0 ? ContextVersion.WebGl2 : ContextVersion.WebGl;
+        } else {
+          return ContextVersion.WebGl;
+        }
+      }
+    }, {
+      key: "getVertex",
+      value: function getVertex(vertexString, fragmentString) {
+        if (vertexString) {
+          return vertexString;
+        } else {
+          var version = this.inferVersion(vertexString, fragmentString);
+          return version === ContextVersion.WebGl2 ? exports.ContextDefaultVertex2 : exports.ContextDefaultVertex;
+        }
+      }
+    }, {
+      key: "getFragment",
+      value: function getFragment(vertexString, fragmentString) {
+        if (fragmentString) {
+          return fragmentString;
+        } else {
+          var version = this.inferVersion(vertexString, fragmentString);
+          return version === ContextVersion.WebGl2 ? exports.ContextDefaultFragment2 : exports.ContextDefaultFragment;
+        }
+      }
+    }, {
+      key: "tryInferContext",
+      value: function tryInferContext(vertexString, fragmentString, canvas, attributes, errorCallback) {
+        function handleError(errorCode, html) {
+          if (typeof errorCallback === 'function') {
+            errorCallback(errorCode);
+          } else {
+            var container = canvas.parentNode;
+
+            if (container) {
+              container.innerHTML = "<div class=\"glsl-canvas--error\">".concat(html, "</div>");
+            }
+          }
+        }
+
+        if (!WebGLRenderingContext) {
+          handleError(ContextError.BrowserSupport, "This page requires a browser that supports WebGL.<br/>\n\t\t\t<a href=\"http://get.webgl.org\">Click here to upgrade your browser.</a>");
+          return null;
+        }
+
+        var context = Context.inferContext(vertexString, fragmentString, canvas, attributes);
+
+        if (!context) {
+          handleError(ContextError.Other, "It does not appear your computer can support WebGL.<br/>\n\t\t\t<a href=\"http://get.webgl.org/troubleshooting/\">Click here for more information.</a>");
+        } else {
+          var version = this.inferVersion(vertexString, fragmentString);
+
+          if (version === ContextVersion.WebGl) {
+            context.getExtension('OES_standard_derivatives');
+          }
+        }
+
+        return context;
+      }
+    }, {
       key: "tryGetContext",
       value: function tryGetContext(canvas, attributes, errorCallback) {
         function handleError(errorCode, html) {
@@ -968,7 +1100,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
           return null;
         }
 
-        var context = Context.getContext(canvas, attributes);
+        var context = Context.getContext_(canvas, attributes);
 
         if (!context) {
           handleError(ContextError.Other, "It does not appear your computer can support WebGL.<br/>\n\t\t\t<a href=\"http://get.webgl.org/troubleshooting/\">Click here for more information.</a>");
@@ -979,22 +1111,10 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         return context;
       }
     }, {
-      key: "getContext",
-      value: function getContext(canvas, options) {
-        var names = ['webgl', 'experimental-webgl'];
-        var context = null;
-
-        for (var i = 0; i < names.length; ++i) {
-          try {
-            context = canvas.getContext(names[i], options);
-          } catch (e) {
-            if (context) {
-              break;
-            }
-          }
-        }
-
-        return context;
+      key: "inferContext",
+      value: function inferContext(vertexString, fragmentString, canvas, options) {
+        var version = this.inferVersion(vertexString, fragmentString);
+        return version === ContextVersion.WebGl2 ? this.getContext2_(canvas, options) : this.getContext_(canvas, options);
       }
     }, {
       key: "createShader",
@@ -1254,19 +1374,23 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
       _this.height = 0; // canvas.clientHeight;
 
       _this.rect = canvas.getBoundingClientRect();
-      _this.vertexString = options.vertexString || context_1.ContextDefaultVertex;
-      _this.fragmentString = options.fragmentString || context_1.ContextDefaultFragment;
-      var gl = context_1.default.tryGetContext(canvas, options, options.onError);
-
-      if (!gl) {
-        return _possibleConstructorReturn(_this);
-      }
-
-      _this.gl = gl;
       _this.devicePixelRatio = window.devicePixelRatio || 1;
       canvas.style.backgroundColor = options.backgroundColor || 'rgba(0,0,0,0)';
 
       _this.getShaders_().then(function (success) {
+        var v = _this.vertexString = options.vertexString || _this.vertexString;
+        var f = _this.fragmentString = options.fragmentString || _this.fragmentString;
+        _this.fragmentString = context_1.default.getFragment(v, f);
+        _this.vertexString = context_1.default.getVertex(v, f);
+        _this.fragmentString = context_1.default.getFragment(v, f);
+        var gl = context_1.default.tryInferContext(v, f, canvas, options, options.onError);
+
+        if (!gl) {
+          return;
+        }
+
+        _this.gl = gl;
+
         _this.load();
 
         if (!_this.program) {
@@ -1722,6 +1846,8 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
             this.valid = true;
           }
         } catch (e) {
+          // !!!
+          // console.error(e);
           this.trigger('error', e);
           return;
         } // Create and use program
@@ -1741,6 +1867,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           try {
             this.buffers = buffers_1.default.getBuffers(gl, this.fragmentString, this.vertexString);
           } catch (e) {
+            // console.error('load', e);
             this.valid = false;
             this.trigger('error', e);
             return;

@@ -1,8 +1,8 @@
-// Author: Patricio Gonzalez Vivo
+#version 300 es
 
-#ifdef GL_ES
-precision highp float;
-#endif
+precision mediump float;
+
+// Author: Patricio Gonzalez Vivo
 
 #define PI 3.1415926535
 #define HALF_PI 1.57079632679
@@ -50,7 +50,7 @@ vec4 sphereTexture(in sampler2D _tex,in vec2 _uv,float _time){
 	vec2 st=sphereCoords(_uv,1.);
 	float aspect=u_tex0Resolution.y/u_tex0Resolution.x;
 	st.x=fract(st.x*aspect+_time);
-	return texture2D(_tex,st);
+	return texture(_tex,st);
 }
 
 vec3 sphereNormals(in vec2 uv){
@@ -61,6 +61,8 @@ vec3 sphereNormals(in vec2 uv){
 	ret=ret*.5+.5;
 	return mix(vec3(0.),ret,smoothstep(1.,.98,dot(uv,uv)));
 }
+
+out vec4 outColor;
 
 void main(){
 	vec2 st=gl_FragCoord.xy/u_resolution.xy;
@@ -80,6 +82,6 @@ void main(){
 	float radius=1.-circleSDF(st);
 	color*=smoothstep(.001,.02,radius);
 	st=scale(st,2.);
-	color+=texture2D(u_logo,st).rgb*step(.0001,st.y)*step(st.y,.999);
-	gl_FragColor=vec4(color,1.);
+	color+=texture(u_logo,st).rgb*step(.0001,st.y)*step(st.y,.999);
+	outColor=vec4(color,1.);
 }

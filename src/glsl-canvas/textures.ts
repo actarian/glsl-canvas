@@ -66,7 +66,7 @@ export class Texture extends Subscriber {
 	powerOf2: boolean = false;
 
 	constructor(
-		gl: WebGLRenderingContext,
+		gl: WebGLRenderingContext | WebGL2RenderingContext,
 		key: string,
 		index: number,
 		options: TextureOptions = new TextureOptions(),
@@ -99,7 +99,7 @@ export class Texture extends Subscriber {
 		return options !== undefined;
 	}
 
-	static getMaxTextureSize(gl: WebGLRenderingContext): number {
+	static getMaxTextureSize(gl: WebGLRenderingContext | WebGL2RenderingContext): number {
 		return gl.getParameter(gl.MAX_TEXTURE_SIZE);
 	};
 
@@ -129,7 +129,7 @@ export class Texture extends Subscriber {
 	}
 
 	create(
-		gl: WebGLRenderingContext
+		gl: WebGLRenderingContext | WebGL2RenderingContext
 	): void {
 		this.texture = gl.createTexture();
 		if (this.texture) {
@@ -146,7 +146,7 @@ export class Texture extends Subscriber {
 	}
 
 	load(
-		gl: WebGLRenderingContext,
+		gl: WebGLRenderingContext | WebGL2RenderingContext,
 		options: TextureOptions = {}
 	): Promise<Texture> {
 		this.options = options;
@@ -164,7 +164,7 @@ export class Texture extends Subscriber {
 	}
 
 	setUrl(
-		gl: WebGLRenderingContext,
+		gl: WebGLRenderingContext | WebGL2RenderingContext,
 		url: string,
 		options: TextureOptions = {}
 	): Promise<Texture> {
@@ -214,7 +214,7 @@ export class Texture extends Subscriber {
 	}
 
 	setElement(
-		gl: WebGLRenderingContext,
+		gl: WebGLRenderingContext | WebGL2RenderingContext,
 		element: HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | HTMLElement | Element,
 		options: TextureOptions = {}
 	): Promise<Texture> {
@@ -263,7 +263,7 @@ export class Texture extends Subscriber {
 	}
 
 	setData(
-		gl: WebGLRenderingContext,
+		gl: WebGLRenderingContext | WebGL2RenderingContext,
 		width: number,
 		height: number,
 		data: Uint8Array,
@@ -281,7 +281,7 @@ export class Texture extends Subscriber {
 
 	// Uploads current image or buffer to the GPU (can be used to update animated textures on the fly)
 	update(
-		gl: WebGLRenderingContext,
+		gl: WebGLRenderingContext | WebGL2RenderingContext,
 		options: TextureOptions
 	): void {
 		if (!this.valid) {
@@ -312,7 +312,7 @@ export class Texture extends Subscriber {
 		this.trigger('loaded', this);
 	}
 
-	tryUpdate(gl: WebGLRenderingContext): boolean {
+	tryUpdate(gl: WebGLRenderingContext | WebGL2RenderingContext): boolean {
 		let dirty = false;
 		if (this.animated) {
 			dirty = true;
@@ -321,7 +321,7 @@ export class Texture extends Subscriber {
 		return dirty;
 	}
 
-	destroy(gl: WebGLRenderingContext): void {
+	destroy(gl: WebGLRenderingContext | WebGL2RenderingContext): void {
 		if (!this.valid) {
 			return;
 		}
@@ -333,7 +333,7 @@ export class Texture extends Subscriber {
 	}
 
 	setFiltering(
-		gl: WebGLRenderingContext,
+		gl: WebGLRenderingContext | WebGL2RenderingContext,
 		options: TextureOptions
 	): void {
 		if (!this.valid) {
@@ -389,7 +389,7 @@ export default class Textures extends IterableStringMap<Texture> {
 	}
 
 	createOrUpdate(
-		gl: WebGLRenderingContext,
+		gl: WebGLRenderingContext | WebGL2RenderingContext,
 		key: string,
 		urlElementOrData: string | HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | Element | TextureData,
 		index: number = 0,

@@ -67,7 +67,7 @@ export class Uniform {
 		if (options) {
 			Object.assign(this, options);
 		}
-		this.apply = (gl: WebGLRenderingContext, program: WebGLProgram) => {
+		this.apply = (gl: WebGLRenderingContext | WebGL2RenderingContext, program: WebGLProgram) => {
 			if (this.dirty) {
 				gl.useProgram(program);
 				const location = gl.getUniformLocation(program, this.key);
@@ -281,7 +281,7 @@ export default class Uniforms extends IterableStringMap<Uniform> {
 		}
 	}
 
-	apply(gl: WebGLRenderingContext, program: WebGLProgram) {
+	apply(gl: WebGLRenderingContext | WebGL2RenderingContext, program: WebGLProgram) {
 		for (const key in this.values) {
 			// if (typeof this.values[key].apply === 'function') {
 			this.values[key].apply(gl, program);

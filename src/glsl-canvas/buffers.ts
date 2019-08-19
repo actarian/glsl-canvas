@@ -1,6 +1,22 @@
 import Context from './context';
 import IterableStringMap from './iterable';
 
+export const BuffersDefaultFragment = `
+void main(){
+	gl_FragColor = vec4(1.0);
+}`;
+
+export const BuffersDefaultFragment2 = `#version 300 es
+
+precision mediump float;
+
+out vec4 outColor;
+
+void main() {
+	outColor = vec4(1.0);
+}
+`;
+
 export enum BufferFloatType {
 	FLOAT = 0,
 	HALF_FLOAT,
@@ -15,7 +31,7 @@ export class Buffer {
 	BH: number;
 	index: number;
 
-	constructor(gl: WebGLRenderingContext, BW: number, BH: number, index: number) {
+	constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, BW: number, BH: number, index: number) {
 		const buffer = gl.createFramebuffer();
 		const texture = this.getTexture(gl, BW, BH, index);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -29,10 +45,11 @@ export class Buffer {
 		this.index = index;
 	}
 
-	getFloatType(gl: WebGLRenderingContext): number {
+	getFloatType(gl: WebGLRenderingContext | WebGL2RenderingContext): number {
 		let floatType: number, extension;
 		if (Buffer.floatType === BufferFloatType.FLOAT) {
-			extension = gl.getExtension('OES_texture_float');
+			const extensionName = gl instanceof WebGL2RenderingContext ? 'EXT_color_buffer_float' : 'OES_texture_float';
+			extension = gl.getExtension(extensionName);
 			if (extension) {
 				floatType = gl.FLOAT;
 			} else {
@@ -40,7 +57,8 @@ export class Buffer {
 				return this.getFloatType(gl);
 			}
 		} else {
-			extension = gl.getExtension('OES_texture_half_float');
+			const extensionName = gl instanceof WebGL2RenderingContext ? 'EXT_color_buffer_half_float' : 'OES_texture_half_float';
+			extension = gl.getExtension(extensionName);
 			if (extension) {
 				floatType = extension.HALF_FLOAT_OES;
 			} else {
@@ -51,12 +69,17 @@ export class Buffer {
 		return floatType;
 	}
 
-	getTexture(gl: WebGLRenderingContext, BW: number, BH: number, index: number): WebGLTexture {
+	getTexture(gl: WebGLRenderingContext | WebGL2RenderingContext, BW: number, BH: number, index: number): WebGLTexture {
 		const floatType = this.getFloatType(gl);
 		const texture = gl.createTexture();
 		gl.activeTexture(gl.TEXTURE0 + index);
 		gl.bindTexture(gl.TEXTURE_2D, texture);
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, BW, BH, 0, gl.RGBA, floatType, null);
+
+		// They are, GL_ALPHA, GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_RGB and GL_RGBA.
+		// Depending on exactly what you're trying to achieve, you will probably find GL_LUMINANCE or GL_ALPHA can be suitable substitutes.
+		// Alternatively, this extension does support a red (and a red-green) texture, I think it's quite common, but isn't everywhere.
+
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl instanceof WebGL2RenderingContext ? gl.RGBA16F : gl.RGBA, BW, BH, 0, gl.RGBA, floatType, null);
 		const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
 		if (status !== gl.FRAMEBUFFER_COMPLETE) {
 			if (Buffer.floatType === BufferFloatType.FLOAT) {
@@ -69,7 +92,7 @@ export class Buffer {
 		return texture;
 	}
 
-	resize(gl: WebGLRenderingContext, BW: number, BH: number) {
+	resize(gl: WebGLRenderingContext | WebGL2RenderingContext, BW: number, BH: number) {
 		if (BW !== this.BW || BH !== this.BH) {
 			const buffer = this.buffer;
 			const texture = this.texture;
@@ -131,11 +154,13 @@ export class IOBuffer {
 		this.fragmentString = fragmentString;
 	}
 
-	create(gl: WebGLRenderingContext, BW: number, BH: number) {
+	create(gl: WebGLRenderingContext | WebGL2RenderingContext, BW: number, BH: number) {
+		// console.log('create', this.vertexString, this.fragmentString);
 		const vertexShader = Context.createShader(gl, this.vertexString, gl.VERTEX_SHADER);
 		let fragmentShader = Context.createShader(gl, this.fragmentString, gl.FRAGMENT_SHADER, 1);
 		if (!fragmentShader) {
-			fragmentShader = Context.createShader(gl, 'void main(){\n\tgl_FragColor = vec4(1.0);\n}', gl.FRAGMENT_SHADER);
+			fragmentShader = Context.createShader(gl, gl instanceof WebGL2RenderingContext ?
+				BuffersDefaultFragment2 : BuffersDefaultFragment, gl.FRAGMENT_SHADER);
 			this.isValid = false;
 		} else {
 			this.isValid = true;
@@ -151,7 +176,7 @@ export class IOBuffer {
 		gl.deleteShader(fragmentShader);
 	}
 
-	render(gl: WebGLRenderingContext, BW: number, BH: number) {
+	render(gl: WebGLRenderingContext | WebGL2RenderingContext, BW: number, BH: number) {
 		gl.useProgram(this.program);
 		gl.viewport(0, 0, BW, BH);
 		gl.bindFramebuffer(gl.FRAMEBUFFER, this.output.buffer);
@@ -165,14 +190,14 @@ export class IOBuffer {
 		this.output = output;
 	}
 
-	resize(gl: WebGLRenderingContext, BW: number, BH: number) {
+	resize(gl: WebGLRenderingContext | WebGL2RenderingContext, BW: number, BH: number) {
 		gl.useProgram(this.program);
 		gl.viewport(0, 0, BW, BH);
 		this.input.resize(gl, BW, BH);
 		this.output.resize(gl, BW, BH);
 	}
 
-	destroy(gl: WebGLRenderingContext) {
+	destroy(gl: WebGLRenderingContext | WebGL2RenderingContext) {
 		gl.deleteProgram(this.program);
 		this.program = null;
 		this.input = null;
@@ -187,16 +212,23 @@ export default class Buffers extends IterableStringMap<IOBuffer> {
 		return Object.keys(this.values).length * 4;
 	}
 
-	static getBuffers(gl: WebGLRenderingContext, fragmentString: string, vertexString: string): Buffers {
+	static getBuffers(gl: WebGLRenderingContext | WebGL2RenderingContext, fragmentString: string, vertexString: string): Buffers {
 		const buffers: Buffers = new Buffers();
 		let count = 0;
 		if (fragmentString) {
+			if (gl instanceof WebGL2RenderingContext) {
+				fragmentString = fragmentString.replace(/^\#version\s*300\s*es\s*\n/, '');
+			}
 			const regexp = /(?:^\s*)((?:#if|#elif)(?:\s*)(defined\s*\(\s*BUFFER_)(\d+)(?:\s*\))|(?:#ifdef)(?:\s*BUFFER_)(\d+)(?:\s*))/gm;
 			let matches;
 			while ((matches = regexp.exec(fragmentString)) !== null) {
 				const i = matches[3] || matches[4];
 				const key = 'u_buffer' + i;
-				const buffer = new IOBuffer(count, key, vertexString, '#define BUFFER_' + i + '\n' + fragmentString);
+				const bufferFragmentString = gl instanceof WebGL2RenderingContext ? `#version 300 es
+#define BUFFER_${i}
+${fragmentString}` : `#define BUFFER_${i}
+${fragmentString}`;
+				const buffer = new IOBuffer(count, key, vertexString, bufferFragmentString);
 				buffer.create(gl, gl.drawingBufferWidth, gl.drawingBufferHeight);
 				buffers.set(key, buffer);
 				count += 4;

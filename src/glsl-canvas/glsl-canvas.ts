@@ -2,7 +2,7 @@
 import 'promise-polyfill';
 import Buffers, { IOBuffer } from './buffers';
 import Common from './common';
-import Context, { ContextDefaultFragment, ContextDefaultVertex, ContextOptions, ContextVertexBuffers } from './context';
+import Context, { ContextDefaultFragment, ContextOptions, ContextVertexBuffers } from './context';
 import Logger from './logger';
 import Subscriber from './subscriber';
 import Textures, { Texture, TextureData, TextureExtensions, TextureInput, TextureOptions } from './textures';
@@ -66,7 +66,7 @@ export default class GlslCanvas extends Subscriber {
 
 	options: GlslCanvasOptions;
 	canvas: HTMLCanvasElement;
-	gl: WebGLRenderingContext;
+	gl: WebGLRenderingContext | WebGL2RenderingContext;
 	program: WebGLProgram;
 	timer: GlslCanvasTimer;
 	vertexBuffers: ContextVertexBuffers;
@@ -109,17 +109,20 @@ export default class GlslCanvas extends Subscriber {
 		this.width = 0; // canvas.clientWidth;
 		this.height = 0; // canvas.clientHeight;
 		this.rect = canvas.getBoundingClientRect();
-		this.vertexString = options.vertexString || ContextDefaultVertex;
-		this.fragmentString = options.fragmentString || ContextDefaultFragment;
-		const gl = Context.tryGetContext(canvas, options, options.onError);
-		if (!gl) {
-			return;
-		}
-		this.gl = gl;
 		this.devicePixelRatio = window.devicePixelRatio || 1;
 		canvas.style.backgroundColor = options.backgroundColor || 'rgba(0,0,0,0)';
 		this.getShaders_().then(
 			(success) => {
+				const v = this.vertexString = options.vertexString || this.vertexString;
+				const f = this.fragmentString = options.fragmentString || this.fragmentString;
+				this.fragmentString = Context.getFragment(v, f);
+				this.vertexString = Context.getVertex(v, f);
+				this.fragmentString = Context.getFragment(v, f);
+				const gl = Context.tryInferContext(v, f, canvas, options, options.onError);
+				if (!gl) {
+					return;
+				}
+				this.gl = gl;
 				this.load();
 				if (!this.program) {
 					return;
@@ -177,8 +180,7 @@ export default class GlslCanvas extends Subscriber {
 								return this.fragmentString = body;
 							}
 						})
-				}
-				)).then(shaders => {
+				})).then(shaders => {
 					resolve([this.vertexString, this.fragmentString]);
 				});
 			} else {
@@ -507,6 +509,8 @@ export default class GlslCanvas extends Subscriber {
 				this.valid = true;
 			}
 		} catch (e) {
+			// !!!
+			// console.error(e);
 			this.trigger('error', e);
 			return;
 		}
@@ -522,7 +526,9 @@ export default class GlslCanvas extends Subscriber {
 		if (this.valid) {
 			try {
 				this.buffers = Buffers.getBuffers(gl, this.fragmentString, this.vertexString);
+
 			} catch (e) {
+				// console.error('load', e);
 				this.valid = false;
 				this.trigger('error', e);
 				return;
