@@ -1001,11 +1001,6 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         return context;
       }
     }, {
-      key: "getVersion",
-      value: function getVersion(context) {
-        return context instanceof WebGL2RenderingContext ? ContextVersion.WebGl2 : ContextVersion.WebGl;
-      }
-    }, {
       key: "isWebGl",
       value: function isWebGl(context) {
         return context instanceof WebGLRenderingContext;
@@ -1071,9 +1066,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         if (!context) {
           handleError(ContextError.Other, "It does not appear your computer can support WebGL.<br/>\n\t\t\t<a href=\"http://get.webgl.org/troubleshooting/\">Click here for more information.</a>");
         } else {
-          var version = this.inferVersion(vertexString, fragmentString);
-
-          if (version === ContextVersion.WebGl) {
+          if (!(context instanceof WebGL2RenderingContext)) {
             context.getExtension('OES_standard_derivatives');
           }
         }

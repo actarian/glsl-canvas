@@ -106,10 +106,6 @@ export default class Context {
 		return context;
 	}
 
-	static getVersion(context: WebGLRenderingContext | WebGL2RenderingContext): ContextVersion {
-		return context instanceof WebGL2RenderingContext ? ContextVersion.WebGl2 : ContextVersion.WebGl;
-	}
-
 	static isWebGl(context: WebGLRenderingContext | WebGL2RenderingContext): boolean {
 		return context instanceof WebGLRenderingContext;
 	}
@@ -166,8 +162,7 @@ export default class Context {
 			handleError(ContextError.Other, `It does not appear your computer can support WebGL.<br/>
 			<a href="http://get.webgl.org/troubleshooting/">Click here for more information.</a>`);
 		} else {
-			const version: ContextVersion = this.inferVersion(vertexString, fragmentString);
-			if (version === ContextVersion.WebGl) {
+			if (!(context instanceof WebGL2RenderingContext)) {
 				context.getExtension('OES_standard_derivatives');
 			}
 		}

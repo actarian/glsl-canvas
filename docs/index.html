@@ -103,10 +103,6 @@
 	document.body.appendChild(stats.dom);
 	var canvases = [].slice.call(document.querySelectorAll('.glsl-canvas_'))
 		.map(function(element, i) {
-			if (i < 11) {
-				return;
-			}
-			console.log(i);
 			var canvas = GlslCanvas.of(element);
 			canvas.on('render', function() {
 				stats.end();
