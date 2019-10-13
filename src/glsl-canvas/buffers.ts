@@ -74,11 +74,6 @@ export class Buffer {
 		const texture = gl.createTexture();
 		gl.activeTexture(gl.TEXTURE0 + index);
 		gl.bindTexture(gl.TEXTURE_2D, texture);
-
-		// They are, GL_ALPHA, GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_RGB and GL_RGBA.
-		// Depending on exactly what you're trying to achieve, you will probably find GL_LUMINANCE or GL_ALPHA can be suitable substitutes.
-		// Alternatively, this extension does support a red (and a red-green) texture, I think it's quite common, but isn't everywhere.
-
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl instanceof WebGL2RenderingContext ? gl.RGBA16F : gl.RGBA, BW, BH, 0, gl.RGBA, floatType, null);
 		const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
 		if (status !== gl.FRAMEBUFFER_COMPLETE) {

@@ -2,6 +2,10 @@
 
 [glsl-canvas-js](https://github.com/actarian/glsl-canvas) is a typescript porting of GlslCanvas, a javascript library that helps you easily load GLSL Fragment and Vertex Shaders into an HTMLCanvasElement. Originally made by [Patricio Gonzalez Vivo](http://patriciogonzalezvivo.com) author of [Book of Shaders](http://thebookofshaders.com) and [GlslEditor](http://editor.thebookofshaders.com).
 
+***Now supporting WebGL2. just add `#version 300 es` at the very start of the file.***
+
+---
+
 ## How to use
 
 *With link*
@@ -98,6 +102,19 @@ ___
 | `destroy`     | |
 ___
 
+## Including dependent files with `#include`
+
+You can include other GLSL code using a traditional `#include "file.glsl"` macro. 
+
+```javascript
+// example
+#include "common/uniforms.glsl"
+#include "common/functions.glsl"
+
+void main(){
+```
+___
+
 ## Tips
 
 You can change the content of the shader as many times you want. Here are some examples:
@@ -188,6 +205,12 @@ ___
 
 ## Release Notes
 Changelog [here](https://github.com/actarian/glsl-canvas/blob/master/CHANGELOG.md).
+
+---
+
+### 0.1.4
+- Added WebGL2 support.
+- Added #include macro for including dependent files.
 
 ---
 

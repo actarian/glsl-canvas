@@ -1,3 +1,4 @@
+import Common from './common';
 import Logger from './logger';
 
 export const ContextDefaultVertex = `
@@ -20,8 +21,6 @@ export const ContextDefaultFragment = `
 #ifdef GL_ES
 precision mediump float;
 #endif
-
-varying vec2 v_texcoord;
 
 void main(){
 	gl_FragColor = vec4(0.0);
@@ -106,6 +105,25 @@ export default class Context {
 		return context;
 	}
 
+	static getIncludes(input: string | undefined): Promise<string | undefined> {
+		if (input === undefined) {
+			return Promise.resolve(input);
+		}
+		const regex = /#include\s*['|"](.*.glsl)['|"]/gm;
+		const promises = [];
+		let i = 0;
+		let match;
+		while ((match = regex.exec(input)) !== null) {
+			promises.push(Promise.resolve(input.slice(i, match.index)));
+			i = match.index + match[0].length;
+			promises.push(Common.fetch(match[1]));
+		}
+		promises.push(Promise.resolve(input.slice(i)));
+		return Promise.all(promises).then(chunks => {
+			return chunks.join('');
+		});
+	}
+
 	static isWebGl(context: WebGLRenderingContext | WebGL2RenderingContext): boolean {
 		return context instanceof WebGLRenderingContext;
 	}
@@ -120,6 +138,16 @@ export default class Context {
 			return source.indexOf('#version 300 es') === 0 ? ContextVersion.WebGl2 : ContextVersion.WebGl;
 		} else {
 			return ContextVersion.WebGl;
+		}
+	}
+
+	static versionDiffers(gl: WebGLRenderingContext | WebGL2RenderingContext, vertexString?: string, fragmentString?: string): boolean {
+		if (gl) {
+			const currentVersion = gl instanceof WebGL2RenderingContext ? ContextVersion.WebGl2 : ContextVersion.WebGl;
+			const newVersion = Context.inferVersion(vertexString, fragmentString);
+			return newVersion !== currentVersion;
+		} else {
+			return false;
 		}
 	}
 
@@ -208,6 +236,7 @@ export default class Context {
 		if (!compiled) {
 			// Something went wrong during compilation; get the error
 			Context.lastError = gl.getShaderInfoLog(shader);
+			// console.log('lastError', Context.lastError);
 			Logger.error('*** Error compiling shader ' + shader + ':' + Context.lastError);
 			// main.trigger('error', {
 			gl.deleteShader(shader);

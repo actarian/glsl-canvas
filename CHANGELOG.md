@@ -3,6 +3,13 @@ All notable changes to the "glsl-canvas" library will be documented in this file
 
 ---
 
+## [0.1.4] - 2019-10-13
+### Added
+- WebGL2 support.
+- Including dependent files with #include macro.
+
+---
+
 ## [0.1.3] - 2019-02-16
 ### Fixed
 - u_mouse on retina display.

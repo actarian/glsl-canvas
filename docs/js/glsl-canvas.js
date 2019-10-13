@@ -635,10 +635,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         var floatType = this.getFloatType(gl);
         var texture = gl.createTexture();
         gl.activeTexture(gl.TEXTURE0 + index);
-        gl.bindTexture(gl.TEXTURE_2D, texture); // They are, GL_ALPHA, GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_RGB and GL_RGBA.
-        // Depending on exactly what you're trying to achieve, you will probably find GL_LUMINANCE or GL_ALPHA can be suitable substitutes.
-        // Alternatively, this extension does support a red (and a red-green) texture, I think it's quite common, but isn't everywhere.
-
+        gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl instanceof WebGL2RenderingContext ? gl.RGBA16F : gl.RGBA, BW, BH, 0, gl.RGBA, floatType, null);
         var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
 
@@ -870,6 +867,7 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
     _createClass(Common, null, [{
       key: "fetch",
       value: function fetch(url) {
+        // console.log('fetch', url);
         return new Promise(function (resolve, reject) {
           var xhr = new XMLHttpRequest();
 
@@ -877,12 +875,14 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
             resolve(xhr.response || xhr.responseText);
           };
 
-          xhr.onerror = function () {
-            reject(new Error('Network request failed'));
+          xhr.onerror = function (error) {
+            // console.log(error);
+            reject(new Error("Network request failed for url ".concat(url)));
           };
 
-          xhr.ontimeout = function () {
-            reject(new Error('Network request failed'));
+          xhr.ontimeout = function (error) {
+            // console.log(error);
+            reject(new Error("Network request failed for url ".concat(url)));
           };
 
           xhr.onabort = function () {
@@ -923,7 +923,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     var v = factory(require, exports);
     if (v !== undefined) module.exports = v;
   } else if (typeof define === "function" && define.amd) {
-    define(["require", "exports", "./logger"], factory);
+    define(["require", "exports", "./common", "./logger"], factory);
   }
 })(function (require, exports) {
   "use strict";
@@ -932,10 +932,12 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
     value: true
   });
 
+  var common_1 = __importDefault(require("./common"));
+
   var logger_1 = __importDefault(require("./logger"));
 
   exports.ContextDefaultVertex = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nattribute vec2 a_position;\nattribute vec2 a_texcoord;\n\nvarying vec2 v_texcoord;\n\nvoid main(){\n\tgl_Position = vec4(a_position, 0.0, 1.0);\n\tv_texcoord = a_texcoord;\n}\n";
-  exports.ContextDefaultFragment = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nvarying vec2 v_texcoord;\n\nvoid main(){\n\tgl_FragColor = vec4(0.0);\n}\n";
+  exports.ContextDefaultFragment = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nvoid main(){\n\tgl_FragColor = vec4(0.0);\n}\n";
   exports.ContextDefaultVertex2 = "#version 300 es\n\nin vec2 a_position;\nin vec2 a_texcoord;\n\nout vec2 v_texcoord;\n\nvoid main() {\n\tgl_Position = vec4(a_position, 0.0, 1.0);\n\tv_texcoord = a_texcoord;\n}\n";
   exports.ContextDefaultFragment2 = "#version 300 es\n\nprecision mediump float;\n\nout vec4 outColor;\n\nvoid main() {\n\toutColor = vec4(0.0);\n}\n";
 
@@ -1001,6 +1003,29 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
         return context;
       }
     }, {
+      key: "getIncludes",
+      value: function getIncludes(input) {
+        if (input === undefined) {
+          return Promise.resolve(input);
+        }
+
+        var regex = /#include\s*['|"](.*.glsl)['|"]/gm;
+        var promises = [];
+        var i = 0;
+        var match;
+
+        while ((match = regex.exec(input)) !== null) {
+          promises.push(Promise.resolve(input.slice(i, match.index)));
+          i = match.index + match[0].length;
+          promises.push(common_1.default.fetch(match[1]));
+        }
+
+        promises.push(Promise.resolve(input.slice(i)));
+        return Promise.all(promises).then(function (chunks) {
+          return chunks.join('');
+        });
+      }
+    }, {
       key: "isWebGl",
       value: function isWebGl(context) {
         return context instanceof WebGLRenderingContext;
@@ -1019,6 +1044,17 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
           return source.indexOf('#version 300 es') === 0 ? ContextVersion.WebGl2 : ContextVersion.WebGl;
         } else {
           return ContextVersion.WebGl;
+        }
+      }
+    }, {
+      key: "versionDiffers",
+      value: function versionDiffers(gl, vertexString, fragmentString) {
+        if (gl) {
+          var currentVersion = gl instanceof WebGL2RenderingContext ? ContextVersion.WebGl2 : ContextVersion.WebGl;
+          var newVersion = Context.inferVersion(vertexString, fragmentString);
+          return newVersion !== currentVersion;
+        } else {
+          return false;
         }
       }
     }, {
@@ -1120,7 +1156,8 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 
         if (!compiled) {
           // Something went wrong during compilation; get the error
-          Context.lastError = gl.getShaderInfoLog(shader);
+          Context.lastError = gl.getShaderInfoLog(shader); // console.log('lastError', Context.lastError);
+
           logger_1.default.error('*** Error compiling shader ' + shader + ':' + Context.lastError); // main.trigger('error', {
 
           gl.deleteShader(shader);
@@ -1191,7 +1228,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
   exports.default = Context;
 });
 
-},{"./logger":9}],7:[function(require,module,exports){
+},{"./common":5,"./logger":9}],7:[function(require,module,exports){
 "use strict";
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -1371,28 +1408,26 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
       canvas.style.backgroundColor = options.backgroundColor || 'rgba(0,0,0,0)';
 
       _this.getShaders_().then(function (success) {
-        var v = _this.vertexString = options.vertexString || _this.vertexString;
-        var f = _this.fragmentString = options.fragmentString || _this.fragmentString;
-        _this.fragmentString = context_1.default.getFragment(v, f);
-        _this.vertexString = context_1.default.getVertex(v, f);
-        _this.fragmentString = context_1.default.getFragment(v, f);
-        var gl = context_1.default.tryInferContext(v, f, canvas, options, options.onError);
-
+        /*
+        const v = this.vertexString = options.vertexString || this.vertexString;
+        const f = this.fragmentString = options.fragmentString || this.fragmentString;
+        this.vertexString = Context.getVertex(v, f);
+        this.fragmentString = Context.getFragment(v, f);
+        const gl = Context.tryInferContext(v, f, canvas, options, options.onError);
         if (!gl) {
-          return;
+            return;
         }
+        this.gl = gl;
+        */
+        _this.load().then(function (success) {
+          if (!_this.program) {
+            return;
+          }
 
-        _this.gl = gl;
+          _this.addListeners_();
 
-        _this.load();
-
-        if (!_this.program) {
-          return;
-        }
-
-        _this.addListeners_();
-
-        _this.loop();
+          _this.loop();
+        });
       }, function (error) {
         logger_1.default.log('GlslCanvas.getShaders_.error', error);
       });
@@ -1817,15 +1852,51 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     }, {
       key: "load",
       value: function load(fragmentString, vertexString) {
-        if (vertexString) {
-          this.vertexString = vertexString;
+        var _this7 = this;
+
+        return Promise.all([context_1.default.getIncludes(fragmentString || this.fragmentString), context_1.default.getIncludes(vertexString || this.vertexString)]).then(function (array) {
+          _this7.fragmentString = array[0];
+          _this7.vertexString = array[1];
+          return _this7.createContext_();
+        });
+      }
+    }, {
+      key: "getContext_",
+      value: function getContext_() {
+        var vertexString = this.vertexString;
+        var fragmentString = this.fragmentString;
+        this.vertexString = context_1.default.getVertex(vertexString, fragmentString);
+        this.fragmentString = context_1.default.getFragment(vertexString, fragmentString);
+
+        if (context_1.default.versionDiffers(this.gl, vertexString, fragmentString)) {
+          this.destroyContext_();
+          this.uniforms = new uniforms_1.default();
+          this.buffers = new buffers_1.default();
+          this.textures = new textures_1.default();
+          this.textureList = [];
         }
 
-        if (fragmentString) {
-          this.fragmentString = fragmentString;
+        if (!this.gl) {
+          var gl = context_1.default.tryInferContext(vertexString, fragmentString, this.canvas, this.options, this.options.onError);
+
+          if (!gl) {
+            return;
+          }
+
+          this.gl = gl;
         }
 
-        var gl = this.gl;
+        return this.gl;
+      }
+    }, {
+      key: "createContext_",
+      value: function createContext_() {
+        var gl = this.getContext_();
+
+        if (!gl) {
+          return;
+        }
+
         var vertexShader, fragmentShader;
 
         try {
@@ -1842,7 +1913,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           // !!!
           // console.error(e);
           this.trigger('error', e);
-          return;
+          return false;
         } // Create and use program
 
 
@@ -1863,7 +1934,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
             // console.error('load', e);
             this.valid = false;
             this.trigger('error', e);
-            return;
+            return false;
           }
 
           this.vertexBuffers = context_1.default.createVertexBuffers(gl, program);
@@ -1872,56 +1943,57 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
 
 
         this.trigger('load', this);
+        return this.valid;
       }
     }, {
       key: "test",
       value: function test(fragmentString, vertexString) {
-        var _this7 = this;
+        var _this8 = this;
 
         return new Promise(function (resolve, reject) {
-          var vertex = _this7.vertexString;
-          var fragment = _this7.fragmentString;
-          var paused = _this7.timer.paused; // Thanks to @thespite for the help here
+          var vertex = _this8.vertexString;
+          var fragment = _this8.fragmentString;
+          var paused = _this8.timer.paused; // Thanks to @thespite for the help here
           // https://www.khronos.org/registry/webgl/extensions/EXT_disjoint_timer_query/
 
-          var extension = _this7.gl.getExtension('EXT_disjoint_timer_query');
+          var extension = _this8.gl.getExtension('EXT_disjoint_timer_query');
 
           var query = extension.createQueryEXT();
-          var wasValid = _this7.valid;
+          var wasValid = _this8.valid;
 
           if (fragmentString || vertexString) {
-            _this7.load(fragmentString, vertexString);
+            _this8.load(fragmentString, vertexString);
 
-            wasValid = _this7.valid;
+            wasValid = _this8.valid;
 
-            _this7.render();
+            _this8.render();
           }
 
-          _this7.timer.paused = true;
+          _this8.timer.paused = true;
           extension.beginQueryEXT(extension.TIME_ELAPSED_EXT, query);
 
-          _this7.render();
+          _this8.render();
 
           extension.endQueryEXT(extension.TIME_ELAPSED_EXT);
 
           var waitForTest = function waitForTest() {
-            _this7.render();
+            _this8.render();
 
             var available = extension.getQueryObjectEXT(query, extension.QUERY_RESULT_AVAILABLE_EXT);
 
-            var disjoint = _this7.gl.getParameter(extension.GPU_DISJOINT_EXT);
+            var disjoint = _this8.gl.getParameter(extension.GPU_DISJOINT_EXT);
 
             if (available && !disjoint) {
               var result = {
                 wasValid: wasValid,
-                fragment: fragmentString || _this7.fragmentString,
-                vertex: vertexString || _this7.vertexString,
+                fragment: fragmentString || _this8.fragmentString,
+                vertex: vertexString || _this8.vertexString,
                 timeElapsedMs: extension.getQueryObjectEXT(query, extension.QUERY_RESULT_EXT) / 1000000.0
               };
-              _this7.timer.paused = paused;
+              _this8.timer.paused = paused;
 
               if (fragmentString || vertexString) {
-                _this7.load(fragment, vertex);
+                _this8.load(fragment, vertex);
               }
 
               resolve(result);
@@ -1934,14 +2006,14 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         });
       }
     }, {
-      key: "destroy",
-      value: function destroy() {
-        this.removeListeners_();
-        this.animated = false;
-        this.valid = false;
+      key: "destroyContext_",
+      value: function destroyContext_() {
         var gl = this.gl;
         gl.useProgram(null);
-        gl.deleteProgram(this.program);
+
+        if (this.program) {
+          gl.deleteProgram(this.program);
+        }
 
         for (var key in this.buffers.values) {
           var buffer = this.buffers.values[key];
@@ -1958,12 +2030,20 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         this.uniforms = null;
         this.program = null;
         this.gl = null;
+      }
+    }, {
+      key: "destroy",
+      value: function destroy() {
+        this.removeListeners_();
+        this.destroyContext_();
+        this.animated = false;
+        this.valid = false;
         GlslCanvas.items.splice(GlslCanvas.items.indexOf(this), 1);
       }
     }, {
       key: "loadTexture",
       value: function loadTexture(key, urlElementOrData) {
-        var _this8 = this;
+        var _this9 = this;
 
         var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
@@ -1972,12 +2052,12 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           this.textures.createOrUpdate(this.gl, key, urlElementOrData, this.buffers.count, options, this.options.workpath).then(function (texture) {
             var index = texture.index;
 
-            var uniform = _this8.uniforms.createTexture(key, index);
+            var uniform = _this9.uniforms.createTexture(key, index);
 
             uniform.texture = texture;
             var keyResolution = key.indexOf('[') !== -1 ? key.replace('[', 'Resolution[') : key + 'Resolution';
 
-            var uniformResolution = _this8.uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.Float, keyResolution, [texture.width, texture.height]); // Logger.log('loadTexture', key, url, index, texture.width, texture.height);
+            var uniformResolution = _this9.uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.Float, keyResolution, [texture.width, texture.height]); // Logger.log('loadTexture', key, url, index, texture.width, texture.height);
 
 
             return texture;
@@ -1987,7 +2067,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
             }).join(', ') : error.message;
             logger_1.default.log('GlslCanvas.loadTexture.error', key, urlElementOrData, message);
 
-            _this8.trigger('textureError', {
+            _this9.trigger('textureError', {
               key: key,
               urlElementOrData: urlElementOrData,
               message: message

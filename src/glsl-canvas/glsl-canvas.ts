@@ -113,9 +113,9 @@ export default class GlslCanvas extends Subscriber {
 		canvas.style.backgroundColor = options.backgroundColor || 'rgba(0,0,0,0)';
 		this.getShaders_().then(
 			(success) => {
+				/*
 				const v = this.vertexString = options.vertexString || this.vertexString;
 				const f = this.fragmentString = options.fragmentString || this.fragmentString;
-				this.fragmentString = Context.getFragment(v, f);
 				this.vertexString = Context.getVertex(v, f);
 				this.fragmentString = Context.getFragment(v, f);
 				const gl = Context.tryInferContext(v, f, canvas, options, options.onError);
@@ -123,12 +123,14 @@ export default class GlslCanvas extends Subscriber {
 					return;
 				}
 				this.gl = gl;
-				this.load();
-				if (!this.program) {
-					return;
-				}
-				this.addListeners_();
-				this.loop();
+				*/
+				this.load().then(success => {
+					if (!this.program) {
+						return;
+					}
+					this.addListeners_();
+					this.loop();
+				});
 			},
 			(error) => {
 				Logger.log('GlslCanvas.getShaders_.error', error);
@@ -489,14 +491,44 @@ export default class GlslCanvas extends Subscriber {
 	load(
 		fragmentString?: string,
 		vertexString?: string
-	): void {
-		if (vertexString) {
-			this.vertexString = vertexString;
+	): Promise<boolean> {
+		return Promise.all([
+			Context.getIncludes(fragmentString || this.fragmentString),
+			Context.getIncludes(vertexString || this.vertexString)
+		]).then(array => {
+			this.fragmentString = array[0];
+			this.vertexString = array[1];
+			return this.createContext_();
+		});
+	}
+
+	getContext_(): WebGLRenderingContext | WebGL2RenderingContext {
+		const vertexString = this.vertexString;
+		const fragmentString = this.fragmentString;
+		this.vertexString = Context.getVertex(vertexString, fragmentString);
+		this.fragmentString = Context.getFragment(vertexString, fragmentString);
+		if (Context.versionDiffers(this.gl, vertexString, fragmentString)) {
+			this.destroyContext_();
+			this.uniforms = new Uniforms();
+			this.buffers = new Buffers();
+			this.textures = new Textures();
+			this.textureList = [];
 		}
-		if (fragmentString) {
-			this.fragmentString = fragmentString;
+		if (!this.gl) {
+			const gl = Context.tryInferContext(vertexString, fragmentString, this.canvas, this.options, this.options.onError);
+			if (!gl) {
+				return;
+			}
+			this.gl = gl;
 		}
-		const gl = this.gl;
+		return this.gl;
+	}
+
+	createContext_(): boolean {
+		const gl = this.getContext_();
+		if (!gl) {
+			return;
+		}
 		let vertexShader, fragmentShader;
 		try {
 			vertexShader = Context.createShader(gl, this.vertexString, gl.VERTEX_SHADER);
@@ -512,7 +544,7 @@ export default class GlslCanvas extends Subscriber {
 			// !!!
 			// console.error(e);
 			this.trigger('error', e);
-			return;
+			return false;
 		}
 		// Create and use program
 		const program = Context.createProgram(gl, [vertexShader, fragmentShader]); //, [0,1],['a_texcoord','a_position']);
@@ -526,18 +558,18 @@ export default class GlslCanvas extends Subscriber {
 		if (this.valid) {
 			try {
 				this.buffers = Buffers.getBuffers(gl, this.fragmentString, this.vertexString);
-
 			} catch (e) {
 				// console.error('load', e);
 				this.valid = false;
 				this.trigger('error', e);
-				return;
+				return false;
 			}
 			this.vertexBuffers = Context.createVertexBuffers(gl, program);
 			this.createUniforms_();
 		}
 		// Trigger event
 		this.trigger('load', this);
+		return this.valid;
 	}
 
 	test(
@@ -586,13 +618,12 @@ export default class GlslCanvas extends Subscriber {
 		});
 	}
 
-	destroy(): void {
-		this.removeListeners_();
-		this.animated = false;
-		this.valid = false;
+	destroyContext_(): void {
 		const gl = this.gl;
 		gl.useProgram(null);
-		gl.deleteProgram(this.program);
+		if (this.program) {
+			gl.deleteProgram(this.program);
+		}
 		for (const key in this.buffers.values) {
 			const buffer: IOBuffer = this.buffers.values[key];
 			buffer.destroy(gl);
@@ -606,6 +637,13 @@ export default class GlslCanvas extends Subscriber {
 		this.uniforms = null;
 		this.program = null;
 		this.gl = null;
+	}
+
+	destroy(): void {
+		this.removeListeners_();
+		this.destroyContext_();
+		this.animated = false;
+		this.valid = false;
 		GlslCanvas.items.splice(GlslCanvas.items.indexOf(this), 1);
 	}
 
