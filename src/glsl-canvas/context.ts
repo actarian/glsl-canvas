@@ -101,6 +101,7 @@ export default class Context {
 		try {
 			context = canvas.getContext('webgl2', options) as WebGL2RenderingContext;
 		} catch (e) {
+			// console.error('GlslCanvas.Context.getContext2_.error', e);
 		}
 		return context;
 	}
@@ -183,7 +184,7 @@ export default class Context {
 		if (!WebGLRenderingContext) {
 			handleError(ContextError.BrowserSupport, `This page requires a browser that supports WebGL.<br/>
 			<a href="http://get.webgl.org">Click here to upgrade your browser.</a>`);
-			return null;
+			return;
 		}
 		const context: WebGLRenderingContext | WebGL2RenderingContext = Context.inferContext(vertexString, fragmentString, canvas, attributes);
 		if (!context) {

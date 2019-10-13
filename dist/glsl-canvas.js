@@ -527,8 +527,6 @@ exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate :
 };
 }).call(this,require("timers").setImmediate,require("timers").clearImmediate)
 },{"process/browser.js":1,"timers":3}],4:[function(require,module,exports){
-"use strict";
-
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
 function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
@@ -547,7 +545,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
-var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
+var __importDefault = this && this.__importDefault || function (mod) {
   return mod && mod.__esModule ? mod : {
     "default": mod
   };
@@ -831,8 +829,6 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 });
 
 },{"./context":6,"./iterable":8}],5:[function(require,module,exports){
-"use strict";
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -902,8 +898,6 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 });
 
 },{"promise-polyfill":2}],6:[function(require,module,exports){
-"use strict";
-
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
@@ -912,7 +906,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
-var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
+var __importDefault = this && this.__importDefault || function (mod) {
   return mod && mod.__esModule ? mod : {
     "default": mod
   };
@@ -998,7 +992,8 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 
         try {
           context = canvas.getContext('webgl2', options);
-        } catch (e) {}
+        } catch (e) {// console.error('GlslCanvas.Context.getContext2_.error', e);
+        }
 
         return context;
       }
@@ -1094,7 +1089,7 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 
         if (!WebGLRenderingContext) {
           handleError(ContextError.BrowserSupport, "This page requires a browser that supports WebGL.<br/>\n\t\t\t<a href=\"http://get.webgl.org\">Click here to upgrade your browser.</a>");
-          return null;
+          return;
         }
 
         var context = Context.inferContext(vertexString, fragmentString, canvas, attributes);
@@ -1229,8 +1224,6 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 });
 
 },{"./common":5,"./logger":9}],7:[function(require,module,exports){
-"use strict";
-
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
@@ -1249,13 +1242,13 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
-var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
+var __importDefault = this && this.__importDefault || function (mod) {
   return mod && mod.__esModule ? mod : {
     "default": mod
   };
 };
 
-var __importStar = void 0 && (void 0).__importStar || function (mod) {
+var __importStar = this && this.__importStar || function (mod) {
   if (mod && mod.__esModule) return mod;
   var result = {};
   if (mod != null) for (var k in mod) {
@@ -1391,8 +1384,6 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
       _this.dirty = true;
       _this.visible = false;
 
-      _this.removeListeners_ = function () {};
-
       if (!canvas) {
         return _possibleConstructorReturn(_this);
       }
@@ -1426,7 +1417,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
 
           _this.addListeners_();
 
-          _this.loop();
+          _this.onLoop();
         });
       }, function (error) {
         logger_1.default.log('GlslCanvas.getShaders_.error', error);
@@ -1483,142 +1474,155 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     }, {
       key: "addListeners_",
       value: function addListeners_() {
-        var _this3 = this;
-
         /*
         const resize = (e: Event) => {
             this.rect = this.canvas.getBoundingClientRect();
             this.trigger('resize', e);
         };
         */
-        var scroll = function scroll(e) {
-          _this3.rect = _this3.canvas.getBoundingClientRect();
-        };
+        this.onScroll = this.onScroll.bind(this);
+        this.onClick = this.onClick.bind(this);
+        this.onMove = this.onMove.bind(this);
+        this.onMousemove = this.onMousemove.bind(this);
+        this.onMouseover = this.onMouseover.bind(this);
+        this.onMouseout = this.onMouseout.bind(this);
+        this.onTouchmove = this.onTouchmove.bind(this);
+        this.onTouchend = this.onTouchend.bind(this);
+        this.onTouchstart = this.onTouchstart.bind(this);
+        this.onLoop = this.onLoop.bind(this); // window.addEventListener('resize', this.onResize);
 
-        var click = function click(e) {
-          _this3.toggle();
-
-          _this3.trigger('click', e);
-        };
-
-        var move = function move(mx, my) {
-          /*
-          const rect = this.rect, gap = 20;
-          const x = Math.max(-gap, Math.min(rect.width + gap, (mx - rect.left) * this.devicePixelRatio));
-          const y = Math.max(-gap, Math.min(rect.height + gap, (this.canvas.height - (my - rect.top) * this.devicePixelRatio)));
-          */
-          var rect = _this3.rect;
-          var x = (mx - rect.left) * _this3.devicePixelRatio;
-          var y = (rect.height - (my - rect.top)) * _this3.devicePixelRatio;
-
-          if (x !== _this3.mouse.x || y !== _this3.mouse.y) {
-            _this3.mouse.x = x;
-            _this3.mouse.y = y;
-
-            _this3.trigger('move', _this3.mouse);
-          }
-        };
-
-        var mousemove = function mousemove(e) {
-          move(e.clientX || e.pageX, e.clientY || e.pageY);
-        };
-
-        var mouseover = function mouseover(e) {
-          _this3.play();
-
-          _this3.trigger('over', e);
-        };
-
-        var mouseout = function mouseout(e) {
-          _this3.pause();
-
-          _this3.trigger('out', e);
-        };
-
-        var touchmove = function touchmove(e) {
-          var touch = [].slice.call(e.touches).reduce(function (p, touch) {
-            p = p || {
-              x: 0,
-              y: 0
-            };
-            p.x += touch.clientX;
-            p.y += touch.clientY;
-            return p;
-          }, null);
-
-          if (touch) {
-            move(touch.x / e.touches.length, touch.y / e.touches.length);
-          }
-        };
-
-        var touchend = function touchend(e) {
-          _this3.pause();
-
-          _this3.trigger('out', e);
-
-          document.removeEventListener('touchend', touchend);
-        };
-
-        var touchstart = function touchstart(e) {
-          _this3.play();
-
-          _this3.trigger('over', e);
-
-          document.addEventListener('touchend', touchend);
-          document.removeEventListener('mousemove', mousemove);
-
-          if (_this3.canvas.hasAttribute('controls')) {
-            _this3.canvas.removeEventListener('mouseover', mouseover);
-
-            _this3.canvas.removeEventListener('mouseout', mouseout);
-          }
-        };
-
-        var loop = function loop(time) {
-          _this3.checkRender();
-
-          _this3.rafId = window.requestAnimationFrame(loop);
-        };
-
-        this.loop = loop; // window.addEventListener('resize', resize);
-
-        window.addEventListener('scroll', scroll);
-        document.addEventListener('mousemove', mousemove, false);
-        document.addEventListener('touchmove', touchmove);
-
+        window.addEventListener('scroll', this.onScroll);
+        document.addEventListener('mousemove', this.onMousemove, false);
+        document.addEventListener('touchmove', this.onTouchmove);
+        this.addCanvasListeners_();
+      }
+    }, {
+      key: "addCanvasListeners_",
+      value: function addCanvasListeners_() {
         if (this.canvas.hasAttribute('controls')) {
-          this.canvas.addEventListener('click', click);
-          this.canvas.addEventListener('mouseover', mouseover);
-          this.canvas.addEventListener('mouseout', mouseout);
-          this.canvas.addEventListener('touchstart', touchstart);
+          this.canvas.addEventListener('click', this.onClick);
+          this.canvas.addEventListener('mouseover', this.onMouseover);
+          this.canvas.addEventListener('mouseout', this.onMouseout);
+          this.canvas.addEventListener('touchstart', this.onTouchstart);
 
           if (!this.canvas.hasAttribute('data-autoplay')) {
             this.pause();
           }
         }
+      }
+    }, {
+      key: "removeCanvasListeners_",
+      value: function removeCanvasListeners_() {
+        if (this.canvas.hasAttribute('controls')) {
+          this.canvas.removeEventListener('click', this.onClick);
+          this.canvas.removeEventListener('mouseover', this.onMouseover);
+          this.canvas.removeEventListener('mouseout', this.onMouseout);
+          this.canvas.removeEventListener('touchstart', this.onTouchstart);
+        }
+      }
+    }, {
+      key: "removeListeners_",
+      value: function removeListeners_() {
+        window.cancelAnimationFrame(this.rafId); // window.removeEventListener('resize', this.onResize);
 
-        this.removeListeners_ = function () {
-          window.cancelAnimationFrame(_this3.rafId); // window.removeEventListener('resize', resize);
+        window.removeEventListener('scroll', this.onScroll);
+        document.removeEventListener('mousemove', this.onMousemove);
+        document.removeEventListener('touchmove', this.onTouchmove);
+        this.removeCanvasListeners_();
+      }
+    }, {
+      key: "onScroll",
+      value: function onScroll(e) {
+        this.rect = this.canvas.getBoundingClientRect();
+      }
+    }, {
+      key: "onClick",
+      value: function onClick(e) {
+        this.toggle();
+        this.trigger('click', e);
+      }
+    }, {
+      key: "onMove",
+      value: function onMove(mx, my) {
+        /*
+        const rect = this.rect, gap = 20;
+        const x = Math.max(-gap, Math.min(rect.width + gap, (mx - rect.left) * this.devicePixelRatio));
+        const y = Math.max(-gap, Math.min(rect.height + gap, (this.canvas.height - (my - rect.top) * this.devicePixelRatio)));
+        */
+        var rect = this.rect;
+        var x = (mx - rect.left) * this.devicePixelRatio;
+        var y = (rect.height - (my - rect.top)) * this.devicePixelRatio;
 
-          window.removeEventListener('scroll', scroll);
-          document.removeEventListener('mousemove', mousemove);
-          document.removeEventListener('touchmove', touchmove);
+        if (x !== this.mouse.x || y !== this.mouse.y) {
+          this.mouse.x = x;
+          this.mouse.y = y;
+          this.trigger('move', this.mouse);
+        }
+      }
+    }, {
+      key: "onMousemove",
+      value: function onMousemove(e) {
+        this.onMove(e.clientX || e.pageX, e.clientY || e.pageY);
+      }
+    }, {
+      key: "onMouseover",
+      value: function onMouseover(e) {
+        this.play();
+        this.trigger('over', e);
+      }
+    }, {
+      key: "onMouseout",
+      value: function onMouseout(e) {
+        this.pause();
+        this.trigger('out', e);
+      }
+    }, {
+      key: "onTouchmove",
+      value: function onTouchmove(e) {
+        var touch = [].slice.call(e.touches).reduce(function (p, touch) {
+          p = p || {
+            x: 0,
+            y: 0
+          };
+          p.x += touch.clientX;
+          p.y += touch.clientY;
+          return p;
+        }, null);
 
-          if (_this3.canvas.hasAttribute('controls')) {
-            _this3.canvas.removeEventListener('click', click);
+        if (touch) {
+          this.onMove(touch.x / e.touches.length, touch.y / e.touches.length);
+        }
+      }
+    }, {
+      key: "onTouchend",
+      value: function onTouchend(e) {
+        this.pause();
+        this.trigger('out', e);
+        document.removeEventListener('touchend', this.onTouchend);
+      }
+    }, {
+      key: "onTouchstart",
+      value: function onTouchstart(e) {
+        this.play();
+        this.trigger('over', e);
+        document.addEventListener('touchend', this.onTouchend);
+        document.removeEventListener('mousemove', this.onMousemove);
 
-            _this3.canvas.removeEventListener('mouseover', mouseover);
-
-            _this3.canvas.removeEventListener('mouseout', mouseout);
-
-            _this3.canvas.removeEventListener('touchstart', touchstart);
-          }
-        };
+        if (this.canvas.hasAttribute('controls')) {
+          this.canvas.removeEventListener('mouseover', this.onMouseover);
+          this.canvas.removeEventListener('mouseout', this.onMouseout);
+        }
+      }
+    }, {
+      key: "onLoop",
+      value: function onLoop(time) {
+        this.checkRender();
+        this.rafId = window.requestAnimationFrame(this.onLoop);
       }
     }, {
       key: "setUniform_",
       value: function setUniform_(key, values) {
-        var _this4 = this;
+        var _this3 = this;
 
         var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
         var type = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
@@ -1627,11 +1631,11 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         if (Array.isArray(uniform)) {
           if (uniforms_1.default.isArrayOfSampler2D(uniform)) {
             uniform.forEach(function (x) {
-              return _this4.loadTexture(x.key, x.values[0], options);
+              return _this3.loadTexture(x.key, x.values[0], options);
             });
           } else {
             uniform.forEach(function (x) {
-              return _this4.uniforms.set(x.key, x.values[0]);
+              return _this3.uniforms.set(x.key, x.values[0]);
             });
           }
         } else if (uniform) {
@@ -1648,7 +1652,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     }, {
       key: "parseTextures_",
       value: function parseTextures_(fragmentString) {
-        var _this5 = this;
+        var _this4 = this;
 
         var regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\:\/\/|\.|\-|\_]*)|\s*)/gm;
         var matches;
@@ -1680,7 +1684,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           urls.forEach(function (url, i) {
             var key = 'u_texture' + i;
 
-            _this5.textureList.push({
+            _this4.textureList.push({
               key: key,
               url: url
             });
@@ -1692,7 +1696,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     }, {
       key: "createUniforms_",
       value: function createUniforms_() {
-        var _this6 = this;
+        var _this5 = this;
 
         var gl = this.gl;
         var fragmentString = this.fragmentString;
@@ -1740,7 +1744,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           this.textureList.filter(function (x) {
             return x.url;
           }).forEach(function (x) {
-            _this6.setTexture(x.key, x.url, x.options);
+            _this5.setTexture(x.key, x.url, x.options);
           });
           this.textureList = [];
         }
@@ -1852,12 +1856,12 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     }, {
       key: "load",
       value: function load(fragmentString, vertexString) {
-        var _this7 = this;
+        var _this6 = this;
 
         return Promise.all([context_1.default.getIncludes(fragmentString || this.fragmentString), context_1.default.getIncludes(vertexString || this.vertexString)]).then(function (array) {
-          _this7.fragmentString = array[0];
-          _this7.vertexString = array[1];
-          return _this7.createContext_();
+          _this6.fragmentString = array[0];
+          _this6.vertexString = array[1];
+          return _this6.createContext_();
         });
       }
     }, {
@@ -1870,6 +1874,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
 
         if (context_1.default.versionDiffers(this.gl, vertexString, fragmentString)) {
           this.destroyContext_();
+          this.swapCanvas_();
           this.uniforms = new uniforms_1.default();
           this.buffers = new buffers_1.default();
           this.textures = new textures_1.default();
@@ -1948,52 +1953,52 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     }, {
       key: "test",
       value: function test(fragmentString, vertexString) {
-        var _this8 = this;
+        var _this7 = this;
 
         return new Promise(function (resolve, reject) {
-          var vertex = _this8.vertexString;
-          var fragment = _this8.fragmentString;
-          var paused = _this8.timer.paused; // Thanks to @thespite for the help here
+          var vertex = _this7.vertexString;
+          var fragment = _this7.fragmentString;
+          var paused = _this7.timer.paused; // Thanks to @thespite for the help here
           // https://www.khronos.org/registry/webgl/extensions/EXT_disjoint_timer_query/
 
-          var extension = _this8.gl.getExtension('EXT_disjoint_timer_query');
+          var extension = _this7.gl.getExtension('EXT_disjoint_timer_query');
 
           var query = extension.createQueryEXT();
-          var wasValid = _this8.valid;
+          var wasValid = _this7.valid;
 
           if (fragmentString || vertexString) {
-            _this8.load(fragmentString, vertexString);
+            _this7.load(fragmentString, vertexString);
 
-            wasValid = _this8.valid;
+            wasValid = _this7.valid;
 
-            _this8.render();
+            _this7.render();
           }
 
-          _this8.timer.paused = true;
+          _this7.timer.paused = true;
           extension.beginQueryEXT(extension.TIME_ELAPSED_EXT, query);
 
-          _this8.render();
+          _this7.render();
 
           extension.endQueryEXT(extension.TIME_ELAPSED_EXT);
 
           var waitForTest = function waitForTest() {
-            _this8.render();
+            _this7.render();
 
             var available = extension.getQueryObjectEXT(query, extension.QUERY_RESULT_AVAILABLE_EXT);
 
-            var disjoint = _this8.gl.getParameter(extension.GPU_DISJOINT_EXT);
+            var disjoint = _this7.gl.getParameter(extension.GPU_DISJOINT_EXT);
 
             if (available && !disjoint) {
               var result = {
                 wasValid: wasValid,
-                fragment: fragmentString || _this8.fragmentString,
-                vertex: vertexString || _this8.vertexString,
+                fragment: fragmentString || _this7.fragmentString,
+                vertex: vertexString || _this7.vertexString,
                 timeElapsedMs: extension.getQueryObjectEXT(query, extension.QUERY_RESULT_EXT) / 1000000.0
               };
-              _this8.timer.paused = paused;
+              _this7.timer.paused = paused;
 
               if (fragmentString || vertexString) {
-                _this8.load(fragment, vertex);
+                _this7.load(fragment, vertex);
               }
 
               resolve(result);
@@ -2032,6 +2037,15 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
         this.gl = null;
       }
     }, {
+      key: "swapCanvas_",
+      value: function swapCanvas_() {
+        var canvas = this.canvas;
+        var canvas_ = canvas.cloneNode();
+        canvas.parentNode.replaceChild(canvas_, canvas);
+        this.canvas = canvas_;
+        this.addCanvasListeners_();
+      }
+    }, {
       key: "destroy",
       value: function destroy() {
         this.removeListeners_();
@@ -2043,7 +2057,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     }, {
       key: "loadTexture",
       value: function loadTexture(key, urlElementOrData) {
-        var _this9 = this;
+        var _this8 = this;
 
         var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
@@ -2052,12 +2066,12 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
           this.textures.createOrUpdate(this.gl, key, urlElementOrData, this.buffers.count, options, this.options.workpath).then(function (texture) {
             var index = texture.index;
 
-            var uniform = _this9.uniforms.createTexture(key, index);
+            var uniform = _this8.uniforms.createTexture(key, index);
 
             uniform.texture = texture;
             var keyResolution = key.indexOf('[') !== -1 ? key.replace('[', 'Resolution[') : key + 'Resolution';
 
-            var uniformResolution = _this9.uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.Float, keyResolution, [texture.width, texture.height]); // Logger.log('loadTexture', key, url, index, texture.width, texture.height);
+            var uniformResolution = _this8.uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.Float, keyResolution, [texture.width, texture.height]); // Logger.log('loadTexture', key, url, index, texture.width, texture.height);
 
 
             return texture;
@@ -2067,7 +2081,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
             }).join(', ') : error.message;
             logger_1.default.log('GlslCanvas.loadTexture.error', key, urlElementOrData, message);
 
-            _this9.trigger('textureError', {
+            _this8.trigger('textureError', {
               key: key,
               urlElementOrData: urlElementOrData,
               message: message
@@ -2151,6 +2165,11 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
       key: "render",
       value: function render() {
         var gl = this.gl;
+
+        if (!gl) {
+          return;
+        }
+
         var BW = gl.drawingBufferWidth;
         var BH = gl.drawingBufferHeight;
         this.updateUniforms_();
@@ -2174,7 +2193,7 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
     }], [{
       key: "version",
       value: function version() {
-        return '0.2.0';
+        return '0.1.5';
       }
     }, {
       key: "of",
@@ -2211,8 +2230,6 @@ var __importStar = void 0 && (void 0).__importStar || function (mod) {
 });
 
 },{"./buffers":4,"./common":5,"./context":6,"./logger":9,"./subscriber":10,"./textures":11,"./uniforms":12,"promise-polyfill":2}],8:[function(require,module,exports){
-"use strict";
-
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
@@ -2305,8 +2322,6 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 });
 
 },{}],9:[function(require,module,exports){
-"use strict";
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -2373,8 +2388,6 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 });
 
 },{}],10:[function(require,module,exports){
-"use strict";
-
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
@@ -2383,7 +2396,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
-var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
+var __importDefault = this && this.__importDefault || function (mod) {
   return mod && mod.__esModule ? mod : {
     "default": mod
   };
@@ -2491,8 +2504,6 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 });
 
 },{"./logger":9}],11:[function(require,module,exports){
-"use strict";
-
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
@@ -2511,7 +2522,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
-var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
+var __importDefault = this && this.__importDefault || function (mod) {
   return mod && mod.__esModule ? mod : {
     "default": mod
   };
@@ -3023,8 +3034,6 @@ var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
 });
 
 },{"./iterable":8,"./logger":9,"./subscriber":10}],12:[function(require,module,exports){
-"use strict";
-
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
@@ -3043,7 +3052,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
-var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
+var __importDefault = this && this.__importDefault || function (mod) {
   return mod && mod.__esModule ? mod : {
     "default": mod
   };

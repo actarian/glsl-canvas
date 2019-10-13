@@ -3,7 +3,7 @@ All notable changes to the "glsl-canvas" library will be documented in this file
 
 ---
 
-## [0.1.4] - 2019-10-13
+## [0.1.5] - 2019-10-13
 ### Added
 - WebGL2 support.
 - Including dependent files with #include macro.

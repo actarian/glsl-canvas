@@ -89,8 +89,6 @@ export default class GlslCanvas extends Subscriber {
 	visible: boolean = false;
 
 	rafId: number;
-	loop: Function;
-	private removeListeners_: Function = () => { };
 
 	constructor(
 		canvas: HTMLCanvasElement,
@@ -129,7 +127,7 @@ export default class GlslCanvas extends Subscriber {
 						return;
 					}
 					this.addListeners_();
-					this.loop();
+					this.onLoop();
 				});
 			},
 			(error) => {
@@ -142,7 +140,7 @@ export default class GlslCanvas extends Subscriber {
 	static items: GlslCanvas[] = [];
 
 	static version(): string {
-		return '0.2.0';
+		return '0.1.5';
 	}
 
 	static of(canvas: HTMLCanvasElement): GlslCanvas {
@@ -198,110 +196,125 @@ export default class GlslCanvas extends Subscriber {
             this.trigger('resize', e);
         };
         */
+		this.onScroll = this.onScroll.bind(this);
+		this.onClick = this.onClick.bind(this);
+		this.onMove = this.onMove.bind(this);
+		this.onMousemove = this.onMousemove.bind(this);
+		this.onMouseover = this.onMouseover.bind(this);
+		this.onMouseout = this.onMouseout.bind(this);
+		this.onTouchmove = this.onTouchmove.bind(this);
+		this.onTouchend = this.onTouchend.bind(this);
+		this.onTouchstart = this.onTouchstart.bind(this);
+		this.onLoop = this.onLoop.bind(this);
+		// window.addEventListener('resize', this.onResize);
+		window.addEventListener('scroll', this.onScroll);
+		document.addEventListener('mousemove', this.onMousemove, false);
+		document.addEventListener('touchmove', this.onTouchmove);
+		this.addCanvasListeners_();
+	}
 
-		const scroll = (e: Event) => {
-			this.rect = this.canvas.getBoundingClientRect();
-		};
-
-		const click = (e: MouseEvent) => {
-			this.toggle();
-			this.trigger('click', e);
-		};
-
-		const move = (mx: number, my: number) => {
-			/*
-			const rect = this.rect, gap = 20;
-			const x = Math.max(-gap, Math.min(rect.width + gap, (mx - rect.left) * this.devicePixelRatio));
-			const y = Math.max(-gap, Math.min(rect.height + gap, (this.canvas.height - (my - rect.top) * this.devicePixelRatio)));
-			*/
-			const rect = this.rect;
-			const x = (mx - rect.left) * this.devicePixelRatio;
-			const y = (rect.height - (my - rect.top)) * this.devicePixelRatio;
-			if (x !== this.mouse.x ||
-				y !== this.mouse.y) {
-				this.mouse.x = x;
-				this.mouse.y = y;
-				this.trigger('move', this.mouse);
-			}
-		};
-
-		const mousemove = (e: MouseEvent) => {
-			move(e.clientX || e.pageX, e.clientY || e.pageY);
-		};
-
-		const mouseover = (e: MouseEvent) => {
-			this.play();
-			this.trigger('over', e);
-		};
-
-		const mouseout = (e: MouseEvent) => {
-			this.pause();
-			this.trigger('out', e);
-		};
-
-		const touchmove = (e: TouchEvent) => {
-			const touch = [].slice.call(e.touches).reduce((p: IPoint, touch: Touch) => {
-				p = p || { x: 0, y: 0 };
-				p.x += touch.clientX;
-				p.y += touch.clientY;
-				return p;
-			}, null);
-			if (touch) {
-				move(touch.x / e.touches.length, touch.y / e.touches.length);
-			}
-		};
-
-		const touchend = (e: TouchEvent) => {
-			this.pause();
-			this.trigger('out', e);
-			document.removeEventListener('touchend', touchend);
-		};
-
-		const touchstart = (e: TouchEvent) => {
-			this.play();
-			this.trigger('over', e);
-			document.addEventListener('touchend', touchend);
-			document.removeEventListener('mousemove', mousemove);
-			if (this.canvas.hasAttribute('controls')) {
-				this.canvas.removeEventListener('mouseover', mouseover);
-				this.canvas.removeEventListener('mouseout', mouseout);
-			}
-		};
-
-		const loop: FrameRequestCallback = (time: number) => {
-			this.checkRender();
-			this.rafId = window.requestAnimationFrame(loop);
-		};
-
-		this.loop = loop;
-
-		// window.addEventListener('resize', resize);
-		window.addEventListener('scroll', scroll);
-		document.addEventListener('mousemove', mousemove, false);
-		document.addEventListener('touchmove', touchmove);
+	private addCanvasListeners_() {
 		if (this.canvas.hasAttribute('controls')) {
-			this.canvas.addEventListener('click', click);
-			this.canvas.addEventListener('mouseover', mouseover);
-			this.canvas.addEventListener('mouseout', mouseout);
-			this.canvas.addEventListener('touchstart', touchstart);
+			this.canvas.addEventListener('click', this.onClick);
+			this.canvas.addEventListener('mouseover', this.onMouseover);
+			this.canvas.addEventListener('mouseout', this.onMouseout);
+			this.canvas.addEventListener('touchstart', this.onTouchstart);
 			if (!this.canvas.hasAttribute('data-autoplay')) {
 				this.pause();
 			}
 		}
+	}
 
-		this.removeListeners_ = () => {
-			window.cancelAnimationFrame(this.rafId);
-			// window.removeEventListener('resize', resize);
-			window.removeEventListener('scroll', scroll);
-			document.removeEventListener('mousemove', mousemove);
-			document.removeEventListener('touchmove', touchmove);
-			if (this.canvas.hasAttribute('controls')) {
-				this.canvas.removeEventListener('click', click);
-				this.canvas.removeEventListener('mouseover', mouseover);
-				this.canvas.removeEventListener('mouseout', mouseout);
-				this.canvas.removeEventListener('touchstart', touchstart);
-			}
+	private removeCanvasListeners_() {
+		if (this.canvas.hasAttribute('controls')) {
+			this.canvas.removeEventListener('click', this.onClick);
+			this.canvas.removeEventListener('mouseover', this.onMouseover);
+			this.canvas.removeEventListener('mouseout', this.onMouseout);
+			this.canvas.removeEventListener('touchstart', this.onTouchstart);
 		}
+	}
+
+	private removeListeners_() {
+		window.cancelAnimationFrame(this.rafId);
+		// window.removeEventListener('resize', this.onResize);
+		window.removeEventListener('scroll', this.onScroll);
+		document.removeEventListener('mousemove', this.onMousemove);
+		document.removeEventListener('touchmove', this.onTouchmove);
+		this.removeCanvasListeners_();
+	}
+
+	onScroll(e: Event) {
+		this.rect = this.canvas.getBoundingClientRect();
+	}
+
+	onClick(e: MouseEvent) {
+		this.toggle();
+		this.trigger('click', e);
+	}
+
+	onMove(mx: number, my: number) {
+		/*
+		const rect = this.rect, gap = 20;
+		const x = Math.max(-gap, Math.min(rect.width + gap, (mx - rect.left) * this.devicePixelRatio));
+		const y = Math.max(-gap, Math.min(rect.height + gap, (this.canvas.height - (my - rect.top) * this.devicePixelRatio)));
+		*/
+		const rect = this.rect;
+		const x = (mx - rect.left) * this.devicePixelRatio;
+		const y = (rect.height - (my - rect.top)) * this.devicePixelRatio;
+		if (x !== this.mouse.x ||
+			y !== this.mouse.y) {
+			this.mouse.x = x;
+			this.mouse.y = y;
+			this.trigger('move', this.mouse);
+		}
+	}
+
+	onMousemove(e: MouseEvent) {
+		this.onMove(e.clientX || e.pageX, e.clientY || e.pageY);
+	}
+
+	onMouseover(e: MouseEvent) {
+		this.play();
+		this.trigger('over', e);
+	}
+
+	onMouseout(e: MouseEvent) {
+		this.pause();
+		this.trigger('out', e);
+	}
+
+	onTouchmove(e: TouchEvent) {
+		const touch = [].slice.call(e.touches).reduce((p: IPoint, touch: Touch) => {
+			p = p || { x: 0, y: 0 };
+			p.x += touch.clientX;
+			p.y += touch.clientY;
+			return p;
+		}, null);
+		if (touch) {
+			this.onMove(touch.x / e.touches.length, touch.y / e.touches.length);
+		}
+	}
+
+	onTouchend(e: TouchEvent) {
+		this.pause();
+		this.trigger('out', e);
+		document.removeEventListener('touchend', this.onTouchend);
+	}
+
+	onTouchstart(e: TouchEvent) {
+		this.play();
+		this.trigger('over', e);
+		document.addEventListener('touchend', this.onTouchend);
+		document.removeEventListener('mousemove', this.onMousemove);
+		if (this.canvas.hasAttribute('controls')) {
+			this.canvas.removeEventListener('mouseover', this.onMouseover);
+			this.canvas.removeEventListener('mouseout', this.onMouseout);
+		}
+	}
+
+	onLoop(time?: number) {
+		this.checkRender();
+		this.rafId = window.requestAnimationFrame(this.onLoop);
 	}
 
 	private setUniform_(
@@ -509,6 +522,7 @@ export default class GlslCanvas extends Subscriber {
 		this.fragmentString = Context.getFragment(vertexString, fragmentString);
 		if (Context.versionDiffers(this.gl, vertexString, fragmentString)) {
 			this.destroyContext_();
+			this.swapCanvas_();
 			this.uniforms = new Uniforms();
 			this.buffers = new Buffers();
 			this.textures = new Textures();
@@ -639,6 +653,14 @@ export default class GlslCanvas extends Subscriber {
 		this.gl = null;
 	}
 
+	swapCanvas_(): void {
+		const canvas = this.canvas;
+		const canvas_ = canvas.cloneNode() as HTMLCanvasElement;
+		canvas.parentNode.replaceChild(canvas_, canvas);
+		this.canvas = canvas_;
+		this.addCanvasListeners_();
+	}
+
 	destroy(): void {
 		this.removeListeners_();
 		this.destroyContext_();
@@ -733,6 +755,9 @@ export default class GlslCanvas extends Subscriber {
 
 	render(): void {
 		const gl = this.gl;
+		if (!gl) {
+			return;
+		}
 		const BW = gl.drawingBufferWidth;
 		const BH = gl.drawingBufferHeight;
 		this.updateUniforms_();
