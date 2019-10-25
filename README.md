@@ -12,7 +12,7 @@
 
 Load the latest version of ```glsl-canvas.js``` on your page by adding this line to your HTML:
 ```html
-<script type="text/javascript" src="https://rawgit.com/actarian/glsl-canvas/master/dist/glsl-canvas.min.js"></script>
+<script type="text/javascript" src="https://unpkg.com/glsl-canvas-js/dist/glsl-canvas.min.js"></script>
 ```
 
 *With npm*
