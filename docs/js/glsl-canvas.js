@@ -195,12 +195,15 @@ function finallyConstructor(callback) {
   var constructor = this.constructor;
   return this.then(
     function(value) {
+      // @ts-ignore
       return constructor.resolve(callback()).then(function() {
         return value;
       });
     },
     function(reason) {
+      // @ts-ignore
       return constructor.resolve(callback()).then(function() {
+        // @ts-ignore
         return constructor.reject(reason);
       });
     }
@@ -210,6 +213,10 @@ function finallyConstructor(callback) {
 // Store setTimeout reference so promise-polyfill will be unaffected by
 // other code modifying setTimeout (like sinon.useFakeTimers())
 var setTimeoutFunc = setTimeout;
+
+function isArray(x) {
+  return Boolean(x && typeof x.length !== 'undefined');
+}
 
 function noop() {}
 
@@ -368,8 +375,10 @@ Promise.prototype['finally'] = finallyConstructor;
 
 Promise.all = function(arr) {
   return new Promise(function(resolve, reject) {
-    if (!arr || typeof arr.length === 'undefined')
-      throw new TypeError('Promise.all accepts an array');
+    if (!isArray(arr)) {
+      return reject(new TypeError('Promise.all accepts an array'));
+    }
+
     var args = Array.prototype.slice.call(arr);
     if (args.length === 0) return resolve([]);
     var remaining = args.length;
@@ -420,18 +429,24 @@ Promise.reject = function(value) {
   });
 };
 
-Promise.race = function(values) {
+Promise.race = function(arr) {
   return new Promise(function(resolve, reject) {
-    for (var i = 0, len = values.length; i < len; i++) {
-      values[i].then(resolve, reject);
+    if (!isArray(arr)) {
+      return reject(new TypeError('Promise.race accepts an array'));
+    }
+
+    for (var i = 0, len = arr.length; i < len; i++) {
+      Promise.resolve(arr[i]).then(resolve, reject);
     }
   });
 };
 
 // Use polyfill for setImmediate for performance gains
 Promise._immediateFn =
+  // @ts-ignore
   (typeof setImmediate === 'function' &&
     function(fn) {
+      // @ts-ignore
       setImmediate(fn);
     }) ||
   function(fn) {
@@ -603,7 +618,7 @@ var __importDefault = this && this.__importDefault || function (mod) {
         var floatType, extension;
 
         if (Buffer.floatType === BufferFloatType.FLOAT) {
-          var extensionName = gl instanceof WebGL2RenderingContext ? 'EXT_color_buffer_float' : 'OES_texture_float';
+          var extensionName = context_1.default.isWebGl2(gl) ? 'EXT_color_buffer_float' : 'OES_texture_float';
           extension = gl.getExtension(extensionName);
 
           if (extension) {
@@ -613,7 +628,7 @@ var __importDefault = this && this.__importDefault || function (mod) {
             return this.getFloatType(gl);
           }
         } else {
-          var _extensionName = gl instanceof WebGL2RenderingContext ? 'EXT_color_buffer_half_float' : 'OES_texture_half_float';
+          var _extensionName = context_1.default.isWebGl2(gl) ? 'EXT_color_buffer_half_float' : 'OES_texture_half_float';
 
           extension = gl.getExtension(_extensionName);
 
@@ -634,7 +649,7 @@ var __importDefault = this && this.__importDefault || function (mod) {
         var texture = gl.createTexture();
         gl.activeTexture(gl.TEXTURE0 + index);
         gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl instanceof WebGL2RenderingContext ? gl.RGBA16F : gl.RGBA, BW, BH, 0, gl.RGBA, floatType, null);
+        gl.texImage2D(gl.TEXTURE_2D, 0, context_1.default.isWebGl2(gl) ? gl.RGBA16F : gl.RGBA, BW, BH, 0, gl.RGBA, floatType, null);
         var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
 
         if (status !== gl.FRAMEBUFFER_COMPLETE) {
@@ -699,8 +714,8 @@ var __importDefault = this && this.__importDefault || function (mod) {
     return Buffer;
   }();
 
-  Buffer.floatType = BufferFloatType.HALF_FLOAT;
   exports.Buffer = Buffer;
+  Buffer.floatType = BufferFloatType.HALF_FLOAT;
 
   var IOBuffer =
   /*#__PURE__*/
@@ -723,14 +738,14 @@ var __importDefault = this && this.__importDefault || function (mod) {
         var fragmentShader = context_1.default.createShader(gl, this.fragmentString, gl.FRAGMENT_SHADER, 1);
 
         if (!fragmentShader) {
-          fragmentShader = context_1.default.createShader(gl, gl instanceof WebGL2RenderingContext ? exports.BuffersDefaultFragment2 : exports.BuffersDefaultFragment, gl.FRAGMENT_SHADER);
+          fragmentShader = context_1.default.createShader(gl, context_1.default.isWebGl2(gl) ? exports.BuffersDefaultFragment2 : exports.BuffersDefaultFragment, gl.FRAGMENT_SHADER);
           this.isValid = false;
         } else {
           this.isValid = true;
         }
 
-        var program = context_1.default.createProgram(gl, [vertexShader, fragmentShader]); // gl.useProgram(program);
-
+        var program = context_1.default.createProgram(gl, [vertexShader, fragmentShader]);
+        gl.linkProgram(program);
         var input = new Buffer(gl, BW, BH, this.index + 0);
         var output = new Buffer(gl, BW, BH, this.index + 2);
         this.program = program;
@@ -748,11 +763,10 @@ var __importDefault = this && this.__importDefault || function (mod) {
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.output.texture, 0);
         gl.drawArrays(gl.TRIANGLES, 0, 6); // swap
 
-        var temp = this.input;
-        var input = this.output;
-        var output = temp;
-        this.input = input;
-        this.output = output;
+        var input = this.input;
+        var output = this.output;
+        this.input = output;
+        this.output = input;
       }
     }, {
       key: "resize",
@@ -800,7 +814,7 @@ var __importDefault = this && this.__importDefault || function (mod) {
         var count = 0;
 
         if (fragmentString) {
-          if (gl instanceof WebGL2RenderingContext) {
+          if (context_1.default.isWebGl2(gl)) {
             fragmentString = fragmentString.replace(/^\#version\s*300\s*es\s*\n/, '');
           }
 
@@ -810,7 +824,7 @@ var __importDefault = this && this.__importDefault || function (mod) {
           while ((matches = regexp.exec(fragmentString)) !== null) {
             var i = matches[3] || matches[4];
             var key = 'u_buffer' + i;
-            var bufferFragmentString = gl instanceof WebGL2RenderingContext ? "#version 300 es\n#define BUFFER_".concat(i, "\n").concat(fragmentString) : "#define BUFFER_".concat(i, "\n").concat(fragmentString);
+            var bufferFragmentString = context_1.default.isWebGl2(gl) ? "#version 300 es\n#define BUFFER_".concat(i, "\n").concat(fragmentString) : "#define BUFFER_".concat(i, "\n").concat(fragmentString);
             var buffer = new IOBuffer(count, key, vertexString, bufferFragmentString);
             buffer.create(gl, gl.drawingBufferWidth, gl.drawingBufferHeight);
             buffers.set(key, buffer);
@@ -1028,7 +1042,9 @@ var __importDefault = this && this.__importDefault || function (mod) {
     }, {
       key: "isWebGl2",
       value: function isWebGl2(context) {
-        return context instanceof WebGL2RenderingContext;
+        // console.log(context);
+        // return context !== undefined && typeof (context as any).bindBufferRange === 'function';
+        return window.WebGL2RenderingContext && context instanceof WebGL2RenderingContext;
       }
     }, {
       key: "inferVersion",
@@ -1045,7 +1061,7 @@ var __importDefault = this && this.__importDefault || function (mod) {
       key: "versionDiffers",
       value: function versionDiffers(gl, vertexString, fragmentString) {
         if (gl) {
-          var currentVersion = gl instanceof WebGL2RenderingContext ? ContextVersion.WebGl2 : ContextVersion.WebGl;
+          var currentVersion = this.isWebGl2(gl) ? ContextVersion.WebGl2 : ContextVersion.WebGl;
           var newVersion = Context.inferVersion(vertexString, fragmentString);
           return newVersion !== currentVersion;
         } else {
@@ -1097,7 +1113,7 @@ var __importDefault = this && this.__importDefault || function (mod) {
         if (!context) {
           handleError(ContextError.Other, "It does not appear your computer can support WebGL.<br/>\n\t\t\t<a href=\"http://get.webgl.org/troubleshooting/\">Click here for more information.</a>");
         } else {
-          if (!(context instanceof WebGL2RenderingContext)) {
+          if (!this.isWebGl2(context)) {
             context.getExtension('OES_standard_derivatives');
           }
         }
@@ -1219,8 +1235,8 @@ var __importDefault = this && this.__importDefault || function (mod) {
     return Context;
   }();
 
-  Context.lastError = '';
   exports.default = Context;
+  Context.lastError = '';
 });
 
 },{"./common":5,"./logger":9}],7:[function(require,module,exports){
@@ -1423,7 +1439,7 @@ var __importStar = this && this.__importStar || function (mod) {
         logger_1.default.log('GlslCanvas.getShaders_.error', error);
       });
 
-      GlslCanvas.items.push(_assertThisInitialized(_assertThisInitialized(_this)));
+      GlslCanvas.items.push(_assertThisInitialized(_this));
       return _this;
     }
 
@@ -1755,6 +1771,11 @@ var __importStar = this && this.__importStar || function (mod) {
         var gl = this.gl;
         var BW = gl.drawingBufferWidth;
         var BH = gl.drawingBufferHeight;
+
+        if (!this.timer) {
+          return;
+        }
+
         var timer = this.timer.next();
         this.uniforms.update(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.Float, 'u_resolution', [BW, BH]);
 
@@ -2193,7 +2214,7 @@ var __importStar = this && this.__importStar || function (mod) {
     }], [{
       key: "version",
       value: function version() {
-        return '0.1.5';
+        return '0.1.6';
       }
     }, {
       key: "of",
@@ -2217,9 +2238,9 @@ var __importStar = this && this.__importStar || function (mod) {
     return GlslCanvas;
   }(subscriber_1.default);
 
+  exports.default = GlslCanvas;
   GlslCanvas.logger = logger_1.default;
   GlslCanvas.items = [];
-  exports.default = GlslCanvas;
   window.GlslCanvas = window.GlslCanvas || GlslCanvas; // (<any>(window)).GlslCanvas = GlslCanvas;
 
   if (document) {
@@ -2383,8 +2404,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
     return Logger;
   }();
 
-  Logger.enabled = false;
   exports.default = Logger;
+  Logger.enabled = false;
 });
 
 },{}],10:[function(require,module,exports){
@@ -2736,6 +2757,7 @@ var __importDefault = this && this.__importDefault || function (mod) {
               video.addEventListener('error', function (error) {
                 reject(error);
               });
+              video.load();
             } else if (element instanceof HTMLImageElement) {
               element.addEventListener('load', function () {
                 _this2.update(gl, options);

@@ -140,7 +140,7 @@ export default class GlslCanvas extends Subscriber {
 	static items: GlslCanvas[] = [];
 
 	static version(): string {
-		return '0.1.5';
+		return '0.1.6';
 	}
 
 	static of(canvas: HTMLCanvasElement): GlslCanvas {
@@ -414,6 +414,9 @@ export default class GlslCanvas extends Subscriber {
 		const gl = this.gl;
 		const BW = gl.drawingBufferWidth;
 		const BH = gl.drawingBufferHeight;
+		if (!this.timer) {
+			return;
+		}
 		const timer = this.timer.next();
 		this.uniforms.update(UniformMethod.Uniform2f, UniformType.Float, 'u_resolution', [BW, BH]);
 		if (this.uniforms.has('u_delta')) {

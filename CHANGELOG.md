@@ -3,6 +3,12 @@ All notable changes to the "glsl-canvas" library will be documented in this file
 
 ---
 
+## [0.1.6] - 2019-10-27
+### Fixed
+- error in WebGL2 unsupported browsers.
+
+---
+
 ## [0.1.5] - 2019-10-13
 ### Added
 - WebGL2 support.

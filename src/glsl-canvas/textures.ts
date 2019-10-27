@@ -240,6 +240,7 @@ export class Texture extends Subscriber {
 					video.addEventListener('error', (error) => {
 						reject(error);
 					});
+					video.load();
 				} else if (element instanceof HTMLImageElement) {
 					element.addEventListener('load', () => {
 						this.update(gl, options);

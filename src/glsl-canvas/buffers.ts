@@ -48,7 +48,7 @@ export class Buffer {
 	getFloatType(gl: WebGLRenderingContext | WebGL2RenderingContext): number {
 		let floatType: number, extension;
 		if (Buffer.floatType === BufferFloatType.FLOAT) {
-			const extensionName = gl instanceof WebGL2RenderingContext ? 'EXT_color_buffer_float' : 'OES_texture_float';
+			const extensionName = Context.isWebGl2(gl) ? 'EXT_color_buffer_float' : 'OES_texture_float';
 			extension = gl.getExtension(extensionName);
 			if (extension) {
 				floatType = gl.FLOAT;
@@ -57,7 +57,7 @@ export class Buffer {
 				return this.getFloatType(gl);
 			}
 		} else {
-			const extensionName = gl instanceof WebGL2RenderingContext ? 'EXT_color_buffer_half_float' : 'OES_texture_half_float';
+			const extensionName = Context.isWebGl2(gl) ? 'EXT_color_buffer_half_float' : 'OES_texture_half_float';
 			extension = gl.getExtension(extensionName);
 			if (extension) {
 				floatType = extension.HALF_FLOAT_OES;
@@ -74,7 +74,7 @@ export class Buffer {
 		const texture = gl.createTexture();
 		gl.activeTexture(gl.TEXTURE0 + index);
 		gl.bindTexture(gl.TEXTURE_2D, texture);
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl instanceof WebGL2RenderingContext ? gl.RGBA16F : gl.RGBA, BW, BH, 0, gl.RGBA, floatType, null);
+		gl.texImage2D(gl.TEXTURE_2D, 0, (Context.isWebGl2(gl) ? (gl as WebGL2RenderingContext).RGBA16F : gl.RGBA), BW, BH, 0, gl.RGBA, floatType, null);
 		const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
 		if (status !== gl.FRAMEBUFFER_COMPLETE) {
 			if (Buffer.floatType === BufferFloatType.FLOAT) {
@@ -133,7 +133,6 @@ export class IOBuffer {
 	program: WebGLProgram;
 	input: Buffer;
 	output: Buffer;
-
 	index: number;
 	key: string;
 	vertexString: string;
@@ -154,14 +153,14 @@ export class IOBuffer {
 		const vertexShader = Context.createShader(gl, this.vertexString, gl.VERTEX_SHADER);
 		let fragmentShader = Context.createShader(gl, this.fragmentString, gl.FRAGMENT_SHADER, 1);
 		if (!fragmentShader) {
-			fragmentShader = Context.createShader(gl, gl instanceof WebGL2RenderingContext ?
+			fragmentShader = Context.createShader(gl, Context.isWebGl2(gl) ?
 				BuffersDefaultFragment2 : BuffersDefaultFragment, gl.FRAGMENT_SHADER);
 			this.isValid = false;
 		} else {
 			this.isValid = true;
 		}
 		const program = Context.createProgram(gl, [vertexShader, fragmentShader]);
-		// gl.useProgram(program);
+		gl.linkProgram(program);
 		const input = new Buffer(gl, BW, BH, this.index + 0);
 		const output = new Buffer(gl, BW, BH, this.index + 2);
 		this.program = program;
@@ -178,11 +177,10 @@ export class IOBuffer {
 		gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.output.texture, 0);
 		gl.drawArrays(gl.TRIANGLES, 0, 6);
 		// swap
-		const temp = this.input;
-		const input = this.output;
-		const output = temp;
-		this.input = input;
-		this.output = output;
+		const input = this.input;
+		const output = this.output;
+		this.input = output;
+		this.output = input;
 	}
 
 	resize(gl: WebGLRenderingContext | WebGL2RenderingContext, BW: number, BH: number) {
@@ -211,7 +209,7 @@ export default class Buffers extends IterableStringMap<IOBuffer> {
 		const buffers: Buffers = new Buffers();
 		let count = 0;
 		if (fragmentString) {
-			if (gl instanceof WebGL2RenderingContext) {
+			if (Context.isWebGl2(gl)) {
 				fragmentString = fragmentString.replace(/^\#version\s*300\s*es\s*\n/, '');
 			}
 			const regexp = /(?:^\s*)((?:#if|#elif)(?:\s*)(defined\s*\(\s*BUFFER_)(\d+)(?:\s*\))|(?:#ifdef)(?:\s*BUFFER_)(\d+)(?:\s*))/gm;
@@ -219,7 +217,7 @@ export default class Buffers extends IterableStringMap<IOBuffer> {
 			while ((matches = regexp.exec(fragmentString)) !== null) {
 				const i = matches[3] || matches[4];
 				const key = 'u_buffer' + i;
-				const bufferFragmentString = gl instanceof WebGL2RenderingContext ? `#version 300 es
+				const bufferFragmentString = Context.isWebGl2(gl) ? `#version 300 es
 #define BUFFER_${i}
 ${fragmentString}` : `#define BUFFER_${i}
 ${fragmentString}`;

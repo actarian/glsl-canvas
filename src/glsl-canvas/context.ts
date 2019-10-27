@@ -130,7 +130,9 @@ export default class Context {
 	}
 
 	static isWebGl2(context: WebGLRenderingContext | WebGL2RenderingContext): boolean {
-		return context instanceof WebGL2RenderingContext;
+		// console.log(context);
+		// return context !== undefined && typeof (context as any).bindBufferRange === 'function';
+		return (window as any).WebGL2RenderingContext && context instanceof WebGL2RenderingContext;
 	}
 
 	static inferVersion(vertexString?: string, fragmentString?: string): ContextVersion {
@@ -144,7 +146,7 @@ export default class Context {
 
 	static versionDiffers(gl: WebGLRenderingContext | WebGL2RenderingContext, vertexString?: string, fragmentString?: string): boolean {
 		if (gl) {
-			const currentVersion = gl instanceof WebGL2RenderingContext ? ContextVersion.WebGl2 : ContextVersion.WebGl;
+			const currentVersion = this.isWebGl2(gl) ? ContextVersion.WebGl2 : ContextVersion.WebGl;
 			const newVersion = Context.inferVersion(vertexString, fragmentString);
 			return newVersion !== currentVersion;
 		} else {
@@ -191,7 +193,7 @@ export default class Context {
 			handleError(ContextError.Other, `It does not appear your computer can support WebGL.<br/>
 			<a href="http://get.webgl.org/troubleshooting/">Click here for more information.</a>`);
 		} else {
-			if (!(context instanceof WebGL2RenderingContext)) {
+			if (!(this.isWebGl2(context))) {
 				context.getExtension('OES_standard_derivatives');
 			}
 		}
