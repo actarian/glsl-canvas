@@ -1670,22 +1670,38 @@ var __importStar = this && this.__importStar || function (mod) {
       value: function parseTextures_(fragmentString) {
         var _this4 = this;
 
-        var regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\:\/\/|\.|\-|\_]*)|\s*)/gm;
+        // const regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\:\/\/|\.|\-|\_]*)|\s*)/gm;
+        var regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\:\/\/|\.|\-|\_|\?|\&|\=]*)|\s*)/gm; // const regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\://|\.|\-|\_]*)|\s*)((\s*\:\s)(\{(\s*\w*\:\s*['|"]{0,1}\w*['|"]{0,1}\s*[,]{0,1})+\}))*/gm;
+
         var matches;
 
         while ((matches = regexp.exec(fragmentString)) !== null) {
           var key = matches[1];
+          var url = matches[3];
 
-          if (matches[3]) {
-            var ext = matches[3].split('.').pop().toLowerCase();
-            var url = matches[3];
-
-            if (url && textures_1.TextureExtensions.indexOf(ext) !== -1) {
-              this.textureList.push({
-                key: key,
-                url: url
-              });
-            }
+          if (textures_1.Texture.isTextureUrl(url)) {
+            this.textureList.push({
+              key: key,
+              url: url
+            });
+            /*
+            if (matches[3]) {
+                const ext = matches[3].split('?')[0].split('.').pop().toLowerCase();
+                const url = matches[3];
+                if (url && TextureExtensions.indexOf(ext) !== -1) {
+                    // let options;
+                    // if (matches[6]) {
+                    // 	try {
+                    // 		options = new Function(`return ${matches[6]};`)();
+                    // 	} catch (e) {
+                    // 		// console.log('wrong texture options');
+                    // 	}
+                    // }
+                    // console.log(options, matches[6]);
+                    // this.textureList.push({ key, url, options });
+                    this.textureList.push({ key, url });
+                }
+            */
           } else if (!this.buffers.has(key)) {
             // create empty texture
             this.textureList.push({
@@ -2614,7 +2630,9 @@ var __importDefault = this && this.__importDefault || function (mod) {
     function Texture(gl, key, index) {
       var _this;
 
-      var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : new TextureOptions();
+      var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {
+        filtering: TextureFilteringType.Linear
+      };
       var workpath = arguments.length > 4 ? arguments[4] : undefined;
 
       _classCallCheck(this, Texture);
@@ -2646,9 +2664,7 @@ var __importDefault = this && this.__importDefault || function (mod) {
         // [255, 255, 255, 255]
 
 
-        this.setData(gl, 1, 1, new Uint8Array([0, 0, 0, 0]), {
-          filtering: TextureFilteringType.Linear
-        }); // this.bindTexture();
+        this.setData(gl, 1, 1, new Uint8Array([0, 0, 0, 0]), this.options); // this.bindTexture();
         // this.load(options);
       }
     }, {
@@ -2684,7 +2700,7 @@ var __importDefault = this && this.__importDefault || function (mod) {
         this.sourceType = TextureSourceType.Url;
         this.options = Object.assign(this.options, options);
         var src = String(url.indexOf(':/') === -1 && this.workpath !== undefined ? "".concat(this.workpath, "/").concat(url) : url);
-        var ext = url.split('.').pop().toLowerCase();
+        var ext = url.split('?')[0].split('.').pop().toLowerCase();
         var isVideo = exports.TextureVideoExtensions.indexOf(ext) !== -1;
         var element;
         var promise;
@@ -2733,7 +2749,7 @@ var __importDefault = this && this.__importDefault || function (mod) {
         var _this2 = this;
 
         var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-        this.options = Object.assign(this.options, options);
+        options = this.options = Object.assign(this.options, options);
         return new Promise(function (resolve, reject) {
           var originalElement = element; // a string element is interpeted as a CSS selector
 
@@ -2914,7 +2930,7 @@ var __importDefault = this && this.__importDefault || function (mod) {
     }, {
       key: "isTextureUrl",
       value: function isTextureUrl(text) {
-        return /\.(jpg|jpeg|png|ogv|webm|mp4)$/i.test(text);
+        return text && /\.(jpg|jpeg|png|ogv|webm|mp4)$/i.test(text.split('?')[0]);
       }
     }, {
       key: "isTexture",
@@ -2935,6 +2951,34 @@ var __importDefault = this && this.__importDefault || function (mod) {
         if (typeof urlElementOrData === 'string' && urlElementOrData !== '') {
           if (Texture.isTextureUrl(urlElementOrData)) {
             options.url = urlElementOrData;
+
+            if (urlElementOrData.indexOf('?') !== -1) {
+              options = urlElementOrData.split('?')[1].split('&').reduce(function (prev, curr) {
+                var params = curr.split('=');
+                var key = decodeURIComponent(params[0]);
+                var value = decodeURIComponent(params[1]);
+
+                switch (key) {
+                  case 'filtering':
+                    prev[key] = value;
+                    break;
+
+                  case 'repeat':
+                  case 'UNPACK_FLIP_Y_WEBGL':
+                    prev[key] = Boolean(value);
+                    break;
+
+                  case 'UNPACK_PREMULTIPLY_ALPHA_WEBGL':
+                  case 'TEXTURE_WRAP_S':
+                  case 'TEXTURE_WRAP_T':
+                    prev[key] = Number(value);
+                    break;
+                }
+
+                return prev;
+              }, options);
+            }
+
             return options;
           }
 

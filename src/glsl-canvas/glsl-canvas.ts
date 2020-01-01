@@ -5,7 +5,7 @@ import Common from './common';
 import Context, { ContextDefaultFragment, ContextOptions, ContextVertexBuffers } from './context';
 import Logger from './logger';
 import Subscriber from './subscriber';
-import Textures, { Texture, TextureData, TextureExtensions, TextureInput, TextureOptions } from './textures';
+import Textures, { Texture, TextureData, TextureInput, TextureOptions } from './textures';
 import Uniforms, { IUniformOption, Uniform, UniformMethod, UniformType } from './uniforms';
 
 export interface IPoint {
@@ -109,30 +109,28 @@ export default class GlslCanvas extends Subscriber {
 		this.rect = canvas.getBoundingClientRect();
 		this.devicePixelRatio = window.devicePixelRatio || 1;
 		canvas.style.backgroundColor = options.backgroundColor || 'rgba(0,0,0,0)';
-		this.getShaders_().then(
-			(success) => {
-				/*
-				const v = this.vertexString = options.vertexString || this.vertexString;
-				const f = this.fragmentString = options.fragmentString || this.fragmentString;
-				this.vertexString = Context.getVertex(v, f);
-				this.fragmentString = Context.getFragment(v, f);
-				const gl = Context.tryInferContext(v, f, canvas, options, options.onError);
-				if (!gl) {
+		this.getShaders_().then((success) => {
+			/*
+			const v = this.vertexString = options.vertexString || this.vertexString;
+			const f = this.fragmentString = options.fragmentString || this.fragmentString;
+			this.vertexString = Context.getVertex(v, f);
+			this.fragmentString = Context.getFragment(v, f);
+			const gl = Context.tryInferContext(v, f, canvas, options, options.onError);
+			if (!gl) {
+				return;
+			}
+			this.gl = gl;
+			*/
+			this.load().then(success => {
+				if (!this.program) {
 					return;
 				}
-				this.gl = gl;
-				*/
-				this.load().then(success => {
-					if (!this.program) {
-						return;
-					}
-					this.addListeners_();
-					this.onLoop();
-				});
-			},
-			(error) => {
-				Logger.log('GlslCanvas.getShaders_.error', error);
+				this.addListeners_();
+				this.onLoop();
 			});
+		}, (error) => {
+			Logger.log('GlslCanvas.getShaders_.error', error);
+		});
 		GlslCanvas.items.push(this);
 	}
 
@@ -342,16 +340,33 @@ export default class GlslCanvas extends Subscriber {
 	}
 
 	private parseTextures_(fragmentString: string): boolean {
-		const regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\:\/\/|\.|\-|\_]*)|\s*)/gm;
+		// const regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\:\/\/|\.|\-|\_]*)|\s*)/gm;
+		const regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\:\/\/|\.|\-|\_|\?|\&|\=]*)|\s*)/gm;
+		// const regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\://|\.|\-|\_]*)|\s*)((\s*\:\s)(\{(\s*\w*\:\s*['|"]{0,1}\w*['|"]{0,1}\s*[,]{0,1})+\}))*/gm;
 		let matches;
 		while ((matches = regexp.exec(fragmentString)) !== null) {
 			const key = matches[1];
-			if (matches[3]) {
-				const ext = matches[3].split('.').pop().toLowerCase();
-				const url = matches[3];
-				if (url && TextureExtensions.indexOf(ext) !== -1) {
-					this.textureList.push({ key, url });
-				}
+			const url = matches[3];
+			if (Texture.isTextureUrl(url)) {
+				this.textureList.push({ key, url });
+				/*
+				if (matches[3]) {
+					const ext = matches[3].split('?')[0].split('.').pop().toLowerCase();
+					const url = matches[3];
+					if (url && TextureExtensions.indexOf(ext) !== -1) {
+						// let options;
+						// if (matches[6]) {
+						// 	try {
+						// 		options = new Function(`return ${matches[6]};`)();
+						// 	} catch (e) {
+						// 		// console.log('wrong texture options');
+						// 	}
+						// }
+						// console.log(options, matches[6]);
+						// this.textureList.push({ key, url, options });
+						this.textureList.push({ key, url });
+					}
+				*/
 			} else if (!this.buffers.has(key)) {
 				// create empty texture
 				this.textureList.push({ key, url: null });

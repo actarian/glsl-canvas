@@ -3,6 +3,12 @@ All notable changes to the "glsl-canvas" library will be documented in this file
 
 ---
 
+## [0.1.7] - 2020-01-01
+### Added
+- texture querystring options.
+
+---
+
 ## [0.1.6] - 2019-10-27
 ### Fixed
 - error in WebGL2 unsupported browsers.

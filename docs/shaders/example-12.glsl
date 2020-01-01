@@ -1,0 +1,13 @@
+#ifdef GL_ES
+precision highp float;
+#endif
+
+uniform vec2 u_resolution;
+uniform sampler2D u_texture;
+uniform vec2 u_textureResolution;
+
+void main() {
+	vec2 st = gl_FragCoord.xy / u_resolution.xy;
+	vec3 color = texture2D(u_texture, st).rgb;
+	gl_FragColor = vec4(color, 1.0);
+}

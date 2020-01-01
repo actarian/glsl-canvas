@@ -208,6 +208,11 @@ Changelog [here](https://github.com/actarian/glsl-canvas/blob/master/CHANGELOG.m
 
 ---
 
+### 0.1.7
+- Added texture querystring options.
+
+___
+
 ### 0.1.6
 - Fixed error in WebGL2 unsupported browsers.
 

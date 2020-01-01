@@ -11,8 +11,8 @@
 </head>
 
 <body>
+	<h3>WebGl 1</h3>
 	<div class="examples">
-		<h3>WebGl 1</h3>
 		<div class="example">
 			<h4>fragment via attribute</h4>
 			<canvas class="glsl-canvas_" controls data-fragment-url="shaders/example-0.glsl"></canvas>
@@ -73,6 +73,11 @@
 			<canvas class="glsl-canvas_" controls data-fragment-url="shaders/example-11.glsl"></canvas>
 			<button type="button" class="btn btn-toggle">toggle</button>
 		</div>
+		<div class="example">
+			<h4>texture map nearest</h4>
+			<canvas class="glsl-canvas_" controls data-fragment-url="shaders/example-12.glsl"></canvas>
+			<button type="button" class="btn btn-toggle">toggle</button>
+		</div>
 	</div>
 	<div class="examples">
 		<div class="example">
@@ -81,8 +86,8 @@
 		</div>
 	</div>
 
+	<h3>WebGl 2</h3>
 	<div class="examples">
-		<h3>WebGl 2</h3>
 		<div class="example">
 			<h4>fragment via attribute</h4>
 			<canvas class="glsl-canvas_" controls data-fragment-url="shaders/example-20.glsl"></canvas>
@@ -98,6 +103,13 @@
 			<canvas class="glsl-canvas_" controls data-fragment-url="shaders/example-22.glsl"></canvas>
 			<button type="button" class="btn btn-toggle">toggle</button>
 		</div>
+		<!--
+		<div class="example">
+			<h4>test buffers</h4>
+			<canvas class="glsl-canvas_" controls data-fragment-url="shaders/example-23.glsl"></canvas>
+			<button type="button" class="btn btn-toggle">toggle</button>
+		</div>
+		-->
 	</div>
 
 </body>
@@ -161,6 +173,10 @@
 							u_y: mouse.y + 0.001,
 						});
 					});
+					break;
+				case 12:
+					// canvas.setTexture('u_texture', 'data/bayer-matrix.png', { filtering: 'nearest' });
+					canvas.setTexture('u_texture', 'data/bayer-matrix.png?filtering=nearest&repeat=true');
 					break;
 			}
 			return canvas;

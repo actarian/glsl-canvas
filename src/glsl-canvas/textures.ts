@@ -69,7 +69,7 @@ export class Texture extends Subscriber {
 		gl: WebGLRenderingContext | WebGL2RenderingContext,
 		key: string,
 		index: number,
-		options: TextureOptions = new TextureOptions(),
+		options: TextureOptions = { filtering: TextureFilteringType.Linear },
 		workpath?: string,
 	) {
 		super();
@@ -89,7 +89,7 @@ export class Texture extends Subscriber {
 	}
 
 	static isTextureUrl(text: string): boolean {
-		return (/\.(jpg|jpeg|png|ogv|webm|mp4)$/i).test(text);
+		return text && (/\.(jpg|jpeg|png|ogv|webm|mp4)$/i).test(text.split('?')[0]);
 	}
 
 	static isTexture(
@@ -110,6 +110,28 @@ export class Texture extends Subscriber {
 		if (typeof urlElementOrData === 'string' && urlElementOrData !== '') {
 			if (Texture.isTextureUrl(urlElementOrData)) {
 				options.url = urlElementOrData;
+				if (urlElementOrData.indexOf('?') !== -1) {
+					options = urlElementOrData.split('?')[1].split('&').reduce(function (prev: TextureOptions, curr) {
+						const params = curr.split('=');
+						const key = decodeURIComponent(params[0]);
+						const value = decodeURIComponent(params[1]);
+						switch (key) {
+							case 'filtering':
+								prev[key] = value as TextureFilteringType;
+								break;
+							case 'repeat':
+							case 'UNPACK_FLIP_Y_WEBGL':
+								prev[key] = Boolean(value);
+								break;
+							case 'UNPACK_PREMULTIPLY_ALPHA_WEBGL':
+							case 'TEXTURE_WRAP_S':
+							case 'TEXTURE_WRAP_T':
+								prev[key] = Number(value);
+								break;
+						}
+						return prev;
+					}, options);
+				}
 				return options;
 			}
 			if (document) {
@@ -138,9 +160,7 @@ export class Texture extends Subscriber {
 		// Default to a 1-pixel black texture so we can safely render while we wait for an image to load
 		// See: http://stackoverflow.com/questions/19722247/webgl-wait-for-texture-to-load
 		// [255, 255, 255, 255]
-		this.setData(gl, 1, 1, new Uint8Array([0, 0, 0, 0]), {
-			filtering: TextureFilteringType.Linear
-		});
+		this.setData(gl, 1, 1, new Uint8Array([0, 0, 0, 0]), this.options);
 		// this.bindTexture();
 		// this.load(options);
 	}
@@ -176,7 +196,7 @@ export class Texture extends Subscriber {
 		this.sourceType = TextureSourceType.Url;
 		this.options = Object.assign(this.options, options);
 		const src = String((url.indexOf(':/') === -1 && this.workpath !== undefined) ? `${this.workpath}/${url}` : url);
-		const ext = url.split('.').pop().toLowerCase();
+		const ext = url.split('?')[0].split('.').pop().toLowerCase();
 		const isVideo = TextureVideoExtensions.indexOf(ext) !== -1;
 		let element: HTMLVideoElement | HTMLImageElement;
 		let promise: Promise<Texture>;
@@ -218,7 +238,7 @@ export class Texture extends Subscriber {
 		element: HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | HTMLElement | Element,
 		options: TextureOptions = {}
 	): Promise<Texture> {
-		this.options = Object.assign(this.options, options);
+		options = this.options = Object.assign(this.options, options);
 		return new Promise((resolve, reject) => {
 			const originalElement = element;
 			// a string element is interpeted as a CSS selector
@@ -449,5 +469,4 @@ export default class Textures extends IterableStringMap<Texture> {
 			return Promise.resolve(texture);
 		}
 	}
-
 }
