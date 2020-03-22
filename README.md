@@ -6,13 +6,17 @@
 
 ---
 
+> [Examples](https://actarian.github.io/glsl-canvas/)  
+> [Docs](https://actarian.github.io/glsl-canvas/api/)   
+___
+
 ## How to use
 
 *With link*
 
 Load the latest version of ```glsl-canvas.js``` on your page by adding this line to your HTML:
 ```html
-<script type="text/javascript" src="https://unpkg.com/glsl-canvas-js/dist/glsl-canvas.min.js"></script>
+<script type="text/javascript" src="https://unpkg.com/glsl-canvas-js/dist/umd/glsl-canvas.min.js"></script>
 ```
 
 *With npm*
@@ -37,14 +41,38 @@ Or write your shader directly in code using the ```data-fragment``` attribute.
 
 ### Run with javascript
  
-Create a ```<canvas>``` element and attach a new instance of ```GlslCanvas```.
+Create a ```<canvas>``` element and attach a new instance of ```glsl.Canvas```.
 
 ```javascript
-let canvas = document.createElement('canvas');
-let glsl = new GlslCanvas(canvas);
+const canvas = document.createElement('canvas');
+const options = {
+  vertexString: `...`,
+  fragmentString: `...`,
+  alpha: false,
+  antialas: true,
+  extensions: ['EXT_shader_texture_lod']
+};
+const glsl = new glsl.Canvas(canvas, options);
 ```
 
-All the ```.glsl-canvas``` instances will be stored in the ```GlslCanvas.items``` array.
+All the ```.glsl-canvas``` instances will be stored in the ```glsl.Canvas.items``` array.
+___
+
+### Import es6 module
+ 
+```javascript
+import { Canvas } from 'glsl-canvas-js';
+
+const canvas = document.createElement('canvas');
+const options = {
+  vertexString: `...`,
+  fragmentString: `...`,
+  alpha: false,
+  antialas: true,
+  extensions: ['EXT_shader_texture_lod']
+};
+const glsl = new Canvas(canvas, options);
+```
 ___
 
 ### Default Uniforms
@@ -205,41 +233,3 @@ ___
 
 ## Release Notes
 Changelog [here](https://github.com/actarian/glsl-canvas/blob/master/CHANGELOG.md).
-
----
-
-### 0.1.7
-- Added texture querystring options.
-
-___
-
-### 0.1.6
-- Fixed error in WebGL2 unsupported browsers.
-
----
-
-### 0.1.5
-- Added WebGL2 support.
-- Added #include macro for including dependent files.
-
----
-
-### 0.1.3
-* Fixed u_mouse on retina display.
-
----
-
-### 0.1.2
-* Added buffer error event.
-
----
-
-### 0.1.1
-* Added texture error event.
-* Fixed video texture.
-
-___
-
-### 0.1.0
-
-* Initial release of glsl-canvas lib.

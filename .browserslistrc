@@ -1,0 +1,10 @@
+# supported browsers
+[production]
+> 1%
+ie 11
+
+[modern]
+last 2 version
+
+[ssr]
+node 12

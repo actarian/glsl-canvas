@@ -1,0 +1,23 @@
+{
+	"parserOptions": {
+		"ecmaVersion": 6,
+		"sourceType": "module",
+		"ecmaFeatures": {
+			"jsx": false
+		}
+	},
+	"rules": {
+		"semi": "error",
+		"comma-dangle": ["error", {
+			"functions": "only-multiline",
+			"arrays": "only-multiline",
+			"objects": "only-multiline",
+			"imports": "never",
+			"exports": "never"
+		}]
+	},
+	"env": {
+		"browser": true,
+		"node": true
+	}
+}

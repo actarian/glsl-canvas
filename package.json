@@ -1,8 +1,16 @@
 {
 	"name": "glsl-canvas-js",
-	"version": "0.1.7",
+	"version": "0.2.0",
 	"displayName": "glsl-canvas",
 	"description": "WebGL library to display GLSL fragment shader on canvas",
+	"browser": "dist/umd/glsl-canvas.js",
+	"main": "dist/cjs/glsl-canvas.js",
+	"types": "dist/cjs/glsl-canvas.d.ts",
+	"es2015": "dist/esm/glsl-canvas.js",
+	"files": [
+		"dist/",
+		"!.DS_Store"
+	],
 	"keywords": [
 		"shader",
 		"glsl",
@@ -17,53 +25,17 @@
 		"type": "git",
 		"url": "git://github.com/actarian/glsl-canvas.git"
 	},
-	"browserslist": {
-		"development": [
-			"last 1 version"
-		],
-		"production": [
-			"last 2 version",
-			"ie 11"
-		]
-	},
-	"main": "dist/glsl-canvas.js",
 	"scripts": {
-		"start": "gulp"
+		"start": "gulp",
+		"build": "gulp build --target dist",
+		"docs": "typedoc --options typedoc.json"
 	},
 	"dependencies": {
-		"promise-polyfill": "~8.1.3",
-		"stats.js": "~0.17.0"
+		"promise-polyfill": "~8.1.3"
 	},
 	"devDependencies": {
-		"@babel/core": "~7.6.4",
-		"@babel/plugin-proposal-class-properties": "~7.5.5",
-		"@babel/plugin-proposal-object-rest-spread": "~7.6.2",
-		"@babel/plugin-transform-flow-strip-types": "~7.6.3",
-		"@babel/preset-env": "~7.6.3",
-		"@babel/preset-typescript": "~7.6.0",
-		"@types/webgl2": "~0.0.5",
-		"babelify": "~10.0.0",
-		"browserify": "~16.5.0",
-		"eslint": "~6.6.0",
-		"gulp": "~4.0.2",
-		"gulp-autoprefixer": "~7.0.1",
-		"gulp-concat": "~2.6.1",
-		"gulp-concat-util": "~0.5.5",
-		"gulp-cssmin": "~0.2.0",
-		"gulp-filter": "~6.0.0",
-		"gulp-html2js": "~0.4.2",
-		"gulp-if": "~3.0.0",
-		"gulp-plumber": "~1.2.1",
-		"gulp-rename": "~1.4.0",
-		"gulp-sass": "~4.0.2",
-		"gulp-terser": "~1.2.0",
-		"gulp-uglify": "~3.0.2",
-		"gulp-webserver": "~0.9.1",
-		"tfs": "~1.6.0",
-		"through2": "~3.0.1",
-		"tsify": "~4.0.1",
-		"tslint": "^5.20.1",
-		"typescript": "~3.6.4",
-		"yargs": "^14.2.2"
+		"gulpfile-config": "1.0.0-alpha.9",
+		"stats.js": "~0.17.0",
+		"typedoc": "~0.17.1"
 	}
 }

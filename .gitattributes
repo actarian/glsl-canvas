@@ -1,0 +1,6 @@
+* text=auto
+*.html encoding=utf-8
+*.js encoding=utf-8
+*.ts encoding=utf-8
+*.json encoding=utf-8
+*.md encoding=utf-8

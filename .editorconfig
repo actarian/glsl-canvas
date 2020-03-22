@@ -8,9 +8,15 @@ indent_size = 4
 insert_final_newline = true
 trim_trailing_whitespace = true
 
+[*.json]
+indent_style = space
+indent_size = 2
+
 [*.md]
 max_line_length = off
 trim_trailing_whitespace = false
+indent_style = space
+indent_size = 2
 
 # The indent size used in the `package.json` file cannot be changed
 # https://github.com/npm/npm/pull/3180#issuecomment-16336516

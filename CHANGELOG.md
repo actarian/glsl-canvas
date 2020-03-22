@@ -3,6 +3,14 @@ All notable changes to the "glsl-canvas" library will be documented in this file
 
 ---
 
+## [0.2.0] - 2020-03-22
+### Modified
+- global name `glsl`
+### Added
+- extensions option.
+
+---
+
 ## [0.1.7] - 2020-01-01
 ### Added
 - texture querystring options.

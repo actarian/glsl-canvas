@@ -1,0 +1,64 @@
+﻿{
+  "targets": {
+    "browser": {
+      "compile": [
+        {
+          "input": "src/glsl.ts",
+          "output": "docs/js/glsl-canvas.js",
+          "name": "glsl",
+          "minify": true
+        },
+        {
+          "input": "test/css/docs.scss",
+          "output": "docs/css/docs.css",
+          "minify": true
+        }
+      ],
+      "bundle": [
+        {
+          "input": [
+            "node_modules/stats.js/build/stats.min.js"
+          ],
+          "output": "docs/js/vendors.js",
+          "minify": true
+        }
+      ]
+    },
+    "dist": {
+      "compile": [
+        {
+          "input": "src/glsl.ts",
+          "output": [
+            {
+              "file": "dist/cjs/",
+              "format": "cjs"
+            },
+            {
+              "file": "dist/esm/",
+              "format": "esm"
+            },
+            {
+              "file": "dist/umd/glsl-canvas.js",
+              "format": "umd",
+              "minify": true
+            },
+            {
+              "file": "dist/iife/glsl-canvas.js",
+              "format": "iife",
+              "minify": true
+            }
+          ],
+          "name": "glsl"
+        }
+      ]
+    }
+  },
+  "server": {
+    "root": "./docs",
+    "path": "/glsl-canvas/",
+    "host": "localhost",
+    "port": 40678,
+    "log": false
+  },
+  "tfs": false
+}
