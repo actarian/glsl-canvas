@@ -1,5 +1,5 @@
 /**
- * @license glsl-canvas-js v0.2.0
+ * @license glsl-canvas-js v0.2.1
  * (c) 2020 Luca Zampetti <lzampetti@gmail.com>
  * License: MIT
  */
@@ -1830,6 +1830,8 @@ var glsl = (function (exports) {
       var _this2 = this;
 
       return new Promise(function (resolve, reject) {
+        _this2.vertexString = _this2.options.vertexString || _this2.vertexString;
+        _this2.fragmentString = _this2.options.fragmentString || _this2.fragmentString;
         var canvas = _this2.canvas;
         var urls = {};
 

@@ -1,0 +1,6 @@
+{
+	"glsl-canvas.extensions": ["EXT_shader_texture_lod"],
+	"glsl-canvas.textures": {
+		"0": "./data/bayer-matrix.png?filtering=nearest"
+	},
+}

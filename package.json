@@ -1,41 +1,41 @@
 {
-	"name": "glsl-canvas-js",
-	"version": "0.2.0",
-	"displayName": "glsl-canvas",
-	"description": "WebGL library to display GLSL fragment shader on canvas",
-	"browser": "dist/umd/glsl-canvas.js",
-	"main": "dist/cjs/glsl-canvas.js",
-	"types": "dist/cjs/glsl-canvas.d.ts",
-	"es2015": "dist/esm/glsl-canvas.js",
-	"files": [
-		"dist/",
-		"!.DS_Store"
-	],
-	"keywords": [
-		"shader",
-		"glsl",
-		"webgl",
-		"canvas",
-		"typescript"
-	],
-	"author": "Luca Zampetti <lzampetti@gmail.com>",
-	"publisher": "circledev",
-	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "git://github.com/actarian/glsl-canvas.git"
-	},
-	"scripts": {
-		"start": "gulp",
-		"build": "gulp build --target dist",
-		"docs": "typedoc --options typedoc.json"
-	},
-	"dependencies": {
-		"promise-polyfill": "~8.1.3"
-	},
-	"devDependencies": {
-		"gulpfile-config": "1.0.0-alpha.9",
-		"stats.js": "~0.17.0",
-		"typedoc": "~0.17.1"
-	}
+  "name": "glsl-canvas-js",
+  "version": "0.2.1",
+  "displayName": "glsl-canvas",
+  "description": "WebGL library to display GLSL fragment shader on canvas",
+  "browser": "dist/umd/glsl-canvas.js",
+  "main": "dist/cjs/glsl-canvas.js",
+  "types": "dist/cjs/glsl-canvas.d.ts",
+  "es2015": "dist/esm/glsl-canvas.js",
+  "files": [
+    "dist/",
+    "!.DS_Store"
+  ],
+  "keywords": [
+    "shader",
+    "glsl",
+    "webgl",
+    "canvas",
+    "typescript"
+  ],
+  "author": "Luca Zampetti <lzampetti@gmail.com>",
+  "publisher": "circledev",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/actarian/glsl-canvas.git"
+  },
+  "scripts": {
+    "start": "gulp",
+    "build": "gulp build --target dist",
+    "docs": "typedoc --options typedoc.json"
+  },
+  "dependencies": {
+    "promise-polyfill": "~8.1.3"
+  },
+  "devDependencies": {
+    "gulpfile-config": "1.0.0-alpha.9",
+    "stats.js": "~0.17.0",
+    "typedoc": "~0.17.1"
+  }
 }

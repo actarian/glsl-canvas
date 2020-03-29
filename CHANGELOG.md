@@ -3,7 +3,7 @@ All notable changes to the "glsl-canvas" library will be documented in this file
 
 ---
 
-## [0.2.0] - 2020-03-22
+## [0.2.1] - 2020-03-22
 ### Modified
 - global name `glsl`
 ### Added

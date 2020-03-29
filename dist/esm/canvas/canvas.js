@@ -29,23 +29,12 @@ export default class Canvas extends Subscriber {
         }
         this.options = options;
         this.canvas = canvas;
-        this.width = 0; // canvas.clientWidth;
-        this.height = 0; // canvas.clientHeight;
+        this.width = 0;
+        this.height = 0;
         this.rect = canvas.getBoundingClientRect();
         this.devicePixelRatio = window.devicePixelRatio || 1;
         canvas.style.backgroundColor = options.backgroundColor || 'rgba(0,0,0,0)';
         this.getShaders_().then((success) => {
-            /*
-            const v = this.vertexString = options.vertexString || this.vertexString;
-            const f = this.fragmentString = options.fragmentString || this.fragmentString;
-            this.vertexString = Context.getVertex(v, f);
-            this.fragmentString = Context.getFragment(v, f);
-            const gl = Context.tryInferContext(v, f, canvas, options, options.onError);
-            if (!gl) {
-                return;
-            }
-            this.gl = gl;
-            */
             this.load().then(success => {
                 if (!this.program) {
                     return;
@@ -70,6 +59,8 @@ export default class Canvas extends Subscriber {
     }
     getShaders_() {
         return new Promise((resolve, reject) => {
+            this.vertexString = this.options.vertexString || this.vertexString;
+            this.fragmentString = this.options.fragmentString || this.fragmentString;
             const canvas = this.canvas;
             const urls = {};
             if (canvas.hasAttribute('data-vertex-url')) {

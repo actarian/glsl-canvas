@@ -1,5 +1,5 @@
 /**
- * @license glsl-canvas-js v0.2.0
+ * @license glsl-canvas-js v0.2.1
  * (c) 2020 Luca Zampetti <lzampetti@gmail.com>
  * License: MIT
  */
@@ -1865,26 +1865,13 @@
 
       _this.options = options;
       _this.canvas = canvas;
-      _this.width = 0; // canvas.clientWidth;
-
-      _this.height = 0; // canvas.clientHeight;
-
+      _this.width = 0;
+      _this.height = 0;
       _this.rect = canvas.getBoundingClientRect();
       _this.devicePixelRatio = window.devicePixelRatio || 1;
       canvas.style.backgroundColor = options.backgroundColor || 'rgba(0,0,0,0)';
 
       _this.getShaders_().then(function (success) {
-        /*
-        const v = this.vertexString = options.vertexString || this.vertexString;
-        const f = this.fragmentString = options.fragmentString || this.fragmentString;
-        this.vertexString = Context.getVertex(v, f);
-        this.fragmentString = Context.getFragment(v, f);
-        const gl = Context.tryInferContext(v, f, canvas, options, options.onError);
-        if (!gl) {
-            return;
-        }
-        this.gl = gl;
-        */
         _this.load().then(function (success) {
           if (!_this.program) {
             return;
@@ -1927,6 +1914,8 @@
       var _this2 = this;
 
       return new Promise(function (resolve, reject) {
+        _this2.vertexString = _this2.options.vertexString || _this2.vertexString;
+        _this2.fragmentString = _this2.options.fragmentString || _this2.fragmentString;
         var canvas = _this2.canvas;
         var urls = {};
 
