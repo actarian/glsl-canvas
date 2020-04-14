@@ -67,14 +67,30 @@ export class Uniform {
 		if (options) {
 			Object.assign(this, options);
 		}
-		this.apply = (gl: WebGLRenderingContext | WebGL2RenderingContext, program: WebGLProgram) => {
-			if (this.dirty) {
-				gl.useProgram(program);
-				const location = gl.getUniformLocation(program, this.key);
-				// Logger.log(this.key, this.method, this.values);
-				// (gl as any)[this.method].apply(gl, [location].concat(this.values));
-				(gl as any)[this.method].apply(gl, [location].concat(this.values));
-			}
+		switch (this.method) {
+			case UniformMethod.UniformMatrix2fv:
+			case UniformMethod.UniformMatrix3fv:
+			case UniformMethod.UniformMatrix4fv:
+				this.apply = (gl: WebGLRenderingContext | WebGL2RenderingContext, program: WebGLProgram) => {
+					if (this.dirty) {
+						gl.useProgram(program);
+						const location = gl.getUniformLocation(program, this.key);
+						// Logger.log(this.key, this.method, this.values);
+						// (gl as any)[this.method].apply(gl, [location].concat(this.values));
+						(gl as any)[this.method].apply(gl, [location, false].concat(this.values));
+					}
+				}
+				break;
+			default:
+				this.apply = (gl: WebGLRenderingContext | WebGL2RenderingContext, program: WebGLProgram) => {
+					if (this.dirty) {
+						gl.useProgram(program);
+						const location = gl.getUniformLocation(program, this.key);
+						// Logger.log(this.key, this.method, this.values);
+						// (gl as any)[this.method].apply(gl, [location].concat(this.values));
+						(gl as any)[this.method].apply(gl, [location].concat(this.values));
+					}
+				}
 		}
 	}
 
@@ -93,20 +109,6 @@ export class UniformTexture extends Uniform {
 export default class Uniforms extends IterableStringMap<Uniform> {
 
 	dirty: boolean = false;
-
-	/*
-	// slow
-	static isDifferent(a: any, b: any): boolean {
-        return JSON.stringify(a) !== JSON.stringify(b);
-    }
-	*/
-
-	static isDifferent(a: any[], b: any[]) {
-		return a.length !== b.length ||
-			a.reduce((f: boolean, v: any, i: number) => {
-				return f || v !== b[i];
-			}, false);
-	}
 
 	static isArrayOfInteger(array: any[]): boolean {
 		return array.reduce((flag: boolean, value: any) => {
@@ -260,11 +262,9 @@ export default class Uniforms extends IterableStringMap<Uniform> {
 
 	update(method: UniformMethod, type: UniformType, key: string, values: any[]) {
 		const uniform = this.get(key);
-		if (uniform &&
-			(uniform.method !== method ||
-				uniform.type !== type ||
-				Uniforms.isDifferent(uniform.values, values)
-			)) {
+		if (uniform) {
+			// !!! consider performance
+			// && (uniform.method !== method || uniform.type !== type || Uniforms.isDifferent(uniform.values, values))) {
 			uniform.method = method;
 			uniform.type = type;
 			uniform.values = values;
@@ -282,6 +282,7 @@ export default class Uniforms extends IterableStringMap<Uniform> {
 	}
 
 	apply(gl: WebGLRenderingContext | WebGL2RenderingContext, program: WebGLProgram) {
+		gl.useProgram(program);
 		for (const key in this.values) {
 			// if (typeof this.values[key].apply === 'function') {
 			this.values[key].apply(gl, program);
@@ -295,6 +296,19 @@ export default class Uniforms extends IterableStringMap<Uniform> {
 			this.values[key].dirty = false;
 		}
 		this.dirty = false;
+	}
+
+	/*
+	// slow
+	static isDifferent(a: any, b: any): boolean {
+        return JSON.stringify(a) !== JSON.stringify(b);
+    }
+	*/
+
+	static isDifferent(a: any[], b: any[]) {
+		return a.length !== b.length || a.reduce((f: boolean, v: any, i: number) => {
+			return f || v !== b[i];
+		}, false);
 	}
 
 }

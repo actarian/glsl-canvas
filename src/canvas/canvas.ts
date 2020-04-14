@@ -1,18 +1,12 @@
 // import '@babel/polyfill';
 import 'promise-polyfill';
 import Buffers, { IOBuffer } from '../buffers/buffers';
-import Context, { ContextDefaultFragment, ContextVertexBuffers, IContextOptions } from '../context/context';
+import Context, { ContextMode, IContextOptions } from '../context/context';
 import Common from '../core/common';
-import Subscriber from '../core/subscriber';
 import Logger from '../logger/logger';
-import Textures, { ITextureData, ITextureInput, ITextureOptions, Texture } from '../textures/textures';
+import Renderer, { IPoint } from '../renderer/renderer';
+import Textures, { ITextureData, ITextureOptions, Texture } from '../textures/textures';
 import Uniforms, { IUniformOption, Uniform, UniformMethod, UniformType } from '../uniforms/uniforms';
-import CanvasTimer from './canvas-timer';
-
-export interface IPoint {
-	x: number,
-	y: number,
-}
 
 export interface ICanvasOptions extends IContextOptions {
 	vertexString?: string;
@@ -21,31 +15,20 @@ export interface ICanvasOptions extends IContextOptions {
 	workpath?: string;
 	onError?: Function;
 	extensions?: string[];
+	mode?: ContextMode;
 }
 
-export default class Canvas extends Subscriber {
+export default class Canvas extends Renderer {
+
 	options: ICanvasOptions;
 	canvas: HTMLCanvasElement;
-	gl: WebGLRenderingContext | WebGL2RenderingContext;
-	program: WebGLProgram;
-	timer: CanvasTimer;
-	vertexBuffers: ContextVertexBuffers;
 	rect: ClientRect | DOMRect;
-	mouse: IPoint = { x: 0, y: 0 };
-	uniforms: Uniforms = new Uniforms();
-	buffers: Buffers = new Buffers();
-	textures: Textures = new Textures();
-	textureList: ITextureInput[] = [];
 
-	vertexString: string;
-	fragmentString: string;
 	width: number;
 	height: number;
 	devicePixelRatio: number;
 
 	valid: boolean = false;
-	animated: boolean = false;
-	dirty: boolean = true;
 	visible: boolean = false;
 
 	rafId: number;
@@ -68,6 +51,7 @@ export default class Canvas extends Subscriber {
 		this.height = 0;
 		this.rect = canvas.getBoundingClientRect();
 		this.devicePixelRatio = window.devicePixelRatio || 1;
+		this.mode = options.mode || ContextMode.Flat;
 		canvas.style.backgroundColor = options.backgroundColor || 'rgba(0,0,0,0)';
 		this.getShaders_().then((success) => {
 			this.load().then(success => {
@@ -78,17 +62,13 @@ export default class Canvas extends Subscriber {
 				this.onLoop();
 			});
 		}, (error) => {
-			Logger.log('GlslCanvas.getShaders_.error', error);
+			Logger.error('GlslCanvas.getShaders_.error', error);
 		});
 		Canvas.items.push(this);
 	}
 
 	static logger: Logger = Logger;
 	static items: Canvas[] = [];
-
-	static version(): string {
-		return '0.1.6';
-	}
 
 	static of(canvas: HTMLCanvasElement, options?: ICanvasOptions): Canvas {
 		return Canvas.items.find(x => x.canvas === canvas) || new Canvas(canvas, options);
@@ -290,135 +270,6 @@ export default class Canvas extends Subscriber {
 		}
 	}
 
-	private parseTextures_(fragmentString: string): boolean {
-		// const regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\:\/\/|\.|\-|\_]*)|\s*)/gm;
-		const regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\:\/\/|\.|\-|\_|\?|\&|\=]*)|\s*)/gm;
-		// const regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\://|\.|\-|\_]*)|\s*)((\s*\:\s)(\{(\s*\w*\:\s*['|"]{0,1}\w*['|"]{0,1}\s*[,]{0,1})+\}))*/gm;
-		let matches;
-		while ((matches = regexp.exec(fragmentString)) !== null) {
-			const key = matches[1];
-			const url = matches[3];
-			if (Texture.isTextureUrl(url)) {
-				this.textureList.push({ key, url });
-				/*
-				if (matches[3]) {
-					const ext = matches[3].split('?')[0].split('.').pop().toLowerCase();
-					const url = matches[3];
-					if (url && TextureExtensions.indexOf(ext) !== -1) {
-						// let options;
-						// if (matches[6]) {
-						// 	try {
-						// 		options = new Function(`return ${matches[6]};`)();
-						// 	} catch (e) {
-						// 		// console.log('wrong texture options');
-						// 	}
-						// }
-						// console.log(options, matches[6]);
-						// this.textureList.push({ key, url, options });
-						this.textureList.push({ key, url });
-					}
-				*/
-			} else if (!this.buffers.has(key)) {
-				// create empty texture
-				this.textureList.push({ key, url: null });
-			}
-		}
-		if (this.canvas.hasAttribute('data-textures')) {
-			const urls = this.canvas.getAttribute('data-textures').split(',');
-			urls.forEach((url: string, i: number) => {
-				const key = 'u_texture' + i;
-				this.textureList.push({ key, url });
-			});
-		}
-		return this.textureList.length > 0;
-	}
-
-	private createUniforms_(): void {
-		const gl = this.gl;
-		const fragmentString = this.fragmentString;
-		const BW = gl.drawingBufferWidth;
-		const BH = gl.drawingBufferHeight;
-		const timer = this.timer = new CanvasTimer();
-		const hasDelta = (fragmentString.match(/u_delta/g) || []).length > 1;
-		const hasTime = (fragmentString.match(/u_time/g) || []).length > 1;
-		const hasDate = (fragmentString.match(/u_date/g) || []).length > 1;
-		const hasMouse = (fragmentString.match(/u_mouse/g) || []).length > 1;
-		const hasTextures = this.parseTextures_(fragmentString);
-		this.animated = hasTime || hasDate || hasMouse;
-		if (this.animated) {
-			this.canvas.classList.add('animated');
-		} else {
-			this.canvas.classList.remove('animated');
-		}
-		this.uniforms.create(UniformMethod.Uniform2f, UniformType.Float, 'u_resolution', [BW, BH]);
-		if (hasDelta) {
-			this.uniforms.create(UniformMethod.Uniform1f, UniformType.Float, 'u_delta', [timer.delta / 1000.0]);
-		}
-		if (hasTime) {
-			this.uniforms.create(UniformMethod.Uniform1f, UniformType.Float, 'u_time', [timer.current / 1000.0]);
-		}
-		if (hasDate) {
-			const date = new Date();
-			this.uniforms.create(UniformMethod.Uniform4f, UniformType.Float, 'u_date', [date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001]);
-		}
-		if (hasMouse) {
-			this.uniforms.create(UniformMethod.Uniform2f, UniformType.Float, 'u_mouse', [0, 0]);
-		}
-		for (const key in this.buffers.values) {
-			const buffer: IOBuffer = this.buffers.values[key];
-			this.uniforms.create(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, [buffer.input.index]);
-		}
-		if (hasTextures) {
-			this.textureList.filter(x => x.url).forEach(x => {
-				this.setTexture(x.key, x.url, x.options);
-			});
-			this.textureList = [];
-		}
-	}
-
-	private updateUniforms_(): void {
-		const gl = this.gl;
-		const BW = gl.drawingBufferWidth;
-		const BH = gl.drawingBufferHeight;
-		if (!this.timer) {
-			return;
-		}
-		const timer = this.timer.next();
-		this.uniforms.update(UniformMethod.Uniform2f, UniformType.Float, 'u_resolution', [BW, BH]);
-		if (this.uniforms.has('u_delta')) {
-			this.uniforms.update(UniformMethod.Uniform1f, UniformType.Float, 'u_delta', [timer.delta / 1000.0]);
-		}
-		if (this.uniforms.has('u_time')) {
-			this.uniforms.update(UniformMethod.Uniform1f, UniformType.Float, 'u_time', [timer.current / 1000.0]);
-		}
-		if (this.uniforms.has('u_date')) {
-			const date = new Date();
-			this.uniforms.update(UniformMethod.Uniform4f, UniformType.Float, 'u_date', [date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001]);
-		}
-		if (this.uniforms.has('u_mouse')) {
-			const mouse = this.mouse;
-			this.uniforms.update(UniformMethod.Uniform2f, UniformType.Float, 'u_mouse', [mouse.x, mouse.y]);
-            /*
-            const rect = this.rect;
-            if (mouse.x >= rect.left && mouse.x <= rect.right &&
-                mouse.y >= rect.top && mouse.y <= rect.bottom) {
-                const MX = (mouse.x - rect.left) * this.devicePixelRatio;
-                const MY = (this.canvas.height - (mouse.y - rect.top) * this.devicePixelRatio);
-                this.uniforms.update(UniformMethod.Uniform2f, UniformType.Float, 'u_mouse', [MX, MY]);
-            }
-            */
-		}
-		for (const key in this.buffers.values) {
-			const buffer: IOBuffer = this.buffers.values[key];
-			this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, [buffer.input.index]);
-		}
-		for (const key in this.textures.values) {
-			const texture: Texture = this.textures.values[key];
-			texture.tryUpdate(gl);
-			this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, texture.key, [texture.index]);
-		}
-	}
-
 	private isVisible_(): boolean {
 		const rect = this.rect;
 		return (rect.top + rect.height) > 0 && rect.top < (window.innerHeight || document.documentElement.clientHeight);
@@ -470,13 +321,57 @@ export default class Canvas extends Subscriber {
 		}
 	}
 
+	private parseTextures_(fragmentString: string): boolean {
+		// const regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\:\/\/|\.|\-|\_]*)|\s*)/gm;
+		const regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\:\/\/|\.|\-|\_|\?|\&|\=]*)|\s*)/gm;
+		// const regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\://|\.|\-|\_]*)|\s*)((\s*\:\s)(\{(\s*\w*\:\s*['|"]{0,1}\w*['|"]{0,1}\s*[,]{0,1})+\}))*/gm;
+		let matches;
+		while ((matches = regexp.exec(fragmentString)) !== null) {
+			const key = matches[1];
+			const url = matches[3];
+			if (Texture.isTextureUrl(url)) {
+				this.textureList.push({ key, url });
+				/*
+				if (matches[3]) {
+					const ext = matches[3].split('?')[0].split('.').pop().toLowerCase();
+					const url = matches[3];
+					if (url && TextureExtensions.indexOf(ext) !== -1) {
+						// let options;
+						// if (matches[6]) {
+						// 	try {
+						// 		options = new Function(`return ${matches[6]};`)();
+						// 	} catch (e) {
+						// 		// console.log('wrong texture options');
+						// 	}
+						// }
+						// console.log(options, matches[6]);
+						// this.textureList.push({ key, url, options });
+						this.textureList.push({ key, url });
+					}
+				*/
+			} else if (!this.buffers.has(key)) {
+				// create empty texture
+				this.textureList.push({ key, url: null });
+			}
+		}
+		if (this.canvas.hasAttribute('data-textures')) {
+			const urls = this.canvas.getAttribute('data-textures').split(',');
+			urls.forEach((url: string, i: number) => {
+				const key = 'u_texture' + i;
+				this.textureList.push({ key, url });
+			});
+		}
+		return this.textureList.length > 0;
+	}
+
 	load(
 		fragmentString?: string,
 		vertexString?: string
 	): Promise<boolean> {
+		const fragmentVertexString: string = Context.getFragmentVertex(this.gl, fragmentString || this.fragmentString);
 		return Promise.all([
 			Context.getIncludes(fragmentString || this.fragmentString),
-			Context.getIncludes(vertexString || this.vertexString)
+			Context.getIncludes(fragmentVertexString || vertexString || this.vertexString)
 		]).then(array => {
 			this.fragmentString = array[0];
 			this.vertexString = array[1];
@@ -484,11 +379,11 @@ export default class Canvas extends Subscriber {
 		});
 	}
 
-	getContext_(): WebGLRenderingContext | WebGL2RenderingContext {
+	private getContext_(): WebGLRenderingContext | WebGL2RenderingContext {
 		const vertexString = this.vertexString;
 		const fragmentString = this.fragmentString;
-		this.vertexString = Context.getVertex(vertexString, fragmentString);
-		this.fragmentString = Context.getFragment(vertexString, fragmentString);
+		this.vertexString = Context.getVertex(vertexString, fragmentString, this.mode);
+		this.fragmentString = Context.getFragment(vertexString, fragmentString, this.mode);
 		if (Context.versionDiffers(this.gl, vertexString, fragmentString)) {
 			this.destroyContext_();
 			this.swapCanvas_();
@@ -507,18 +402,20 @@ export default class Canvas extends Subscriber {
 		return this.gl;
 	}
 
-	createContext_(): boolean {
+	private createContext_(): boolean {
 		const gl = this.getContext_();
 		if (!gl) {
 			return false;
 		}
 		let vertexShader, fragmentShader;
 		try {
+			Context.inferPrecision(this.fragmentString);
 			vertexShader = Context.createShader(gl, this.vertexString, gl.VERTEX_SHADER);
 			fragmentShader = Context.createShader(gl, this.fragmentString, gl.FRAGMENT_SHADER);
 			// If Fragment shader fails load a empty one to sign the error
 			if (!fragmentShader) {
-				fragmentShader = Context.createShader(gl, ContextDefaultFragment, gl.FRAGMENT_SHADER);
+				const defaultFragment = Context.getFragment(null, null, this.mode);
+				fragmentShader = Context.createShader(gl, defaultFragment, gl.FRAGMENT_SHADER);
 				this.valid = false;
 			} else {
 				this.valid = true;
@@ -531,7 +428,11 @@ export default class Canvas extends Subscriber {
 		}
 		// Create and use program
 		const program = Context.createProgram(gl, [vertexShader, fragmentShader]); //, [0,1],['a_texcoord','a_position']);
-		gl.useProgram(program);
+		if (!program) {
+			this.trigger('error', Context.lastError);
+			return false;
+		}
+		// console.log(this.vertexString, this.fragmentString, program);
 		// Delete shaders
 		// gl.detachShader(program, vertexShader);
 		// gl.detachShader(program, fragmentShader);
@@ -540,68 +441,83 @@ export default class Canvas extends Subscriber {
 		this.program = program;
 		if (this.valid) {
 			try {
-				this.buffers = Buffers.getBuffers(gl, this.fragmentString, this.vertexString);
+				this.buffers = Buffers.getBuffers(gl, this.fragmentString, Context.getBufferVertex(gl));
 			} catch (e) {
 				// console.error('load', e);
 				this.valid = false;
 				this.trigger('error', e);
 				return false;
 			}
-			this.vertexBuffers = Context.createVertexBuffers(gl, program);
-			this.createUniforms_();
+			this.create_();
+			if (this.animated) {
+				this.canvas.classList.add('animated');
+			} else {
+				this.canvas.classList.remove('animated');
+			}
 		}
 		// Trigger event
 		this.trigger('load', this);
 		return this.valid;
 	}
 
-	test(
-		fragmentString?: string,
-		vertexString?: string
-	): Promise<any> {
-		return new Promise((resolve, reject) => {
-			const vertex = this.vertexString;
-			const fragment = this.fragmentString;
-			const paused = this.timer.paused;
-			// Thanks to @thespite for the help here
-			// https://www.khronos.org/registry/webgl/extensions/EXT_disjoint_timer_query/
-			const extension = this.gl.getExtension('EXT_disjoint_timer_query');
-			const query = extension.createQueryEXT();
-			let wasValid = this.valid;
-			if (fragmentString || vertexString) {
-				this.load(fragmentString, vertexString);
-				wasValid = this.valid;
-				this.render();
-			}
-			this.timer.paused = true;
-			extension.beginQueryEXT(extension.TIME_ELAPSED_EXT, query);
-			this.render();
-			extension.endQueryEXT(extension.TIME_ELAPSED_EXT);
-			const waitForTest = () => {
-				this.render();
-				const available = extension.getQueryObjectEXT(query, extension.QUERY_RESULT_AVAILABLE_EXT);
-				const disjoint = this.gl.getParameter(extension.GPU_DISJOINT_EXT);
-				if (available && !disjoint) {
-					const result = {
-						wasValid: wasValid,
-						fragment: fragmentString || this.fragmentString,
-						vertex: vertexString || this.vertexString,
-						timeElapsedMs: extension.getQueryObjectEXT(query, extension.QUERY_RESULT_EXT) / 1000000.0
-					};
-					this.timer.paused = paused;
-					if (fragmentString || vertexString) {
-						this.load(fragment, vertex);
-					}
-					resolve(result);
-				} else {
-					window.requestAnimationFrame(waitForTest);
-				}
-			}
-			waitForTest();
-		});
+	protected create_(): void {
+		this.mode = this.parseMode_();
+		super.create_();
+		this.createBuffers_();
+		this.createTextures_();
 	}
 
-	destroyContext_(): void {
+	protected parseMode_(): ContextMode | string {
+		let mode: ContextMode | string = this.mode;
+		if (this.canvas.hasAttribute('data-mode')) {
+			const data = this.canvas.getAttribute('data-mode');
+			if (['flat', 'box', 'sphere', 'torus'].indexOf(data) !== -1 || data.indexOf('.obj') !== -1) {
+				mode = data;
+			}
+		}
+		return mode;
+	}
+
+	protected createBuffers_() {
+		for (const key in this.buffers.values) {
+			const buffer: IOBuffer = this.buffers.values[key];
+			this.uniforms.create(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, [buffer.input.index]);
+		}
+	}
+
+	protected createTextures_() {
+		const hasTextures = this.parseTextures_(this.fragmentString);
+		if (hasTextures) {
+			this.textureList.filter(x => x.url).forEach(x => {
+				this.setTexture(x.key, x.url, x.options);
+			});
+			this.textureList = [];
+		}
+	}
+
+	protected update_(): void {
+		super.update_();
+		this.updateBuffers_();
+		this.updateTextures_();
+	}
+
+	protected updateBuffers_(): void {
+		for (const key in this.buffers.values) {
+			const buffer: IOBuffer = this.buffers.values[key];
+			this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, [buffer.input.index]);
+		}
+	}
+
+	protected updateTextures_(): void {
+		const gl = this.gl;
+		for (const key in this.textures.values) {
+			const texture: Texture = this.textures.values[key];
+			texture.tryUpdate(gl);
+			this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, texture.key, [texture.index]);
+		}
+	}
+
+	private destroyContext_(): void {
 		const gl = this.gl;
 		gl.useProgram(null);
 		if (this.program) {
@@ -622,7 +538,7 @@ export default class Canvas extends Subscriber {
 		this.gl = null;
 	}
 
-	swapCanvas_(): void {
+	private swapCanvas_(): void {
 		const canvas = this.canvas;
 		const canvas_ = canvas.cloneNode() as HTMLCanvasElement;
 		canvas.parentNode.replaceChild(canvas_, canvas);
@@ -658,7 +574,7 @@ export default class Canvas extends Subscriber {
 				},
 				error => {
 					const message = Array.isArray(error.path) ? error.path.map((x: any) => x.error ? x.error.message : '').join(', ') : error.message;
-					Logger.log('GlslCanvas.loadTexture.error', key, urlElementOrData, message);
+					Logger.error('GlslCanvas.loadTexture.error', key, urlElementOrData, message);
 					this.trigger('textureError', { key, urlElementOrData, message });
 				});
 		} else {
@@ -715,7 +631,7 @@ export default class Canvas extends Subscriber {
 	}
 
 	checkRender(): void {
-		if (this.isVisible_() && (this.sizeDidChanged_() || this.isAnimated_() || this.isDirty_())) {
+		if (this.isVisible_() && (this.sizeDidChanged_() || this.isDirty_() || this.isAnimated_())) {
 			this.render();
 			this.canvas.classList.add('playing');
 		} else {
@@ -723,29 +639,53 @@ export default class Canvas extends Subscriber {
 		}
 	}
 
-	render(): void {
-		const gl = this.gl;
-		if (!gl) {
-			return;
-		}
-		const BW = gl.drawingBufferWidth;
-		const BH = gl.drawingBufferHeight;
-		this.updateUniforms_();
-		for (const key in this.buffers.values) {
-			const buffer: IOBuffer = this.buffers.values[key];
-			this.uniforms.apply(gl, buffer.program);
-			buffer.render(gl, BW, BH);
-		}
-		gl.useProgram(this.program);
-		this.uniforms.apply(gl, this.program);
-		gl.viewport(0, 0, BW, BH);
-		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-		gl.drawArrays(gl.TRIANGLES, 0, 6);
-		this.uniforms.clean();
-		this.textures.clean();
-		this.dirty = false;
-		this.trigger('render', this);
+	/*
+	test(
+		fragmentString?: string,
+		vertexString?: string
+	): Promise<any> {
+		return new Promise((resolve, reject) => {
+			const vertex = this.vertexString;
+			const fragment = this.fragmentString;
+			const paused = this.timer.paused;
+			// Thanks to @thespite for the help here
+			// https://www.khronos.org/registry/webgl/extensions/EXT_disjoint_timer_query/
+			const extension = this.gl.getExtension('EXT_disjoint_timer_query');
+			const query = extension.createQueryEXT();
+			let wasValid = this.valid;
+			if (fragmentString || vertexString) {
+				this.load(fragmentString, vertexString);
+				wasValid = this.valid;
+				this.render();
+			}
+			this.timer.paused = true;
+			extension.beginQueryEXT(extension.TIME_ELAPSED_EXT, query);
+			this.render();
+			extension.endQueryEXT(extension.TIME_ELAPSED_EXT);
+			const waitForTest = () => {
+				this.render();
+				const available = extension.getQueryObjectEXT(query, extension.QUERY_RESULT_AVAILABLE_EXT);
+				const disjoint = this.gl.getParameter(extension.GPU_DISJOINT_EXT);
+				if (available && !disjoint) {
+					const result = {
+						wasValid: wasValid,
+						fragment: fragmentString || this.fragmentString,
+						vertex: vertexString || this.vertexString,
+						timeElapsedMs: extension.getQueryObjectEXT(query, extension.QUERY_RESULT_EXT) / 1000000.0
+					};
+					this.timer.paused = paused;
+					if (fragmentString || vertexString) {
+						this.load(fragment, vertex);
+					}
+					resolve(result);
+				} else {
+					window.requestAnimationFrame(waitForTest);
+				}
+			}
+			waitForTest();
+		});
 	}
+	*/
 
 }
 

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=2,user-scalable=yes">
+	<title>GlslCanvas</title>
+	<link rel="stylesheet" type="text/css" href="css/docs.min.css">
+	<script type="text/javascript" src="js/vendors.js"></script>
+	<script type="text/javascript" src="js/glsl-canvas.js"></script>
+</head>
+
+<body class="renderer">
+	<h3>Renderer</h3>
+	<div class="examples">
+		<div class="example">
+			<h4>fragment via attribute</h4>
+			<canvas class="glsl-canvas_" controls data-fragment-url="shaders/example-3d.glsl"></canvas>
+			<button type="button" class="btn btn-toggle">toggle</button>
+		</div>
+		<div class="example">
+			<h4>buffers</h4>
+			<canvas class="glsl-canvas_" controls data-fragment-url="shaders/example-3d-buffer.glsl"></canvas>
+			<button type="button" class="btn btn-toggle">toggle</button>
+		</div>
+	</div>
+</body>
+
+<script>
+	var stats = new Stats();
+	stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+	document.body.appendChild(stats.dom);
+	// glsl.Canvas.logger.enabled = false;
+	var canvases = [].slice.call(document.querySelectorAll('.glsl-canvas_'))
+		.map(function(element, i) {
+			var canvas = glsl.Canvas.of(element, { mode: 'sphere' });
+			canvas.on('render', function() {
+				stats.end();
+				stats.begin();
+			});
+			return canvas;
+		});
+	var buttons = [].slice.call(document.querySelectorAll('.btn-toggle'))
+		.forEach(function(button, i) {
+			button.addEventListener('click', function() {
+				var canvas = canvases[i];
+				if (canvas) {
+					canvas.toggle();
+				}
+			});
+		});
+
+</script>
+
+</html>

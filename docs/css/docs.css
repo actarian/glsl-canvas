@@ -61,6 +61,14 @@ h4 {
     .glsl-canvas_[controls].animated.playing {
       border-color: blue; }
 
+.renderer .glsl-canvas_ {
+  width: 640px;
+  height: 344px; }
+
+.renderer .examples .example {
+  width: 640px;
+  flex: 0 0 640px; }
+
 video {
   width: 320px;
   height: 172px;

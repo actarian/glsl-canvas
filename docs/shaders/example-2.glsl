@@ -1,5 +1,4 @@
 // Author: Patricio Gonzalez Vivo
-
 #ifdef GL_ES
 precision highp float;
 #endif
@@ -68,12 +67,12 @@ void main() {
 	st = ratio(st, u_resolution);
 	vec3 color = vec3(0.0);
 	color = sphereTexture(u_tex0, st, u_time * 0.01).rgb;
-	
+
 	// Calculate sun direction
 	float speedSun = 0.25;
 	vec3 sunPos = normalize(vec3(cos(u_time * speedSun - HALF_PI), 0.0, sin(speedSun * u_time - HALF_PI)));
 	vec3 surface = normalize(sphereNormals(st) * 2.0 - 1.0);
-	
+
 	// Add Shadows
 	color *= clamp(dot(sunPos, surface), 0.0, 1.0);
 	// Blend black the edge of the sphere

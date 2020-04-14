@@ -84,6 +84,21 @@ h4 {
 
 }
 
+.renderer {
+	.glsl-canvas_ {
+		width: 320px * 2;
+		height: 172px * 2;
+	}
+
+	.examples {
+		.example {
+			width: 320px * 2;
+			flex: 0 0 320px * 2;
+		}
+	}
+
+}
+
 video {
 	width: 320px;
 	height: 172px;
