@@ -49,7 +49,7 @@ const options = {
   vertexString: `...`,
   fragmentString: `...`,
   alpha: false,
-  antialas: true,
+  antialias: true,
   extensions: ['EXT_shader_texture_lod']
 };
 const glsl = new glsl.Canvas(canvas, options);
@@ -68,7 +68,7 @@ const options = {
   vertexString: `...`,
   fragmentString: `...`,
   alpha: false,
-  antialas: true,
+  antialias: true,
   extensions: ['EXT_shader_texture_lod']
 };
 const glsl = new Canvas(canvas, options);

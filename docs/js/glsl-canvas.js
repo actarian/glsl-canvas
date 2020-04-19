@@ -320,6 +320,7 @@ var glsl = (function (exports) {
         };
 
         xhr.onerror = function (error) {
+          console.log('Common.error', error);
           reject(new Error("Network request failed for url " + url));
         };
 
@@ -409,6 +410,7 @@ var glsl = (function (exports) {
     ContextMode["Box"] = "box";
     ContextMode["Sphere"] = "sphere";
     ContextMode["Torus"] = "torus";
+    ContextMode["Mesh"] = "mesh";
   })(ContextMode || (ContextMode = {}));
 
   var ContextDefault = {
@@ -480,9 +482,9 @@ var glsl = (function (exports) {
         }
 
         var regexp = /(?:^\s*)((?:#if|#elif)(?:\s*)(defined\s*\(\s*VERTEX)(?:\s*\))|(?:#ifdef)(?:\s*VERTEX)(?:\s*))/gm;
-        var matches;
+        var matches = regexp.exec(fragmentString);
 
-        while ((matches = regexp.exec(fragmentString)) !== null) {
+        if (matches !== null) {
           vertexString = Context.isWebGl2(gl) ? "#version 300 es\n#define VERTEX\n" + fragmentString : "#define VERTEX\n" + fragmentString;
         }
       }
@@ -1101,6 +1103,7 @@ var glsl = (function (exports) {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       }
 
+      gl.viewport(0, 0, BW, BH);
       gl.drawArrays(gl.TRIANGLES, 0, this.geometry.size);
       var input = this.input;
       this.input = this.output;
@@ -1172,6 +1175,62 @@ var glsl = (function (exports) {
 
     return Buffers;
   }(IterableStringMap);
+
+  var Vector2 = function () {
+    function Vector2(x, y) {
+      if (x === void 0) {
+        x = 0;
+      }
+
+      if (y === void 0) {
+        y = 0;
+      }
+
+      this.isVector2 = true;
+      this.x = x;
+      this.y = y;
+    }
+
+    var _proto = Vector2.prototype;
+
+    _proto.copy = function copy(v) {
+      this.x = v.x;
+      this.y = v.y;
+      return this;
+    };
+
+    _proto.length = function length() {
+      return Math.sqrt(this.x * this.x + this.y * this.y);
+    };
+
+    _proto.normalize = function normalize() {
+      return this.divideScalar(this.length() || 1);
+    };
+
+    _proto.divideScalar = function divideScalar(scalar) {
+      return this.multiplyScalar(1 / scalar);
+    };
+
+    _proto.multiplyScalar = function multiplyScalar(scalar) {
+      this.x *= scalar;
+      this.y *= scalar;
+      return this;
+    };
+
+    _proto.subVectors = function subVectors(a, b) {
+      this.x = a.x - b.x;
+      this.y = a.y - b.y;
+      return this;
+    };
+
+    _proto.addVectors = function addVectors(a, b) {
+      this.x = a.x + b.x;
+      this.y = a.y + b.y;
+      return this;
+    };
+
+    return Vector2;
+  }();
 
   /**
    * Common utilities
@@ -1542,6 +1601,140 @@ var glsl = (function (exports) {
     return out;
   }
 
+  var Vector3 = function () {
+    function Vector3(x, y, z) {
+      if (x === void 0) {
+        x = 0;
+      }
+
+      if (y === void 0) {
+        y = 0;
+      }
+
+      if (z === void 0) {
+        z = 0;
+      }
+
+      this.isVector3 = true;
+      this.x = x;
+      this.y = y;
+      this.z = z;
+    }
+
+    var _proto = Vector3.prototype;
+
+    _proto.copy = function copy(v) {
+      this.x = v.x;
+      this.y = v.y;
+      this.z = v.z;
+      return this;
+    };
+
+    _proto.length = function length() {
+      return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+    };
+
+    _proto.normalize = function normalize() {
+      return this.divideScalar(this.length() || 1);
+    };
+
+    _proto.divideScalar = function divideScalar(scalar) {
+      return this.multiplyScalar(1 / scalar);
+    };
+
+    _proto.multiplyScalar = function multiplyScalar(scalar) {
+      this.x *= scalar;
+      this.y *= scalar;
+      this.z *= scalar;
+      return this;
+    };
+
+    _proto.subVectors = function subVectors(a, b) {
+      this.x = a.x - b.x;
+      this.y = a.y - b.y;
+      this.z = a.z - b.z;
+      return this;
+    };
+
+    _proto.addVectors = function addVectors(a, b) {
+      this.x = a.x + b.x;
+      this.y = a.y + b.y;
+      this.z = a.z + b.z;
+      return this;
+    };
+
+    _proto.crossVectors = function crossVectors(a, b) {
+      var ax = a.x,
+          ay = a.y,
+          az = a.z;
+      var bx = b.x,
+          by = b.y,
+          bz = b.z;
+      this.x = ay * bz - az * by;
+      this.y = az * bx - ax * bz;
+      this.z = ax * by - ay * bx;
+      return this;
+    };
+
+    return Vector3;
+  }();
+
+  var PI = Math.PI;
+  var RAD = PI / 180;
+
+  var OrbitCamera = function (_Vector) {
+    _inheritsLoose(OrbitCamera, _Vector);
+
+    function OrbitCamera(theta, phi, radius) {
+      var _this;
+
+      _this = _Vector.call(this) || this;
+      _this.position = new Vector3();
+      _this.value = new Float32Array([0, 0, 0]);
+      _this.dirty = false;
+      _this.theta = (theta || 0) * RAD;
+      _this.phi = (phi || 0) * RAD;
+      _this.radius = radius || 6.0;
+      return _this;
+    }
+
+    var _proto = OrbitCamera.prototype;
+
+    _proto.down = function down(x, y) {
+      this.mouse = new Vector2(x, y);
+    };
+
+    _proto.move = function move(x, y) {
+      var mouse = this.mouse;
+
+      if (mouse && (mouse.x !== x || mouse.y !== y)) {
+        var theta = (x - mouse.x) * 180 * RAD;
+        var phi = (y - mouse.y) * 180 * RAD;
+        mouse.x = x;
+        mouse.y = y;
+        this.theta += theta;
+        this.phi = Math.max(-60 * RAD, Math.min(60 * RAD, this.phi + phi));
+      }
+    };
+
+    _proto.up = function up() {
+      this.mouse = null;
+    };
+
+    _proto.wheel = function wheel(d) {
+      this.radius = Math.max(4.0, Math.min(10.0, this.radius + d * 0.02));
+    };
+
+    OrbitCamera.fromVector = function fromVector(vector) {
+      var radius = vector.length();
+      var theta = Math.acos(vector.y / radius);
+      var phi = Math.atan(vector.x / vector.z);
+      return new OrbitCamera(theta, phi, radius);
+    };
+
+    return OrbitCamera;
+  }(Vector3);
+
   var CanvasTimer = function () {
     function CanvasTimer() {
       this.delay = 0.0;
@@ -1677,84 +1870,6 @@ var glsl = (function (exports) {
     return BoxGeometry;
   }(Geometry);
 
-  var Vector3 = function () {
-    function Vector3(x, y, z) {
-      if (x === void 0) {
-        x = 0;
-      }
-
-      if (y === void 0) {
-        y = 0;
-      }
-
-      if (z === void 0) {
-        z = 0;
-      }
-
-      this.isVector3 = true;
-      this.x = x;
-      this.y = y;
-      this.z = z;
-    }
-
-    var _proto = Vector3.prototype;
-
-    _proto.copy = function copy(v) {
-      this.x = v.x;
-      this.y = v.y;
-      this.z = v.z;
-      return this;
-    };
-
-    _proto.length = function length() {
-      return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
-    };
-
-    _proto.normalize = function normalize() {
-      return this.divideScalar(this.length() || 1);
-    };
-
-    _proto.divideScalar = function divideScalar(scalar) {
-      return this.multiplyScalar(1 / scalar);
-    };
-
-    _proto.multiplyScalar = function multiplyScalar(scalar) {
-      this.x *= scalar;
-      this.y *= scalar;
-      this.z *= scalar;
-      return this;
-    };
-
-    _proto.subVectors = function subVectors(a, b) {
-      this.x = a.x - b.x;
-      this.y = a.y - b.y;
-      this.z = a.z - b.z;
-      return this;
-    };
-
-    _proto.addVectors = function addVectors(a, b) {
-      this.x = a.x + b.x;
-      this.y = a.y + b.y;
-      this.z = a.z + b.z;
-      return this;
-    };
-
-    _proto.crossVectors = function crossVectors(a, b) {
-      var ax = a.x,
-          ay = a.y,
-          az = a.z;
-      var bx = b.x,
-          by = b.y,
-          bz = b.z;
-      this.x = ay * bz - az * by;
-      this.y = az * bx - ax * bz;
-      this.z = ax * by - ay * bx;
-      return this;
-    };
-
-    return Vector3;
-  }();
-
   var SphereGeometry = function (_Geometry) {
     _inheritsLoose(SphereGeometry, _Geometry);
 
@@ -1845,9 +1960,9 @@ var glsl = (function (exports) {
 
     _proto.createData_ = function createData_() {
       var radius = 1;
-      var tube = 0.2;
-      var tubularDivisions = 100;
-      var radialDivisions = 20;
+      var tube = 0.25;
+      var tubularDivisions = 200;
+      var radialDivisions = 40;
       var p = 2;
       var q = 3;
       var indices = [];
@@ -1936,8 +2051,12 @@ var glsl = (function (exports) {
         Common.fetch(url).then(function (text) {
           var data = _this.parse(text);
 
-          var geometry = new Geometry(data);
-          resolve(geometry);
+          if (data.positions.length) {
+            var geometry = new Geometry(data);
+            resolve(geometry);
+          } else {
+            reject('ObjLoader error: empty positions');
+          }
         }, function (error) {
           reject(error);
         });
@@ -2043,7 +2162,8 @@ var glsl = (function (exports) {
             return parseFloat(x);
           });
 
-          VN.push(_v);
+          var n = new Vector3(_v[0], _v[1], _v[2]).normalize();
+          VN.push([n.x, n.y, n.z]);
         } else if (line.indexOf('vt ') === 0) {
           var _a2 = line.replace('vt', '').trim().split(' ');
 
@@ -2887,8 +3007,6 @@ var glsl = (function (exports) {
     return Uniforms;
   }(IterableStringMap);
 
-  var useDoubleSide = true;
-
   var Renderer = function (_Subscriber) {
     _inheritsLoose(Renderer, _Subscriber);
 
@@ -2900,13 +3018,14 @@ var glsl = (function (exports) {
       _this.buffers = new Buffers();
       _this.textures = new Textures();
       _this.textureList = [];
-      _this.mouse = {
-        x: 0,
-        y: 0
-      };
+      _this.W = 0;
+      _this.H = 0;
+      _this.mouse = new Vector2();
       _this.radians = 0;
       _this.dirty = true;
       _this.animated = false;
+      _this.camera = new OrbitCamera();
+      _this.cache = {};
       _this.drawFunc_ = _this.drawArrays_;
       return _this;
     }
@@ -2944,13 +3063,14 @@ var glsl = (function (exports) {
     _proto.drawArrays_ = function drawArrays_(deltaTime) {
       var gl = this.gl;
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.viewport(0, 0, this.W, this.H);
       gl.clearColor(0.0, 0.0, 0.0, 1.0);
       gl.clearDepth(1.0);
       gl.enable(gl.DEPTH_TEST);
       gl.depthFunc(gl.LEQUAL);
       gl.enable(gl.CULL_FACE);
 
-      if (this.mode !== ContextMode.Flat && useDoubleSide) {
+      if (this.doubleSided && this.mode !== ContextMode.Flat) {
         gl.cullFace(gl.FRONT);
         gl.drawArrays(gl.TRIANGLES, 0, this.geometry.size);
         gl.enable(gl.BLEND);
@@ -2967,56 +3087,19 @@ var glsl = (function (exports) {
     };
 
     _proto.createGeometry_ = function createGeometry_() {
-      var _this2 = this;
-
-      this.mode = this.parseGeometry_();
-      var geometry;
-
-      switch (this.mode) {
-        case ContextMode.Flat:
-          geometry = new FlatGeometry();
-          break;
-
-        case ContextMode.Box:
-          geometry = new BoxGeometry();
-          break;
-
-        case ContextMode.Sphere:
-          geometry = new SphereGeometry();
-          break;
-
-        case ContextMode.Torus:
-          geometry = new TorusGeometry();
-          break;
-
-        default:
-          geometry = new FlatGeometry();
-          var loader = new ObjLoader();
-          loader.load(this.mode).then(function (geometry) {
-            geometry.createAttributes_(_this2.gl, _this2.program);
-            _this2.geometry = geometry;
-            _this2.dirty = true;
-          });
-      }
-
-      geometry.create(this.gl, this.program);
-      this.geometry = geometry;
+      this.parseGeometry_();
+      this.setMode(this.mode);
     };
 
     _proto.parseGeometry_ = function parseGeometry_() {
-      var mode = this.mode;
-      var regexp = /attribute\s+vec4\s+a_position\s*;\s*\/\/\s*([\w|\:\/\/|\.|\-|\_|\?|\&|\=]+)/gm;
+      var regexp = /^attribute\s+vec4\s+a_position\s*;\s*\/\/\s*([\w|\:\/\/|\.|\-|\_|\?|\&|\=]+)/gm;
       var match = regexp.exec(this.vertexString);
 
       if (match && match.length > 1) {
-        mode = match[1];
+        this.mesh = match[1];
+      } else {
+        this.mesh = this.defaultMesh;
       }
-
-      return mode;
-    };
-
-    _proto.createVertex__ = function createVertex__() {
-      this.vertexBuffers = Context.createVertexBuffers(this.gl, this.program);
     };
 
     _proto.createUniforms_ = function createUniforms_() {
@@ -3113,9 +3196,16 @@ var glsl = (function (exports) {
 
     _proto.updateModelViewMatrix_ = function updateModelViewMatrix_(deltaTime) {
       this.modelViewMatrix = identity(this.modelViewMatrix);
-      translate(this.modelViewMatrix, this.modelViewMatrix, [0.0, 0.0, -6.0]);
-      rotate(this.modelViewMatrix, this.modelViewMatrix, this.radians, [0, 1, 0]);
-      this.radians += deltaTime * 0.001;
+      translate(this.modelViewMatrix, this.modelViewMatrix, [0.0, 0.0, -this.camera.radius]);
+      rotate(this.modelViewMatrix, this.modelViewMatrix, this.camera.theta + this.radians, [0, 1, 0]);
+      rotate(this.modelViewMatrix, this.modelViewMatrix, this.camera.phi, [1, 0, 0]);
+
+      if (!this.camera.mouse) {
+        this.camera.theta += (0 - this.camera.theta) / 20;
+        this.camera.phi += (0 - this.camera.phi) / 20;
+        this.radians += deltaTime * 0.0005;
+      }
+
       return this.modelViewMatrix;
     };
 
@@ -3124,6 +3214,81 @@ var glsl = (function (exports) {
       invert(this.normalMatrix, modelViewMatrix);
       transpose(this.normalMatrix, this.normalMatrix);
       return this.normalMatrix;
+    };
+
+    _proto.setMode = function setMode(mode) {
+      var _this2 = this;
+
+      var geometry;
+
+      if (mode === ContextMode.Mesh) {
+        geometry = this.cache[this.mesh];
+
+        if (geometry) {
+          this.geometry = geometry;
+          this.mode = ContextMode.Mesh;
+          this.dirty = true;
+          return;
+        }
+      }
+
+      var loader;
+
+      switch (mode) {
+        case ContextMode.Flat:
+          geometry = new FlatGeometry();
+          this.uniforms.update(exports.UniformMethod.UniformMatrix4fv, exports.UniformType.Float, 'u_projectionMatrix', create());
+          this.uniforms.update(exports.UniformMethod.UniformMatrix4fv, exports.UniformType.Float, 'u_modelViewMatrix', create());
+          this.uniforms.update(exports.UniformMethod.UniformMatrix4fv, exports.UniformType.Float, 'u_normalMatrix', create());
+          break;
+
+        case ContextMode.Box:
+          geometry = new BoxGeometry();
+          break;
+
+        case ContextMode.Sphere:
+          geometry = new SphereGeometry();
+          break;
+
+        case ContextMode.Torus:
+          geometry = new TorusGeometry();
+          break;
+
+        case ContextMode.Mesh:
+          geometry = new FlatGeometry();
+
+          if (this.mesh) {
+            loader = new ObjLoader();
+            loader.load(this.getResource(this.mesh)).then(function (geometry) {
+              geometry.createAttributes_(_this2.gl, _this2.program);
+              var cache = {};
+              cache[_this2.mesh] = geometry;
+              _this2.cache = cache;
+              _this2.geometry = geometry;
+              _this2.dirty = true;
+            }, function (error) {
+              Logger.warn('GlslCanvas', error);
+              _this2.mode = ContextMode.Flat;
+            });
+          } else {
+            mode = ContextMode.Flat;
+          }
+
+          break;
+      }
+
+      geometry.create(this.gl, this.program);
+      this.geometry = geometry;
+      this.mode = mode;
+      this.dirty = true;
+    };
+
+    _proto.setMesh = function setMesh(mesh) {
+      this.mesh = mesh;
+    };
+
+    _proto.getResource = function getResource(url) {
+      return String(url.indexOf(':/') === -1 && this.workpath !== undefined ? this.workpath + "/" + url : url);
     };
 
     return Renderer;
@@ -3142,6 +3307,7 @@ var glsl = (function (exports) {
       _this = _Renderer.call(this) || this;
       _this.valid = false;
       _this.visible = false;
+      _this.controls = false;
 
       if (!canvas) {
         return _assertThisInitialized(_this);
@@ -3154,6 +3320,10 @@ var glsl = (function (exports) {
       _this.rect = canvas.getBoundingClientRect();
       _this.devicePixelRatio = window.devicePixelRatio || 1;
       _this.mode = options.mode || ContextMode.Flat;
+      _this.mesh = options.mesh || undefined;
+      _this.doubleSided = options.doubleSided || false;
+      _this.defaultMesh = _this.mesh;
+      _this.workpath = options.workpath;
       canvas.style.backgroundColor = options.backgroundColor || 'rgba(0,0,0,0)';
 
       _this.getShaders_().then(function (success) {
@@ -3237,11 +3407,14 @@ var glsl = (function (exports) {
 
     _proto.addListeners_ = function addListeners_() {
       this.onScroll = this.onScroll.bind(this);
+      this.onWheel = this.onWheel.bind(this);
       this.onClick = this.onClick.bind(this);
       this.onMove = this.onMove.bind(this);
+      this.onMousedown = this.onMousedown.bind(this);
       this.onMousemove = this.onMousemove.bind(this);
       this.onMouseover = this.onMouseover.bind(this);
       this.onMouseout = this.onMouseout.bind(this);
+      this.onMouseup = this.onMouseup.bind(this);
       this.onTouchmove = this.onTouchmove.bind(this);
       this.onTouchend = this.onTouchend.bind(this);
       this.onTouchstart = this.onTouchstart.bind(this);
@@ -3253,11 +3426,15 @@ var glsl = (function (exports) {
     };
 
     _proto.addCanvasListeners_ = function addCanvasListeners_() {
-      if (this.canvas.hasAttribute('controls')) {
-        this.canvas.addEventListener('click', this.onClick);
+      this.controls = this.canvas.hasAttribute('controls');
+      this.canvas.addEventListener('wheel', this.onWheel);
+      this.canvas.addEventListener('click', this.onClick);
+      this.canvas.addEventListener('mousedown', this.onMousedown);
+      this.canvas.addEventListener('touchstart', this.onTouchstart);
+
+      if (this.controls) {
         this.canvas.addEventListener('mouseover', this.onMouseover);
         this.canvas.addEventListener('mouseout', this.onMouseout);
-        this.canvas.addEventListener('touchstart', this.onTouchstart);
 
         if (!this.canvas.hasAttribute('data-autoplay')) {
           this.pause();
@@ -3266,11 +3443,16 @@ var glsl = (function (exports) {
     };
 
     _proto.removeCanvasListeners_ = function removeCanvasListeners_() {
-      if (this.canvas.hasAttribute('controls')) {
-        this.canvas.removeEventListener('click', this.onClick);
+      this.canvas.removeEventListener('wheel', this.onWheel);
+      this.canvas.removeEventListener('click', this.onClick);
+      this.canvas.removeEventListener('mousedown', this.onMousedown);
+      this.canvas.removeEventListener('mouseup', this.onMouseup);
+      this.canvas.removeEventListener('touchstart', this.onTouchstart);
+      this.canvas.removeEventListener('touchend', this.onTouchend);
+
+      if (this.controls) {
         this.canvas.removeEventListener('mouseover', this.onMouseover);
         this.canvas.removeEventListener('mouseout', this.onMouseout);
-        this.canvas.removeEventListener('touchstart', this.onTouchstart);
       }
     };
 
@@ -3286,9 +3468,28 @@ var glsl = (function (exports) {
       this.rect = this.canvas.getBoundingClientRect();
     };
 
+    _proto.onWheel = function onWheel(e) {
+      this.camera.wheel(e.deltaY);
+      this.trigger('wheel', e);
+    };
+
     _proto.onClick = function onClick(e) {
-      this.toggle();
+      if (this.controls) {
+        this.toggle();
+      }
+
       this.trigger('click', e);
+    };
+
+    _proto.onDown = function onDown(mx, my) {
+      mx *= this.devicePixelRatio;
+      my *= this.devicePixelRatio;
+      this.mouse.x = mx;
+      this.mouse.y = my;
+      var rect = this.rect;
+      var min = Math.min(rect.width, rect.height);
+      this.camera.down(mx / min, my / min);
+      this.trigger('down', this.mouse);
     };
 
     _proto.onMove = function onMove(mx, my) {
@@ -3299,12 +3500,35 @@ var glsl = (function (exports) {
       if (x !== this.mouse.x || y !== this.mouse.y) {
         this.mouse.x = x;
         this.mouse.y = y;
+        var min = Math.min(rect.width, rect.height);
+        this.camera.move(mx / min, my / min);
         this.trigger('move', this.mouse);
       }
     };
 
+    _proto.onUp = function onUp(e) {
+      this.camera.up();
+
+      if (this.controls) {
+        this.pause();
+      }
+
+      this.trigger('out', e);
+    };
+
+    _proto.onMousedown = function onMousedown(e) {
+      this.onDown(e.clientX || e.pageX, e.clientY || e.pageY);
+      document.addEventListener('mouseup', this.onMouseup);
+      document.removeEventListener('touchstart', this.onTouchstart);
+      document.removeEventListener('touchmove', this.onTouchmove);
+    };
+
     _proto.onMousemove = function onMousemove(e) {
       this.onMove(e.clientX || e.pageX, e.clientY || e.pageY);
+    };
+
+    _proto.onMouseup = function onMouseup(e) {
+      this.onUp(e);
     };
 
     _proto.onMouseover = function onMouseover(e) {
@@ -3319,10 +3543,7 @@ var glsl = (function (exports) {
 
     _proto.onTouchmove = function onTouchmove(e) {
       var touch = [].slice.call(e.touches).reduce(function (p, touch) {
-        p = p || {
-          x: 0,
-          y: 0
-        };
+        p = p || new Vector2();
         p.x += touch.clientX;
         p.y += touch.clientY;
         return p;
@@ -3334,18 +3555,32 @@ var glsl = (function (exports) {
     };
 
     _proto.onTouchend = function onTouchend(e) {
-      this.pause();
-      this.trigger('out', e);
+      this.onUp(e);
       document.removeEventListener('touchend', this.onTouchend);
     };
 
     _proto.onTouchstart = function onTouchstart(e) {
-      this.play();
+      var touch = [].slice.call(e.touches).reduce(function (p, touch) {
+        p = p || new Vector2();
+        p.x += touch.clientX;
+        p.y += touch.clientY;
+        return p;
+      }, null);
+
+      if (touch) {
+        this.onDown(touch.x / e.touches.length, touch.y / e.touches.length);
+      }
+
+      if (this.controls) {
+        this.play();
+      }
+
       this.trigger('over', e);
       document.addEventListener('touchend', this.onTouchend);
+      document.removeEventListener('mousedown', this.onMousedown);
       document.removeEventListener('mousemove', this.onMousemove);
 
-      if (this.canvas.hasAttribute('controls')) {
+      if (this.controls) {
         this.canvas.removeEventListener('mouseover', this.onMouseover);
         this.canvas.removeEventListener('mouseout', this.onMouseout);
       }
@@ -3406,20 +3641,22 @@ var glsl = (function (exports) {
 
     _proto.sizeDidChanged_ = function sizeDidChanged_() {
       var gl = this.gl;
-      var W = Math.ceil(this.canvas.clientWidth),
-          H = Math.ceil(this.canvas.clientHeight);
+      var CW = Math.ceil(this.canvas.clientWidth),
+          CH = Math.ceil(this.canvas.clientHeight);
 
-      if (this.width !== W || this.height !== H) {
-        this.width = W;
-        this.height = H;
-        var BW = Math.ceil(W * this.devicePixelRatio);
-        var BH = Math.ceil(H * this.devicePixelRatio);
-        this.canvas.width = BW;
-        this.canvas.height = BH;
+      if (this.width !== CW || this.height !== CH) {
+        this.width = CW;
+        this.height = CH;
+        var W = Math.ceil(CW * this.devicePixelRatio);
+        var H = Math.ceil(CH * this.devicePixelRatio);
+        this.W = W;
+        this.H = H;
+        this.canvas.width = W;
+        this.canvas.height = H;
 
         for (var key in this.buffers.values) {
           var buffer = this.buffers.values[key];
-          buffer.resize(gl, BW, BH);
+          buffer.resize(gl, W, H);
         }
 
         this.rect = this.canvas.getBoundingClientRect();
@@ -3567,7 +3804,8 @@ var glsl = (function (exports) {
     };
 
     _proto.create_ = function create_() {
-      this.mode = this.parseMode_();
+      this.parseMode_();
+      this.parseMesh_();
 
       _Renderer.prototype.create_.call(this);
 
@@ -3576,17 +3814,23 @@ var glsl = (function (exports) {
     };
 
     _proto.parseMode_ = function parseMode_() {
-      var mode = this.mode;
-
       if (this.canvas.hasAttribute('data-mode')) {
         var data = this.canvas.getAttribute('data-mode');
 
-        if (['flat', 'box', 'sphere', 'torus'].indexOf(data) !== -1 || data.indexOf('.obj') !== -1) {
-          mode = data;
+        if (['flat', 'box', 'sphere', 'torus', 'mesh'].indexOf(data) !== -1) {
+          this.mode = data;
         }
       }
+    };
 
-      return mode;
+    _proto.parseMesh_ = function parseMesh_() {
+      if (this.canvas.hasAttribute('data-mesh')) {
+        var data = this.canvas.getAttribute('data-mesh');
+
+        if (data.indexOf('.obj') !== -1) {
+          this.mesh = this.defaultMesh = data;
+        }
+      }
     };
 
     _proto.createBuffers_ = function createBuffers_() {
@@ -3827,6 +4071,8 @@ var glsl = (function (exports) {
   exports.Uniform = Uniform;
   exports.UniformTexture = UniformTexture;
   exports.Uniforms = Uniforms;
+  exports.Vector2 = Vector2;
+  exports.Vector3 = Vector3;
   exports.isTextureData = isTextureData;
 
   return exports;

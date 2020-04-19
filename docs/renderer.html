@@ -6,8 +6,8 @@
 	<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=2,user-scalable=yes">
 	<title>GlslCanvas</title>
 	<link rel="stylesheet" type="text/css" href="css/docs.min.css">
-	<script type="text/javascript" src="js/vendors.js"></script>
-	<script type="text/javascript" src="js/glsl-canvas.js"></script>
+	<script type="text/javascript" src="js/vendors.min.js"></script>
+	<script type="text/javascript" src="js/glsl-canvas.min.js"></script>
 </head>
 
 <body class="renderer">
@@ -33,7 +33,9 @@
 	// glsl.Canvas.logger.enabled = false;
 	var canvases = [].slice.call(document.querySelectorAll('.glsl-canvas_'))
 		.map(function(element, i) {
-			var canvas = glsl.Canvas.of(element, { mode: 'sphere' });
+			// var canvas = glsl.Canvas.of(element, { mode: 'mesh', mesh: './data/mage.obj' });
+			var canvas = glsl.Canvas.of(element, { mode: 'mesh', mesh: './data/lego.obj' });
+			// var canvas = glsl.Canvas.of(element, { mode: 'box' });
 			canvas.on('render', function() {
 				stats.end();
 				stats.begin();

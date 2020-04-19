@@ -1,8 +1,13 @@
 import Context from '../context/context';
 import IterableStringMap from '../core/iterable';
+import FlatGeometry from '../geometry/flat-geometry';
 export const BuffersDefaultFragment = `
+#ifdef GL_ES
+precision mediump float;
+#endif
+
 void main(){
-	gl_FragColor = vec4(1.0);
+	gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
 }`;
 export const BuffersDefaultFragment2 = `#version 300 es
 
@@ -11,7 +16,7 @@ precision mediump float;
 out vec4 outColor;
 
 void main() {
-	outColor = vec4(1.0);
+	outColor = vec4(0.0, 0.0, 0.0, 1.0);
 }
 `;
 export var BufferFloatType;
@@ -21,6 +26,7 @@ export var BufferFloatType;
 })(BufferFloatType || (BufferFloatType = {}));
 export class Buffer {
     constructor(gl, BW, BH, index) {
+        // BW = BH = 1024;
         const buffer = gl.createFramebuffer();
         const texture = this.getTexture(gl, BW, BH, index);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -60,6 +66,7 @@ export class Buffer {
         return floatType;
     }
     getTexture(gl, BW, BH, index) {
+        // BW = BH = 1024;
         const floatType = this.getFloatType(gl);
         const texture = gl.createTexture();
         gl.activeTexture(gl.TEXTURE0 + index);
@@ -78,6 +85,7 @@ export class Buffer {
         return texture;
     }
     resize(gl, BW, BH) {
+        // BW = BH = 1024;
         if (BW !== this.BW || BH !== this.BH) {
             const buffer = this.buffer;
             const texture = this.texture;
@@ -104,6 +112,12 @@ export class Buffer {
                 gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, minW, minH, gl.RGBA, floatType, pixels);
             }
             const newBuffer = gl.createFramebuffer();
+            /*
+            if (!newBuffer) {
+                Logger.error('Failed to create the frame buffer object');
+                return null;
+            }
+            */
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             gl.deleteTexture(texture);
             gl.activeTexture(gl.TEXTURE0 + index);
@@ -124,42 +138,74 @@ export class IOBuffer {
         this.key = key;
         this.vertexString = vertexString;
         this.fragmentString = fragmentString;
+        this.geometry = new FlatGeometry();
     }
     create(gl, BW, BH) {
-        // console.log('create', this.vertexString, this.fragmentString);
+        // BW = BH = 1024;
         const vertexShader = Context.createShader(gl, this.vertexString, gl.VERTEX_SHADER);
         let fragmentShader = Context.createShader(gl, this.fragmentString, gl.FRAGMENT_SHADER, 1);
         if (!fragmentShader) {
-            fragmentShader = Context.createShader(gl, Context.isWebGl2(gl) ?
-                BuffersDefaultFragment2 : BuffersDefaultFragment, gl.FRAGMENT_SHADER);
+            fragmentShader = Context.createShader(gl, Context.isWebGl2(gl) ? BuffersDefaultFragment2 : BuffersDefaultFragment, gl.FRAGMENT_SHADER);
             this.isValid = false;
         }
         else {
             this.isValid = true;
         }
         const program = Context.createProgram(gl, [vertexShader, fragmentShader]);
-        gl.linkProgram(program);
+        if (!program) {
+            this.isValid = false;
+            gl.deleteShader(vertexShader);
+            gl.deleteShader(fragmentShader);
+            return;
+        }
+        this.geometry.create(gl, program);
+        gl.deleteShader(vertexShader);
+        gl.deleteShader(fragmentShader);
         const input = new Buffer(gl, BW, BH, this.index + 0);
         const output = new Buffer(gl, BW, BH, this.index + 2);
         this.program = program;
         this.input = input;
         this.output = output;
-        gl.deleteShader(vertexShader);
-        gl.deleteShader(fragmentShader);
+        // console.log(geometry.position.length / 3, geometry.size);
+        // console.log(gl.getProgramInfoLog(program));
+        // Context.lastError = gl.getProgramInfoLog(program);
+        // Logger.warn(`Error in program linking: ${Context.lastError}`);
     }
     render(gl, BW, BH) {
+        // BW = BH = 1024;
         gl.useProgram(this.program);
-        gl.viewport(0, 0, BW, BH);
+        // gl.activeTexture(gl.TEXTURE0);
+        // gl.bindTexture(gl.TEXTURE_2D, this.input.texture);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.output.buffer);
+        // gl.bindTexture(gl.TEXTURE_2D, this.output.texture);
+        // console.log(this.output.texture);
+        // console.log('binding', gl.getParameter(gl.FRAMEBUFFER_BINDING));
+        // gl.enable(gl.DEPTH_TEST); // Enable depth testing
+        // gl.depthFunc(gl.LEQUAL); // Near things obscure far things
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.output.texture, 0);
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+        if (status === gl.FRAMEBUFFER_COMPLETE) {
+            // Clear the canvas before we start drawing on it.
+            gl.clearColor(0, 0, 0, 1); // black
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        }
+        // this.geometry.createAttributes_(gl, this.program);
+        // this.geometry.bindAttributes_(gl, this.program);
+        gl.viewport(0, 0, BW, BH);
+        gl.drawArrays(gl.TRIANGLES, 0, this.geometry.size);
+        // console.log(this.geometry.size);
+        // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        // console.log(BW, BH);
+        // console.log(gl.getProgramInfoLog(this.program));
         // swap
         const input = this.input;
-        const output = this.output;
-        this.input = output;
+        // const output = this.output;
+        this.input = this.output;
         this.output = input;
+        // console.log('swap');
     }
     resize(gl, BW, BH) {
+        // BW = BH = 1024;
         gl.useProgram(this.program);
         gl.viewport(0, 0, BW, BH);
         this.input.resize(gl, BW, BH);
@@ -194,7 +240,12 @@ ${fragmentString}` : `#define BUFFER_${i}
 ${fragmentString}`;
                 const buffer = new IOBuffer(count, key, vertexString, bufferFragmentString);
                 buffer.create(gl, gl.drawingBufferWidth, gl.drawingBufferHeight);
-                buffers.set(key, buffer);
+                if (buffer.program) {
+                    buffers.set(key, buffer);
+                }
+                else {
+                    throw (`buffer error ${key}`);
+                }
                 count += 4;
             }
         }

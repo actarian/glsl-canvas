@@ -59,15 +59,31 @@ var Uniform = /** @class */ (function () {
         if (options) {
             Object.assign(this, options);
         }
-        this.apply = function (gl, program) {
-            if (_this.dirty) {
-                gl.useProgram(program);
-                var location_1 = gl.getUniformLocation(program, _this.key);
-                // Logger.log(this.key, this.method, this.values);
-                // (gl as any)[this.method].apply(gl, [location].concat(this.values));
-                gl[_this.method].apply(gl, [location_1].concat(_this.values));
-            }
-        };
+        switch (this.method) {
+            case UniformMethod.UniformMatrix2fv:
+            case UniformMethod.UniformMatrix3fv:
+            case UniformMethod.UniformMatrix4fv:
+                this.apply = function (gl, program) {
+                    if (_this.dirty) {
+                        gl.useProgram(program);
+                        var location_1 = gl.getUniformLocation(program, _this.key);
+                        // Logger.log(this.key, this.method, this.values);
+                        // (gl as any)[this.method].apply(gl, [location].concat(this.values));
+                        gl[_this.method].apply(gl, [location_1, false].concat(_this.values));
+                    }
+                };
+                break;
+            default:
+                this.apply = function (gl, program) {
+                    if (_this.dirty) {
+                        gl.useProgram(program);
+                        var location_2 = gl.getUniformLocation(program, _this.key);
+                        // Logger.log(this.key, this.method, this.values);
+                        // (gl as any)[this.method].apply(gl, [location].concat(this.values));
+                        gl[_this.method].apply(gl, [location_2].concat(_this.values));
+                    }
+                };
+        }
     }
     return Uniform;
 }());
@@ -87,18 +103,6 @@ var Uniforms = /** @class */ (function (_super) {
         _this.dirty = false;
         return _this;
     }
-    /*
-    // slow
-    static isDifferent(a: any, b: any): boolean {
-        return JSON.stringify(a) !== JSON.stringify(b);
-    }
-    */
-    Uniforms.isDifferent = function (a, b) {
-        return a.length !== b.length ||
-            a.reduce(function (f, v, i) {
-                return f || v !== b[i];
-            }, false);
-    };
     Uniforms.isArrayOfInteger = function (array) {
         return array.reduce(function (flag, value) {
             return flag && Number.isInteger(value);
@@ -241,10 +245,9 @@ var Uniforms = /** @class */ (function (_super) {
     };
     Uniforms.prototype.update = function (method, type, key, values) {
         var uniform = this.get(key);
-        if (uniform &&
-            (uniform.method !== method ||
-                uniform.type !== type ||
-                Uniforms.isDifferent(uniform.values, values))) {
+        if (uniform) {
+            // !!! consider performance
+            // && (uniform.method !== method || uniform.type !== type || Uniforms.isDifferent(uniform.values, values))) {
             uniform.method = method;
             uniform.type = type;
             uniform.values = values;
@@ -261,6 +264,7 @@ var Uniforms = /** @class */ (function (_super) {
         }
     };
     Uniforms.prototype.apply = function (gl, program) {
+        gl.useProgram(program);
         for (var key in this.values) {
             // if (typeof this.values[key].apply === 'function') {
             this.values[key].apply(gl, program);
@@ -273,6 +277,17 @@ var Uniforms = /** @class */ (function (_super) {
             this.values[key].dirty = false;
         }
         this.dirty = false;
+    };
+    /*
+    // slow
+    static isDifferent(a: any, b: any): boolean {
+        return JSON.stringify(a) !== JSON.stringify(b);
+    }
+    */
+    Uniforms.isDifferent = function (a, b) {
+        return a.length !== b.length || a.reduce(function (f, v, i) {
+            return f || v !== b[i];
+        }, false);
     };
     return Uniforms;
 }(iterable_1.default));

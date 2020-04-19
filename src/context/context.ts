@@ -256,6 +256,7 @@ export enum ContextMode {
 	Box = 'box',
 	Sphere = 'sphere',
 	Torus = 'torus',
+	Mesh = 'mesh',
 }
 
 export const ContextDefault = {
@@ -286,16 +287,18 @@ export enum ContextError {
 	Other = 2,
 }
 
+/*
 export interface IContextOptions {
 	alpha?: GLboolean;
 	antialias?: GLboolean;
 	depth?: GLboolean;
 	failIfMajorPerformanceCaveat?: boolean;
-	// powerPreference?: WebGLPowerPreference;
+	powerPreference?: WebGLPowerPreference;
 	premultipliedAlpha?: GLboolean;
 	preserveDrawingBuffer?: GLboolean;
 	stencil?: GLboolean;
 }
+*/
 
 export class ContextVertexBuffers {
 	texcoord: WebGLBuffer;
@@ -339,8 +342,8 @@ export default class Context {
 				fragmentString = fragmentString.replace(/^\#version\s*300\s*es\s*\n/, '');
 			}
 			const regexp = /(?:^\s*)((?:#if|#elif)(?:\s*)(defined\s*\(\s*VERTEX)(?:\s*\))|(?:#ifdef)(?:\s*VERTEX)(?:\s*))/gm;
-			let matches;
-			while ((matches = regexp.exec(fragmentString)) !== null) {
+			const matches = regexp.exec(fragmentString);
+			if (matches !== null) {
 				vertexString = Context.isWebGl2(gl) ? `#version 300 es
 #define VERTEX
 ${fragmentString}` : `#define VERTEX
@@ -412,7 +415,7 @@ ${fragmentString}`;
 		return this.isWebGl2(gl) ? DefaultWebGL2BufferVertex : DefaultWebGLBufferVertex;
 	}
 
-	static getVertex(vertexString?: string, fragmentString?: string, mode: ContextMode | string = ContextMode.Flat): string {
+	static getVertex(vertexString?: string, fragmentString?: string, mode: ContextMode = ContextMode.Flat): string {
 		if (vertexString) {
 			return vertexString;
 		} else {
@@ -421,7 +424,7 @@ ${fragmentString}`;
 		}
 	}
 
-	static getFragment(vertexString?: string, fragmentString?: string, mode: ContextMode | string = ContextMode.Flat): string {
+	static getFragment(vertexString?: string, fragmentString?: string, mode: ContextMode = ContextMode.Flat): string {
 		if (fragmentString) {
 			return fragmentString;
 		} else {

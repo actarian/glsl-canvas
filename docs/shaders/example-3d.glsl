@@ -12,6 +12,7 @@ uniform sampler2D u_texture; // data/bayer-matrix.png
 // ?filtering=nearest
 uniform vec2 u_textureResolution;
 uniform float u_time;
+uniform vec3 u_camera;
 
 void main() {
 	vec2 uv = v_texcoord;

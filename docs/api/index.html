@@ -95,7 +95,7 @@
   <span class="hljs-attr">vertexString</span>: <span class="hljs-string">`...`</span>,
   <span class="hljs-attr">fragmentString</span>: <span class="hljs-string">`...`</span>,
   <span class="hljs-attr">alpha</span>: <span class="hljs-literal">false</span>,
-  <span class="hljs-attr">antialas</span>: <span class="hljs-literal">true</span>,
+  <span class="hljs-attr">antialias</span>: <span class="hljs-literal">true</span>,
   <span class="hljs-attr">extensions</span>: [<span class="hljs-string">'EXT_shader_texture_lod'</span>]
 };
 <span class="hljs-keyword">const</span> glsl = <span class="hljs-keyword">new</span> glsl.Canvas(canvas, options);</code></pre>
@@ -111,7 +111,7 @@
   <span class="hljs-attr">vertexString</span>: <span class="hljs-string">`...`</span>,
   <span class="hljs-attr">fragmentString</span>: <span class="hljs-string">`...`</span>,
   <span class="hljs-attr">alpha</span>: <span class="hljs-literal">false</span>,
-  <span class="hljs-attr">antialas</span>: <span class="hljs-literal">true</span>,
+  <span class="hljs-attr">antialias</span>: <span class="hljs-literal">true</span>,
   <span class="hljs-attr">extensions</span>: [<span class="hljs-string">'EXT_shader_texture_lod'</span>]
 };
 <span class="hljs-keyword">const</span> glsl = <span class="hljs-keyword">new</span> Canvas(canvas, options);</code></pre>
@@ -301,13 +301,13 @@ glsl.load(fragment, vertex);</code></pre>
 				<p>You can also send your custom uniforms to a shader with <code>.setUniform(&#39;name&#39;, ...values)</code>. GlslCanvas will parse the value you provide to determine its type. If the value is a <code>string</code>, GlslCanvas will parse it as the url of a texture.</p>
 				<pre><code class="language-javascript">
 <span class="hljs-comment">// assign .5 to 'uniform float u_brightness'</span>
-glsl.setUniform(<span class="hljs-string">'u_brightness'</span>, <span class="hljs-number">0.5</span>); 
+glsl.setUniform(<span class="hljs-string">'u_brightness'</span>, <span class="hljs-number">0.5</span>);
 
 <span class="hljs-comment">// assign (.2,.3) to 'uniform vec2 u_position'</span>
 glsl.setUniform(<span class="hljs-string">'u_position'</span>, <span class="hljs-number">0.2</span>, <span class="hljs-number">0.3</span>);
 
 <span class="hljs-comment">// assign a red color to 'uniform vec3 u_color'</span>
-glsl.setUniform(<span class="hljs-string">'u_color'</span>, <span class="hljs-number">1.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>); 
+glsl.setUniform(<span class="hljs-string">'u_color'</span>, <span class="hljs-number">1.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>);
 
 <span class="hljs-comment">// load a new texture and assign it to 'uniform sampler2D u_texture'</span>
 glsl.setUniform(<span class="hljs-string">'u_texture'</span>, <span class="hljs-string">'data/texture.jpg'</span>);</code></pre>

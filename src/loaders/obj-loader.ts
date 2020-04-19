@@ -20,12 +20,17 @@ export default class ObjLoader {
 			Common.fetch(url)
 				// .then((response) => response.text())
 				.then((text) => {
+					// console.log(text);
 					const data = this.parse(text);
-					const geometry = new Geometry(data as IGeometry);
-					resolve(geometry);
+					if (data.positions.length) {
+						const geometry = new Geometry(data as IGeometry);
+						resolve(geometry);
+					} else {
+						reject('ObjLoader error: empty positions');
+					}
 				}, error => {
 					reject(error);
-				})
+				});
 		});
 	}
 
@@ -125,7 +130,8 @@ export default class ObjLoader {
 				// vn 0.0128 0.9896 0.1431
 				const a = line.replace('vn', '').trim().split(' ');
 				const v = a.map(x => parseFloat(x));
-				VN.push(v);
+				const n = new Vector3(v[0], v[1], v[2]).normalize();
+				VN.push([n.x, n.y, n.z]);
 			} else if (line.indexOf('vt ') === 0) {
 				// vt 0.5955 0.0054 0.0000
 				const a = line.replace('vt', '').trim().split(' ');

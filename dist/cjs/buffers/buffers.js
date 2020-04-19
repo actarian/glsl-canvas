@@ -3,8 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var context_1 = tslib_1.__importDefault(require("../context/context"));
 var iterable_1 = tslib_1.__importDefault(require("../core/iterable"));
-exports.BuffersDefaultFragment = "\nvoid main(){\n\tgl_FragColor = vec4(1.0);\n}";
-exports.BuffersDefaultFragment2 = "#version 300 es\n\nprecision mediump float;\n\nout vec4 outColor;\n\nvoid main() {\n\toutColor = vec4(1.0);\n}\n";
+var flat_geometry_1 = tslib_1.__importDefault(require("../geometry/flat-geometry"));
+exports.BuffersDefaultFragment = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nvoid main(){\n\tgl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);\n}";
+exports.BuffersDefaultFragment2 = "#version 300 es\n\nprecision mediump float;\n\nout vec4 outColor;\n\nvoid main() {\n\toutColor = vec4(0.0, 0.0, 0.0, 1.0);\n}\n";
 var BufferFloatType;
 (function (BufferFloatType) {
     BufferFloatType[BufferFloatType["FLOAT"] = 0] = "FLOAT";
@@ -12,6 +13,7 @@ var BufferFloatType;
 })(BufferFloatType = exports.BufferFloatType || (exports.BufferFloatType = {}));
 var Buffer = /** @class */ (function () {
     function Buffer(gl, BW, BH, index) {
+        // BW = BH = 1024;
         var buffer = gl.createFramebuffer();
         var texture = this.getTexture(gl, BW, BH, index);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -51,6 +53,7 @@ var Buffer = /** @class */ (function () {
         return floatType;
     };
     Buffer.prototype.getTexture = function (gl, BW, BH, index) {
+        // BW = BH = 1024;
         var floatType = this.getFloatType(gl);
         var texture = gl.createTexture();
         gl.activeTexture(gl.TEXTURE0 + index);
@@ -69,6 +72,7 @@ var Buffer = /** @class */ (function () {
         return texture;
     };
     Buffer.prototype.resize = function (gl, BW, BH) {
+        // BW = BH = 1024;
         if (BW !== this.BW || BH !== this.BH) {
             var buffer = this.buffer;
             var texture = this.texture;
@@ -95,6 +99,12 @@ var Buffer = /** @class */ (function () {
                 gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, minW, minH, gl.RGBA, floatType, pixels);
             }
             var newBuffer = gl.createFramebuffer();
+            /*
+            if (!newBuffer) {
+                Logger.error('Failed to create the frame buffer object');
+                return null;
+            }
+            */
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             gl.deleteTexture(texture);
             gl.activeTexture(gl.TEXTURE0 + index);
@@ -117,42 +127,74 @@ var IOBuffer = /** @class */ (function () {
         this.key = key;
         this.vertexString = vertexString;
         this.fragmentString = fragmentString;
+        this.geometry = new flat_geometry_1.default();
     }
     IOBuffer.prototype.create = function (gl, BW, BH) {
-        // console.log('create', this.vertexString, this.fragmentString);
+        // BW = BH = 1024;
         var vertexShader = context_1.default.createShader(gl, this.vertexString, gl.VERTEX_SHADER);
         var fragmentShader = context_1.default.createShader(gl, this.fragmentString, gl.FRAGMENT_SHADER, 1);
         if (!fragmentShader) {
-            fragmentShader = context_1.default.createShader(gl, context_1.default.isWebGl2(gl) ?
-                exports.BuffersDefaultFragment2 : exports.BuffersDefaultFragment, gl.FRAGMENT_SHADER);
+            fragmentShader = context_1.default.createShader(gl, context_1.default.isWebGl2(gl) ? exports.BuffersDefaultFragment2 : exports.BuffersDefaultFragment, gl.FRAGMENT_SHADER);
             this.isValid = false;
         }
         else {
             this.isValid = true;
         }
         var program = context_1.default.createProgram(gl, [vertexShader, fragmentShader]);
-        gl.linkProgram(program);
+        if (!program) {
+            this.isValid = false;
+            gl.deleteShader(vertexShader);
+            gl.deleteShader(fragmentShader);
+            return;
+        }
+        this.geometry.create(gl, program);
+        gl.deleteShader(vertexShader);
+        gl.deleteShader(fragmentShader);
         var input = new Buffer(gl, BW, BH, this.index + 0);
         var output = new Buffer(gl, BW, BH, this.index + 2);
         this.program = program;
         this.input = input;
         this.output = output;
-        gl.deleteShader(vertexShader);
-        gl.deleteShader(fragmentShader);
+        // console.log(geometry.position.length / 3, geometry.size);
+        // console.log(gl.getProgramInfoLog(program));
+        // Context.lastError = gl.getProgramInfoLog(program);
+        // Logger.warn(`Error in program linking: ${Context.lastError}`);
     };
     IOBuffer.prototype.render = function (gl, BW, BH) {
+        // BW = BH = 1024;
         gl.useProgram(this.program);
-        gl.viewport(0, 0, BW, BH);
+        // gl.activeTexture(gl.TEXTURE0);
+        // gl.bindTexture(gl.TEXTURE_2D, this.input.texture);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.output.buffer);
+        // gl.bindTexture(gl.TEXTURE_2D, this.output.texture);
+        // console.log(this.output.texture);
+        // console.log('binding', gl.getParameter(gl.FRAMEBUFFER_BINDING));
+        // gl.enable(gl.DEPTH_TEST); // Enable depth testing
+        // gl.depthFunc(gl.LEQUAL); // Near things obscure far things
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.output.texture, 0);
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+        if (status === gl.FRAMEBUFFER_COMPLETE) {
+            // Clear the canvas before we start drawing on it.
+            gl.clearColor(0, 0, 0, 1); // black
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        }
+        // this.geometry.createAttributes_(gl, this.program);
+        // this.geometry.bindAttributes_(gl, this.program);
+        gl.viewport(0, 0, BW, BH);
+        gl.drawArrays(gl.TRIANGLES, 0, this.geometry.size);
+        // console.log(this.geometry.size);
+        // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        // console.log(BW, BH);
+        // console.log(gl.getProgramInfoLog(this.program));
         // swap
         var input = this.input;
-        var output = this.output;
-        this.input = output;
+        // const output = this.output;
+        this.input = this.output;
         this.output = input;
+        // console.log('swap');
     };
     IOBuffer.prototype.resize = function (gl, BW, BH) {
+        // BW = BH = 1024;
         gl.useProgram(this.program);
         gl.viewport(0, 0, BW, BH);
         this.input.resize(gl, BW, BH);
@@ -194,7 +236,12 @@ var Buffers = /** @class */ (function (_super) {
                 var bufferFragmentString = context_1.default.isWebGl2(gl) ? "#version 300 es\n#define BUFFER_" + i + "\n" + fragmentString : "#define BUFFER_" + i + "\n" + fragmentString;
                 var buffer = new IOBuffer(count, key, vertexString, bufferFragmentString);
                 buffer.create(gl, gl.drawingBufferWidth, gl.drawingBufferHeight);
-                buffers.set(key, buffer);
+                if (buffer.program) {
+                    buffers.set(key, buffer);
+                }
+                else {
+                    throw ("buffer error " + key);
+                }
                 count += 4;
             }
         }

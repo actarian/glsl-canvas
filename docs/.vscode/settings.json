@@ -3,4 +3,10 @@
 	"glsl-canvas.textures": {
 		"0": "./data/bayer-matrix.png?filtering=nearest"
 	},
+	"glsl-canvas.uniforms": {
+		"u_lightColor": [1.0, 0.0, 0.0],
+		"u_color": [1.0, 0.0, 0.0],
+		"u_strength": 1.0
+	},
+	"glsl-canvas.doubleSided": false
 }

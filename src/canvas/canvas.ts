@@ -1,14 +1,15 @@
 // import '@babel/polyfill';
 import 'promise-polyfill';
 import Buffers, { IOBuffer } from '../buffers/buffers';
-import Context, { ContextMode, IContextOptions } from '../context/context';
+import Context, { ContextMode } from '../context/context';
 import Common from '../core/common';
 import Logger from '../logger/logger';
-import Renderer, { IPoint } from '../renderer/renderer';
+import Vector2 from '../math/vector2';
+import Renderer from '../renderer/renderer';
 import Textures, { ITextureData, ITextureOptions, Texture } from '../textures/textures';
 import Uniforms, { IUniformOption, Uniform, UniformMethod, UniformType } from '../uniforms/uniforms';
 
-export interface ICanvasOptions extends IContextOptions {
+export interface ICanvasOptions extends WebGLContextAttributes {
 	vertexString?: string;
 	fragmentString?: string;
 	backgroundColor?: string;
@@ -16,6 +17,8 @@ export interface ICanvasOptions extends IContextOptions {
 	onError?: Function;
 	extensions?: string[];
 	mode?: ContextMode;
+	mesh?: string;
+	doubleSided?: boolean;
 }
 
 export default class Canvas extends Renderer {
@@ -23,14 +26,12 @@ export default class Canvas extends Renderer {
 	options: ICanvasOptions;
 	canvas: HTMLCanvasElement;
 	rect: ClientRect | DOMRect;
-
 	width: number;
 	height: number;
 	devicePixelRatio: number;
-
 	valid: boolean = false;
 	visible: boolean = false;
-
+	controls: boolean = false;
 	rafId: number;
 
 	constructor(
@@ -52,6 +53,10 @@ export default class Canvas extends Renderer {
 		this.rect = canvas.getBoundingClientRect();
 		this.devicePixelRatio = window.devicePixelRatio || 1;
 		this.mode = options.mode || ContextMode.Flat;
+		this.mesh = options.mesh || undefined;
+		this.doubleSided = options.doubleSided || false;
+		this.defaultMesh = this.mesh;
+		this.workpath = options.workpath;
 		canvas.style.backgroundColor = options.backgroundColor || 'rgba(0,0,0,0)';
 		this.getShaders_().then((success) => {
 			this.load().then(success => {
@@ -126,11 +131,14 @@ export default class Canvas extends Renderer {
         };
         */
 		this.onScroll = this.onScroll.bind(this);
+		this.onWheel = this.onWheel.bind(this);
 		this.onClick = this.onClick.bind(this);
 		this.onMove = this.onMove.bind(this);
+		this.onMousedown = this.onMousedown.bind(this);
 		this.onMousemove = this.onMousemove.bind(this);
 		this.onMouseover = this.onMouseover.bind(this);
 		this.onMouseout = this.onMouseout.bind(this);
+		this.onMouseup = this.onMouseup.bind(this);
 		this.onTouchmove = this.onTouchmove.bind(this);
 		this.onTouchend = this.onTouchend.bind(this);
 		this.onTouchstart = this.onTouchstart.bind(this);
@@ -143,11 +151,14 @@ export default class Canvas extends Renderer {
 	}
 
 	private addCanvasListeners_() {
-		if (this.canvas.hasAttribute('controls')) {
-			this.canvas.addEventListener('click', this.onClick);
+		this.controls = this.canvas.hasAttribute('controls');
+		this.canvas.addEventListener('wheel', this.onWheel);
+		this.canvas.addEventListener('click', this.onClick);
+		this.canvas.addEventListener('mousedown', this.onMousedown);
+		this.canvas.addEventListener('touchstart', this.onTouchstart);
+		if (this.controls) {
 			this.canvas.addEventListener('mouseover', this.onMouseover);
 			this.canvas.addEventListener('mouseout', this.onMouseout);
-			this.canvas.addEventListener('touchstart', this.onTouchstart);
 			if (!this.canvas.hasAttribute('data-autoplay')) {
 				this.pause();
 			}
@@ -155,11 +166,15 @@ export default class Canvas extends Renderer {
 	}
 
 	private removeCanvasListeners_() {
-		if (this.canvas.hasAttribute('controls')) {
-			this.canvas.removeEventListener('click', this.onClick);
+		this.canvas.removeEventListener('wheel', this.onWheel);
+		this.canvas.removeEventListener('click', this.onClick);
+		this.canvas.removeEventListener('mousedown', this.onMousedown);
+		this.canvas.removeEventListener('mouseup', this.onMouseup);
+		this.canvas.removeEventListener('touchstart', this.onTouchstart);
+		this.canvas.removeEventListener('touchend', this.onTouchend);
+		if (this.controls) {
 			this.canvas.removeEventListener('mouseover', this.onMouseover);
 			this.canvas.removeEventListener('mouseout', this.onMouseout);
-			this.canvas.removeEventListener('touchstart', this.onTouchstart);
 		}
 	}
 
@@ -176,17 +191,30 @@ export default class Canvas extends Renderer {
 		this.rect = this.canvas.getBoundingClientRect();
 	}
 
+	onWheel(e: MouseWheelEvent) {
+		this.camera.wheel(e.deltaY);
+		this.trigger('wheel', e);
+	}
+
 	onClick(e: MouseEvent) {
-		this.toggle();
+		if (this.controls) {
+			this.toggle();
+		}
 		this.trigger('click', e);
 	}
 
+	onDown(mx: number, my: number) {
+		mx *= this.devicePixelRatio;
+		my *= this.devicePixelRatio;
+		this.mouse.x = mx;
+		this.mouse.y = my;
+		const rect = this.rect;
+		const min = Math.min(rect.width, rect.height);
+		this.camera.down(mx / min, my / min);
+		this.trigger('down', this.mouse);
+	}
+
 	onMove(mx: number, my: number) {
-		/*
-		const rect = this.rect, gap = 20;
-		const x = Math.max(-gap, Math.min(rect.width + gap, (mx - rect.left) * this.devicePixelRatio));
-		const y = Math.max(-gap, Math.min(rect.height + gap, (this.canvas.height - (my - rect.top) * this.devicePixelRatio)));
-		*/
 		const rect = this.rect;
 		const x = (mx - rect.left) * this.devicePixelRatio;
 		const y = (rect.height - (my - rect.top)) * this.devicePixelRatio;
@@ -194,12 +222,33 @@ export default class Canvas extends Renderer {
 			y !== this.mouse.y) {
 			this.mouse.x = x;
 			this.mouse.y = y;
+			const min = Math.min(rect.width, rect.height);
+			this.camera.move(mx / min, my / min);
 			this.trigger('move', this.mouse);
 		}
 	}
 
+	onUp(e: Event) {
+		this.camera.up();
+		if (this.controls) {
+			this.pause();
+		}
+		this.trigger('out', e);
+	}
+
+	onMousedown(e: MouseEvent) {
+		this.onDown(e.clientX || e.pageX, e.clientY || e.pageY);
+		document.addEventListener('mouseup', this.onMouseup);
+		document.removeEventListener('touchstart', this.onTouchstart);
+		document.removeEventListener('touchmove', this.onTouchmove);
+	}
+
 	onMousemove(e: MouseEvent) {
 		this.onMove(e.clientX || e.pageX, e.clientY || e.pageY);
+	}
+
+	onMouseup(e: MouseEvent) {
+		this.onUp(e);
 	}
 
 	onMouseover(e: MouseEvent) {
@@ -213,8 +262,8 @@ export default class Canvas extends Renderer {
 	}
 
 	onTouchmove(e: TouchEvent) {
-		const touch = [].slice.call(e.touches).reduce((p: IPoint, touch: Touch) => {
-			p = p || { x: 0, y: 0 };
+		const touch = [].slice.call(e.touches).reduce((p: Vector2, touch: Touch) => {
+			p = p || new Vector2();
 			p.x += touch.clientX;
 			p.y += touch.clientY;
 			return p;
@@ -225,17 +274,28 @@ export default class Canvas extends Renderer {
 	}
 
 	onTouchend(e: TouchEvent) {
-		this.pause();
-		this.trigger('out', e);
+		this.onUp(e);
 		document.removeEventListener('touchend', this.onTouchend);
 	}
 
 	onTouchstart(e: TouchEvent) {
-		this.play();
+		const touch = [].slice.call(e.touches).reduce((p: Vector2, touch: Touch) => {
+			p = p || new Vector2();
+			p.x += touch.clientX;
+			p.y += touch.clientY;
+			return p;
+		}, null);
+		if (touch) {
+			this.onDown(touch.x / e.touches.length, touch.y / e.touches.length);
+		}
+		if (this.controls) {
+			this.play();
+		}
 		this.trigger('over', e);
 		document.addEventListener('touchend', this.onTouchend);
+		document.removeEventListener('mousedown', this.onMousedown);
 		document.removeEventListener('mousemove', this.onMousemove);
-		if (this.canvas.hasAttribute('controls')) {
+		if (this.controls) {
 			this.canvas.removeEventListener('mouseover', this.onMouseover);
 			this.canvas.removeEventListener('mouseout', this.onMouseout);
 		}
@@ -286,31 +346,33 @@ export default class Canvas extends Renderer {
 	// check size change at start of requestFrame
 	private sizeDidChanged_(): boolean {
 		const gl = this.gl;
-		const W = Math.ceil(this.canvas.clientWidth),
-			H = Math.ceil(this.canvas.clientHeight);
-		if (this.width !== W ||
-			this.height !== H) {
-			this.width = W;
-			this.height = H;
+		const CW = Math.ceil(this.canvas.clientWidth),
+			CH = Math.ceil(this.canvas.clientHeight);
+		if (this.width !== CW ||
+			this.height !== CH) {
+			this.width = CW;
+			this.height = CH;
 			// Lookup the size the browser is displaying the canvas in CSS pixels
 			// and compute a size needed to make our drawingbuffer match it in
 			// device pixels.
-			const BW = Math.ceil(W * this.devicePixelRatio);
-			const BH = Math.ceil(H * this.devicePixelRatio);
-			this.canvas.width = BW;
-			this.canvas.height = BH;
+			const W = Math.ceil(CW * this.devicePixelRatio);
+			const H = Math.ceil(CH * this.devicePixelRatio);
+			this.W = W;
+			this.H = H;
+			this.canvas.width = W;
+			this.canvas.height = H;
             /*
-            if (gl.canvas.width !== BW ||
-                gl.canvas.height !== BH) {
-                gl.canvas.width = BW;
-                gl.canvas.height = BH;
+            if (gl.canvas.width !== W ||
+                gl.canvas.height !== H) {
+                gl.canvas.width = W;
+                gl.canvas.height = H;
                 // Set the viewport to match
-                // gl.viewport(0, 0, BW, BH);
+                // gl.viewport(0, 0, W, H);
             }
             */
 			for (const key in this.buffers.values) {
 				const buffer: IOBuffer = this.buffers.values[key];
-				buffer.resize(gl, BW, BH);
+				buffer.resize(gl, W, H);
 			}
 			this.rect = this.canvas.getBoundingClientRect();
 			this.trigger('resize');
@@ -461,21 +523,29 @@ export default class Canvas extends Renderer {
 	}
 
 	protected create_(): void {
-		this.mode = this.parseMode_();
+		this.parseMode_();
+		this.parseMesh_();
 		super.create_();
 		this.createBuffers_();
 		this.createTextures_();
 	}
 
-	protected parseMode_(): ContextMode | string {
-		let mode: ContextMode | string = this.mode;
+	protected parseMode_() {
 		if (this.canvas.hasAttribute('data-mode')) {
 			const data = this.canvas.getAttribute('data-mode');
-			if (['flat', 'box', 'sphere', 'torus'].indexOf(data) !== -1 || data.indexOf('.obj') !== -1) {
-				mode = data;
+			if (['flat', 'box', 'sphere', 'torus', 'mesh'].indexOf(data) !== -1) {
+				this.mode = data as ContextMode;
 			}
 		}
-		return mode;
+	}
+
+	protected parseMesh_() {
+		if (this.canvas.hasAttribute('data-mesh')) {
+			const data = this.canvas.getAttribute('data-mesh');
+			if (data.indexOf('.obj') !== -1) {
+				this.mesh = this.defaultMesh = data;
+			}
+		}
 	}
 
 	protected createBuffers_() {

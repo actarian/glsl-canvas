@@ -38,6 +38,7 @@ export class Buffer {
 	index: number;
 
 	constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, BW: number, BH: number, index: number) {
+		// BW = BH = 1024;
 		const buffer = gl.createFramebuffer();
 		const texture = this.getTexture(gl, BW, BH, index);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -76,6 +77,7 @@ export class Buffer {
 	}
 
 	getTexture(gl: WebGLRenderingContext | WebGL2RenderingContext, BW: number, BH: number, index: number): WebGLTexture {
+		// BW = BH = 1024;
 		const floatType = this.getFloatType(gl);
 		const texture = gl.createTexture();
 		gl.activeTexture(gl.TEXTURE0 + index);
@@ -94,6 +96,7 @@ export class Buffer {
 	}
 
 	resize(gl: WebGLRenderingContext | WebGL2RenderingContext, BW: number, BH: number) {
+		// BW = BH = 1024;
 		if (BW !== this.BW || BH !== this.BH) {
 			const buffer = this.buffer;
 			const texture = this.texture;
@@ -163,6 +166,7 @@ export class IOBuffer {
 	}
 
 	create(gl: WebGLRenderingContext | WebGL2RenderingContext, BW: number, BH: number) {
+		// BW = BH = 1024;
 		const vertexShader = Context.createShader(gl, this.vertexString, gl.VERTEX_SHADER);
 		let fragmentShader = Context.createShader(gl, this.fragmentString, gl.FRAGMENT_SHADER, 1);
 		if (!fragmentShader) {
@@ -193,10 +197,10 @@ export class IOBuffer {
 	}
 
 	render(gl: WebGLRenderingContext | WebGL2RenderingContext, BW: number, BH: number) {
+		// BW = BH = 1024;
 		gl.useProgram(this.program);
 		// gl.activeTexture(gl.TEXTURE0);
 		// gl.bindTexture(gl.TEXTURE_2D, this.input.texture);
-		// gl.viewport(0, 0, BW, BH);
 		gl.bindFramebuffer(gl.FRAMEBUFFER, this.output.buffer);
 		// gl.bindTexture(gl.TEXTURE_2D, this.output.texture);
 		// console.log(this.output.texture);
@@ -212,6 +216,7 @@ export class IOBuffer {
 		}
 		// this.geometry.createAttributes_(gl, this.program);
 		// this.geometry.bindAttributes_(gl, this.program);
+		gl.viewport(0, 0, BW, BH);
 		gl.drawArrays(gl.TRIANGLES, 0, this.geometry.size);
 		// console.log(this.geometry.size);
 		// gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -226,6 +231,7 @@ export class IOBuffer {
 	}
 
 	resize(gl: WebGLRenderingContext | WebGL2RenderingContext, BW: number, BH: number) {
+		// BW = BH = 1024;
 		gl.useProgram(this.program);
 		gl.viewport(0, 0, BW, BH);
 		this.input.resize(gl, BW, BH);

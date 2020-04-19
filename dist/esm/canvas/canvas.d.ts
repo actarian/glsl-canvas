@@ -1,50 +1,34 @@
 import 'promise-polyfill';
-import Buffers from '../buffers/buffers';
-import { ContextVertexBuffers, IContextOptions } from '../context/context';
-import Subscriber from '../core/subscriber';
+import { ContextMode } from '../context/context';
 import Logger from '../logger/logger';
-import Textures, { ITextureData, ITextureInput, ITextureOptions } from '../textures/textures';
-import Uniforms, { IUniformOption } from '../uniforms/uniforms';
-import CanvasTimer from './canvas-timer';
-export interface IPoint {
-    x: number;
-    y: number;
-}
-export interface ICanvasOptions extends IContextOptions {
+import Renderer from '../renderer/renderer';
+import { ITextureData, ITextureOptions } from '../textures/textures';
+import { IUniformOption } from '../uniforms/uniforms';
+export interface ICanvasOptions extends WebGLContextAttributes {
     vertexString?: string;
     fragmentString?: string;
     backgroundColor?: string;
     workpath?: string;
     onError?: Function;
     extensions?: string[];
+    mode?: ContextMode;
+    mesh?: string;
+    doubleSided?: boolean;
 }
-export default class Canvas extends Subscriber {
+export default class Canvas extends Renderer {
     options: ICanvasOptions;
     canvas: HTMLCanvasElement;
-    gl: WebGLRenderingContext | WebGL2RenderingContext;
-    program: WebGLProgram;
-    timer: CanvasTimer;
-    vertexBuffers: ContextVertexBuffers;
     rect: ClientRect | DOMRect;
-    mouse: IPoint;
-    uniforms: Uniforms;
-    buffers: Buffers;
-    textures: Textures;
-    textureList: ITextureInput[];
-    vertexString: string;
-    fragmentString: string;
     width: number;
     height: number;
     devicePixelRatio: number;
     valid: boolean;
-    animated: boolean;
-    dirty: boolean;
     visible: boolean;
+    controls: boolean;
     rafId: number;
     constructor(canvas: HTMLCanvasElement, options?: ICanvasOptions);
     static logger: Logger;
     static items: Canvas[];
-    static version(): string;
     static of(canvas: HTMLCanvasElement, options?: ICanvasOptions): Canvas;
     static loadAll(): Canvas[];
     private getShaders_;
@@ -53,9 +37,14 @@ export default class Canvas extends Subscriber {
     private removeCanvasListeners_;
     private removeListeners_;
     onScroll(e: Event): void;
+    onWheel(e: MouseWheelEvent): void;
     onClick(e: MouseEvent): void;
+    onDown(mx: number, my: number): void;
     onMove(mx: number, my: number): void;
+    onUp(e: Event): void;
+    onMousedown(e: MouseEvent): void;
     onMousemove(e: MouseEvent): void;
+    onMouseup(e: MouseEvent): void;
     onMouseover(e: MouseEvent): void;
     onMouseout(e: MouseEvent): void;
     onTouchmove(e: TouchEvent): void;
@@ -63,19 +52,24 @@ export default class Canvas extends Subscriber {
     onTouchstart(e: TouchEvent): void;
     onLoop(time?: number): void;
     private setUniform_;
-    private parseTextures_;
-    private createUniforms_;
-    private updateUniforms_;
     private isVisible_;
     private isAnimated_;
     private isDirty_;
     private sizeDidChanged_;
+    private parseTextures_;
     load(fragmentString?: string, vertexString?: string): Promise<boolean>;
-    getContext_(): WebGLRenderingContext | WebGL2RenderingContext;
-    createContext_(): boolean;
-    test(fragmentString?: string, vertexString?: string): Promise<any>;
-    destroyContext_(): void;
-    swapCanvas_(): void;
+    private getContext_;
+    private createContext_;
+    protected create_(): void;
+    protected parseMode_(): void;
+    protected parseMesh_(): void;
+    protected createBuffers_(): void;
+    protected createTextures_(): void;
+    protected update_(): void;
+    protected updateBuffers_(): void;
+    protected updateTextures_(): void;
+    private destroyContext_;
+    private swapCanvas_;
     destroy(): void;
     loadTexture(key: string, urlElementOrData: string | HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | Element | ITextureData, options?: ITextureOptions): void;
     setTexture(key: string, urlElementOrData: string | HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | Element | ITextureData, options?: ITextureOptions): void;
@@ -86,5 +80,4 @@ export default class Canvas extends Subscriber {
     play(): void;
     toggle(): void;
     checkRender(): void;
-    render(): void;
 }

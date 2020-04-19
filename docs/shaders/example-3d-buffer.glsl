@@ -24,9 +24,8 @@ uniform sampler2D u_buffer0;
 
 #if defined(VERTEX)
 
-// './data/duck-toy.obj'
-
-attribute vec4 a_position; // data/dolphin.obj;
+attribute vec4 a_position; // data/duck-toy.obj
+// attribute vec4 a_position;
 attribute vec2 a_texcoord;
 attribute vec3 a_normal;
 attribute vec4 a_color;
@@ -68,7 +67,7 @@ void main(void) {
 	gl_Position = v_position;
 
 	v_texcoord = a_texcoord;
-	v_normal = a_normal;
+	v_normal = normalize(a_normal);
 	v_color = a_color;
 
 	// light

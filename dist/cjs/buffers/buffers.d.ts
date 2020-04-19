@@ -1,6 +1,7 @@
 import IterableStringMap from '../core/iterable';
-export declare const BuffersDefaultFragment = "\nvoid main(){\n\tgl_FragColor = vec4(1.0);\n}";
-export declare const BuffersDefaultFragment2 = "#version 300 es\n\nprecision mediump float;\n\nout vec4 outColor;\n\nvoid main() {\n\toutColor = vec4(1.0);\n}\n";
+import Geometry from '../geometry/geometry';
+export declare const BuffersDefaultFragment = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nvoid main(){\n\tgl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);\n}";
+export declare const BuffersDefaultFragment2 = "#version 300 es\n\nprecision mediump float;\n\nout vec4 outColor;\n\nvoid main() {\n\toutColor = vec4(0.0, 0.0, 0.0, 1.0);\n}\n";
 export declare enum BufferFloatType {
     FLOAT = 0,
     HALF_FLOAT = 1
@@ -19,6 +20,7 @@ export declare class Buffer {
 }
 export declare class IOBuffer {
     program: WebGLProgram;
+    geometry: Geometry;
     input: Buffer;
     output: Buffer;
     index: number;

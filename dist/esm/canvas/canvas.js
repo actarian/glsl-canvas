@@ -1,29 +1,23 @@
 // import '@babel/polyfill';
 import 'promise-polyfill';
 import Buffers from '../buffers/buffers';
-import Context, { ContextDefaultFragment } from '../context/context';
+import Context, { ContextMode } from '../context/context';
 import Common from '../core/common';
-import Subscriber from '../core/subscriber';
 import Logger from '../logger/logger';
+import Vector2 from '../math/vector2';
+import Renderer from '../renderer/renderer';
 import Textures, { Texture } from '../textures/textures';
 import Uniforms, { UniformMethod, UniformType } from '../uniforms/uniforms';
-import CanvasTimer from './canvas-timer';
-export default class Canvas extends Subscriber {
+export default class Canvas extends Renderer {
     constructor(canvas, options = {
     // alpha: true,
     // antialias: true,
     // premultipliedAlpha: true
     }) {
         super();
-        this.mouse = { x: 0, y: 0 };
-        this.uniforms = new Uniforms();
-        this.buffers = new Buffers();
-        this.textures = new Textures();
-        this.textureList = [];
         this.valid = false;
-        this.animated = false;
-        this.dirty = true;
         this.visible = false;
+        this.controls = false;
         if (!canvas) {
             return;
         }
@@ -33,6 +27,11 @@ export default class Canvas extends Subscriber {
         this.height = 0;
         this.rect = canvas.getBoundingClientRect();
         this.devicePixelRatio = window.devicePixelRatio || 1;
+        this.mode = options.mode || ContextMode.Flat;
+        this.mesh = options.mesh || undefined;
+        this.doubleSided = options.doubleSided || false;
+        this.defaultMesh = this.mesh;
+        this.workpath = options.workpath;
         canvas.style.backgroundColor = options.backgroundColor || 'rgba(0,0,0,0)';
         this.getShaders_().then((success) => {
             this.load().then(success => {
@@ -43,12 +42,9 @@ export default class Canvas extends Subscriber {
                 this.onLoop();
             });
         }, (error) => {
-            Logger.log('GlslCanvas.getShaders_.error', error);
+            Logger.error('GlslCanvas.getShaders_.error', error);
         });
         Canvas.items.push(this);
-    }
-    static version() {
-        return '0.1.6';
     }
     static of(canvas, options) {
         return Canvas.items.find(x => x.canvas === canvas) || new Canvas(canvas, options);
@@ -105,11 +101,14 @@ export default class Canvas extends Subscriber {
         };
         */
         this.onScroll = this.onScroll.bind(this);
+        this.onWheel = this.onWheel.bind(this);
         this.onClick = this.onClick.bind(this);
         this.onMove = this.onMove.bind(this);
+        this.onMousedown = this.onMousedown.bind(this);
         this.onMousemove = this.onMousemove.bind(this);
         this.onMouseover = this.onMouseover.bind(this);
         this.onMouseout = this.onMouseout.bind(this);
+        this.onMouseup = this.onMouseup.bind(this);
         this.onTouchmove = this.onTouchmove.bind(this);
         this.onTouchend = this.onTouchend.bind(this);
         this.onTouchstart = this.onTouchstart.bind(this);
@@ -121,22 +120,29 @@ export default class Canvas extends Subscriber {
         this.addCanvasListeners_();
     }
     addCanvasListeners_() {
-        if (this.canvas.hasAttribute('controls')) {
-            this.canvas.addEventListener('click', this.onClick);
+        this.controls = this.canvas.hasAttribute('controls');
+        this.canvas.addEventListener('wheel', this.onWheel);
+        this.canvas.addEventListener('click', this.onClick);
+        this.canvas.addEventListener('mousedown', this.onMousedown);
+        this.canvas.addEventListener('touchstart', this.onTouchstart);
+        if (this.controls) {
             this.canvas.addEventListener('mouseover', this.onMouseover);
             this.canvas.addEventListener('mouseout', this.onMouseout);
-            this.canvas.addEventListener('touchstart', this.onTouchstart);
             if (!this.canvas.hasAttribute('data-autoplay')) {
                 this.pause();
             }
         }
     }
     removeCanvasListeners_() {
-        if (this.canvas.hasAttribute('controls')) {
-            this.canvas.removeEventListener('click', this.onClick);
+        this.canvas.removeEventListener('wheel', this.onWheel);
+        this.canvas.removeEventListener('click', this.onClick);
+        this.canvas.removeEventListener('mousedown', this.onMousedown);
+        this.canvas.removeEventListener('mouseup', this.onMouseup);
+        this.canvas.removeEventListener('touchstart', this.onTouchstart);
+        this.canvas.removeEventListener('touchend', this.onTouchend);
+        if (this.controls) {
             this.canvas.removeEventListener('mouseover', this.onMouseover);
             this.canvas.removeEventListener('mouseout', this.onMouseout);
-            this.canvas.removeEventListener('touchstart', this.onTouchstart);
         }
     }
     removeListeners_() {
@@ -150,16 +156,27 @@ export default class Canvas extends Subscriber {
     onScroll(e) {
         this.rect = this.canvas.getBoundingClientRect();
     }
+    onWheel(e) {
+        this.camera.wheel(e.deltaY);
+        this.trigger('wheel', e);
+    }
     onClick(e) {
-        this.toggle();
+        if (this.controls) {
+            this.toggle();
+        }
         this.trigger('click', e);
     }
+    onDown(mx, my) {
+        mx *= this.devicePixelRatio;
+        my *= this.devicePixelRatio;
+        this.mouse.x = mx;
+        this.mouse.y = my;
+        const rect = this.rect;
+        const min = Math.min(rect.width, rect.height);
+        this.camera.down(mx / min, my / min);
+        this.trigger('down', this.mouse);
+    }
     onMove(mx, my) {
-        /*
-        const rect = this.rect, gap = 20;
-        const x = Math.max(-gap, Math.min(rect.width + gap, (mx - rect.left) * this.devicePixelRatio));
-        const y = Math.max(-gap, Math.min(rect.height + gap, (this.canvas.height - (my - rect.top) * this.devicePixelRatio)));
-        */
         const rect = this.rect;
         const x = (mx - rect.left) * this.devicePixelRatio;
         const y = (rect.height - (my - rect.top)) * this.devicePixelRatio;
@@ -167,11 +184,29 @@ export default class Canvas extends Subscriber {
             y !== this.mouse.y) {
             this.mouse.x = x;
             this.mouse.y = y;
+            const min = Math.min(rect.width, rect.height);
+            this.camera.move(mx / min, my / min);
             this.trigger('move', this.mouse);
         }
     }
+    onUp(e) {
+        this.camera.up();
+        if (this.controls) {
+            this.pause();
+        }
+        this.trigger('out', e);
+    }
+    onMousedown(e) {
+        this.onDown(e.clientX || e.pageX, e.clientY || e.pageY);
+        document.addEventListener('mouseup', this.onMouseup);
+        document.removeEventListener('touchstart', this.onTouchstart);
+        document.removeEventListener('touchmove', this.onTouchmove);
+    }
     onMousemove(e) {
         this.onMove(e.clientX || e.pageX, e.clientY || e.pageY);
+    }
+    onMouseup(e) {
+        this.onUp(e);
     }
     onMouseover(e) {
         this.play();
@@ -183,7 +218,7 @@ export default class Canvas extends Subscriber {
     }
     onTouchmove(e) {
         const touch = [].slice.call(e.touches).reduce((p, touch) => {
-            p = p || { x: 0, y: 0 };
+            p = p || new Vector2();
             p.x += touch.clientX;
             p.y += touch.clientY;
             return p;
@@ -193,16 +228,27 @@ export default class Canvas extends Subscriber {
         }
     }
     onTouchend(e) {
-        this.pause();
-        this.trigger('out', e);
+        this.onUp(e);
         document.removeEventListener('touchend', this.onTouchend);
     }
     onTouchstart(e) {
-        this.play();
+        const touch = [].slice.call(e.touches).reduce((p, touch) => {
+            p = p || new Vector2();
+            p.x += touch.clientX;
+            p.y += touch.clientY;
+            return p;
+        }, null);
+        if (touch) {
+            this.onDown(touch.x / e.touches.length, touch.y / e.touches.length);
+        }
+        if (this.controls) {
+            this.play();
+        }
         this.trigger('over', e);
         document.addEventListener('touchend', this.onTouchend);
+        document.removeEventListener('mousedown', this.onMousedown);
         document.removeEventListener('mousemove', this.onMousemove);
-        if (this.canvas.hasAttribute('controls')) {
+        if (this.controls) {
             this.canvas.removeEventListener('mouseover', this.onMouseover);
             this.canvas.removeEventListener('mouseout', this.onMouseout);
         }
@@ -229,6 +275,55 @@ export default class Canvas extends Subscriber {
                 default:
                     this.uniforms.set(key, uniform);
             }
+        }
+    }
+    isVisible_() {
+        const rect = this.rect;
+        return (rect.top + rect.height) > 0 && rect.top < (window.innerHeight || document.documentElement.clientHeight);
+    }
+    isAnimated_() {
+        return (this.animated || this.textures.animated) && !this.timer.paused;
+    }
+    isDirty_() {
+        return this.dirty || this.uniforms.dirty || this.textures.dirty;
+    }
+    // check size change at start of requestFrame
+    sizeDidChanged_() {
+        const gl = this.gl;
+        const CW = Math.ceil(this.canvas.clientWidth), CH = Math.ceil(this.canvas.clientHeight);
+        if (this.width !== CW ||
+            this.height !== CH) {
+            this.width = CW;
+            this.height = CH;
+            // Lookup the size the browser is displaying the canvas in CSS pixels
+            // and compute a size needed to make our drawingbuffer match it in
+            // device pixels.
+            const W = Math.ceil(CW * this.devicePixelRatio);
+            const H = Math.ceil(CH * this.devicePixelRatio);
+            this.W = W;
+            this.H = H;
+            this.canvas.width = W;
+            this.canvas.height = H;
+            /*
+            if (gl.canvas.width !== W ||
+                gl.canvas.height !== H) {
+                gl.canvas.width = W;
+                gl.canvas.height = H;
+                // Set the viewport to match
+                // gl.viewport(0, 0, W, H);
+            }
+            */
+            for (const key in this.buffers.values) {
+                const buffer = this.buffers.values[key];
+                buffer.resize(gl, W, H);
+            }
+            this.rect = this.canvas.getBoundingClientRect();
+            this.trigger('resize');
+            // gl.useProgram(this.program);
+            return true;
+        }
+        else {
+            return false;
         }
     }
     parseTextures_(fragmentString) {
@@ -274,142 +369,11 @@ export default class Canvas extends Subscriber {
         }
         return this.textureList.length > 0;
     }
-    createUniforms_() {
-        const gl = this.gl;
-        const fragmentString = this.fragmentString;
-        const BW = gl.drawingBufferWidth;
-        const BH = gl.drawingBufferHeight;
-        const timer = this.timer = new CanvasTimer();
-        const hasDelta = (fragmentString.match(/u_delta/g) || []).length > 1;
-        const hasTime = (fragmentString.match(/u_time/g) || []).length > 1;
-        const hasDate = (fragmentString.match(/u_date/g) || []).length > 1;
-        const hasMouse = (fragmentString.match(/u_mouse/g) || []).length > 1;
-        const hasTextures = this.parseTextures_(fragmentString);
-        this.animated = hasTime || hasDate || hasMouse;
-        if (this.animated) {
-            this.canvas.classList.add('animated');
-        }
-        else {
-            this.canvas.classList.remove('animated');
-        }
-        this.uniforms.create(UniformMethod.Uniform2f, UniformType.Float, 'u_resolution', [BW, BH]);
-        if (hasDelta) {
-            this.uniforms.create(UniformMethod.Uniform1f, UniformType.Float, 'u_delta', [timer.delta / 1000.0]);
-        }
-        if (hasTime) {
-            this.uniforms.create(UniformMethod.Uniform1f, UniformType.Float, 'u_time', [timer.current / 1000.0]);
-        }
-        if (hasDate) {
-            const date = new Date();
-            this.uniforms.create(UniformMethod.Uniform4f, UniformType.Float, 'u_date', [date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001]);
-        }
-        if (hasMouse) {
-            this.uniforms.create(UniformMethod.Uniform2f, UniformType.Float, 'u_mouse', [0, 0]);
-        }
-        for (const key in this.buffers.values) {
-            const buffer = this.buffers.values[key];
-            this.uniforms.create(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, [buffer.input.index]);
-        }
-        if (hasTextures) {
-            this.textureList.filter(x => x.url).forEach(x => {
-                this.setTexture(x.key, x.url, x.options);
-            });
-            this.textureList = [];
-        }
-    }
-    updateUniforms_() {
-        const gl = this.gl;
-        const BW = gl.drawingBufferWidth;
-        const BH = gl.drawingBufferHeight;
-        if (!this.timer) {
-            return;
-        }
-        const timer = this.timer.next();
-        this.uniforms.update(UniformMethod.Uniform2f, UniformType.Float, 'u_resolution', [BW, BH]);
-        if (this.uniforms.has('u_delta')) {
-            this.uniforms.update(UniformMethod.Uniform1f, UniformType.Float, 'u_delta', [timer.delta / 1000.0]);
-        }
-        if (this.uniforms.has('u_time')) {
-            this.uniforms.update(UniformMethod.Uniform1f, UniformType.Float, 'u_time', [timer.current / 1000.0]);
-        }
-        if (this.uniforms.has('u_date')) {
-            const date = new Date();
-            this.uniforms.update(UniformMethod.Uniform4f, UniformType.Float, 'u_date', [date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001]);
-        }
-        if (this.uniforms.has('u_mouse')) {
-            const mouse = this.mouse;
-            this.uniforms.update(UniformMethod.Uniform2f, UniformType.Float, 'u_mouse', [mouse.x, mouse.y]);
-            /*
-            const rect = this.rect;
-            if (mouse.x >= rect.left && mouse.x <= rect.right &&
-                mouse.y >= rect.top && mouse.y <= rect.bottom) {
-                const MX = (mouse.x - rect.left) * this.devicePixelRatio;
-                const MY = (this.canvas.height - (mouse.y - rect.top) * this.devicePixelRatio);
-                this.uniforms.update(UniformMethod.Uniform2f, UniformType.Float, 'u_mouse', [MX, MY]);
-            }
-            */
-        }
-        for (const key in this.buffers.values) {
-            const buffer = this.buffers.values[key];
-            this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, [buffer.input.index]);
-        }
-        for (const key in this.textures.values) {
-            const texture = this.textures.values[key];
-            texture.tryUpdate(gl);
-            this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, texture.key, [texture.index]);
-        }
-    }
-    isVisible_() {
-        const rect = this.rect;
-        return (rect.top + rect.height) > 0 && rect.top < (window.innerHeight || document.documentElement.clientHeight);
-    }
-    isAnimated_() {
-        return (this.animated || this.textures.animated) && !this.timer.paused;
-    }
-    isDirty_() {
-        return this.dirty || this.uniforms.dirty || this.textures.dirty;
-    }
-    // check size change at start of requestFrame
-    sizeDidChanged_() {
-        const gl = this.gl;
-        const W = Math.ceil(this.canvas.clientWidth), H = Math.ceil(this.canvas.clientHeight);
-        if (this.width !== W ||
-            this.height !== H) {
-            this.width = W;
-            this.height = H;
-            // Lookup the size the browser is displaying the canvas in CSS pixels
-            // and compute a size needed to make our drawingbuffer match it in
-            // device pixels.
-            const BW = Math.ceil(W * this.devicePixelRatio);
-            const BH = Math.ceil(H * this.devicePixelRatio);
-            this.canvas.width = BW;
-            this.canvas.height = BH;
-            /*
-            if (gl.canvas.width !== BW ||
-                gl.canvas.height !== BH) {
-                gl.canvas.width = BW;
-                gl.canvas.height = BH;
-                // Set the viewport to match
-                // gl.viewport(0, 0, BW, BH);
-            }
-            */
-            for (const key in this.buffers.values) {
-                const buffer = this.buffers.values[key];
-                buffer.resize(gl, BW, BH);
-            }
-            this.rect = this.canvas.getBoundingClientRect();
-            this.trigger('resize');
-            // gl.useProgram(this.program);
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
     load(fragmentString, vertexString) {
+        const fragmentVertexString = Context.getFragmentVertex(this.gl, fragmentString || this.fragmentString);
         return Promise.all([
             Context.getIncludes(fragmentString || this.fragmentString),
-            Context.getIncludes(vertexString || this.vertexString)
+            Context.getIncludes(fragmentVertexString || vertexString || this.vertexString)
         ]).then(array => {
             this.fragmentString = array[0];
             this.vertexString = array[1];
@@ -419,8 +383,8 @@ export default class Canvas extends Subscriber {
     getContext_() {
         const vertexString = this.vertexString;
         const fragmentString = this.fragmentString;
-        this.vertexString = Context.getVertex(vertexString, fragmentString);
-        this.fragmentString = Context.getFragment(vertexString, fragmentString);
+        this.vertexString = Context.getVertex(vertexString, fragmentString, this.mode);
+        this.fragmentString = Context.getFragment(vertexString, fragmentString, this.mode);
         if (Context.versionDiffers(this.gl, vertexString, fragmentString)) {
             this.destroyContext_();
             this.swapCanvas_();
@@ -445,11 +409,13 @@ export default class Canvas extends Subscriber {
         }
         let vertexShader, fragmentShader;
         try {
+            Context.inferPrecision(this.fragmentString);
             vertexShader = Context.createShader(gl, this.vertexString, gl.VERTEX_SHADER);
             fragmentShader = Context.createShader(gl, this.fragmentString, gl.FRAGMENT_SHADER);
             // If Fragment shader fails load a empty one to sign the error
             if (!fragmentShader) {
-                fragmentShader = Context.createShader(gl, ContextDefaultFragment, gl.FRAGMENT_SHADER);
+                const defaultFragment = Context.getFragment(null, null, this.mode);
+                fragmentShader = Context.createShader(gl, defaultFragment, gl.FRAGMENT_SHADER);
                 this.valid = false;
             }
             else {
@@ -464,7 +430,11 @@ export default class Canvas extends Subscriber {
         }
         // Create and use program
         const program = Context.createProgram(gl, [vertexShader, fragmentShader]); //, [0,1],['a_texcoord','a_position']);
-        gl.useProgram(program);
+        if (!program) {
+            this.trigger('error', Context.lastError);
+            return false;
+        }
+        // console.log(this.vertexString, this.fragmentString, program);
         // Delete shaders
         // gl.detachShader(program, vertexShader);
         // gl.detachShader(program, fragmentShader);
@@ -473,7 +443,7 @@ export default class Canvas extends Subscriber {
         this.program = program;
         if (this.valid) {
             try {
-                this.buffers = Buffers.getBuffers(gl, this.fragmentString, this.vertexString);
+                this.buffers = Buffers.getBuffers(gl, this.fragmentString, Context.getBufferVertex(gl));
             }
             catch (e) {
                 // console.error('load', e);
@@ -481,55 +451,74 @@ export default class Canvas extends Subscriber {
                 this.trigger('error', e);
                 return false;
             }
-            this.vertexBuffers = Context.createVertexBuffers(gl, program);
-            this.createUniforms_();
+            this.create_();
+            if (this.animated) {
+                this.canvas.classList.add('animated');
+            }
+            else {
+                this.canvas.classList.remove('animated');
+            }
         }
         // Trigger event
         this.trigger('load', this);
         return this.valid;
     }
-    test(fragmentString, vertexString) {
-        return new Promise((resolve, reject) => {
-            const vertex = this.vertexString;
-            const fragment = this.fragmentString;
-            const paused = this.timer.paused;
-            // Thanks to @thespite for the help here
-            // https://www.khronos.org/registry/webgl/extensions/EXT_disjoint_timer_query/
-            const extension = this.gl.getExtension('EXT_disjoint_timer_query');
-            const query = extension.createQueryEXT();
-            let wasValid = this.valid;
-            if (fragmentString || vertexString) {
-                this.load(fragmentString, vertexString);
-                wasValid = this.valid;
-                this.render();
+    create_() {
+        this.parseMode_();
+        this.parseMesh_();
+        super.create_();
+        this.createBuffers_();
+        this.createTextures_();
+    }
+    parseMode_() {
+        if (this.canvas.hasAttribute('data-mode')) {
+            const data = this.canvas.getAttribute('data-mode');
+            if (['flat', 'box', 'sphere', 'torus', 'mesh'].indexOf(data) !== -1) {
+                this.mode = data;
             }
-            this.timer.paused = true;
-            extension.beginQueryEXT(extension.TIME_ELAPSED_EXT, query);
-            this.render();
-            extension.endQueryEXT(extension.TIME_ELAPSED_EXT);
-            const waitForTest = () => {
-                this.render();
-                const available = extension.getQueryObjectEXT(query, extension.QUERY_RESULT_AVAILABLE_EXT);
-                const disjoint = this.gl.getParameter(extension.GPU_DISJOINT_EXT);
-                if (available && !disjoint) {
-                    const result = {
-                        wasValid: wasValid,
-                        fragment: fragmentString || this.fragmentString,
-                        vertex: vertexString || this.vertexString,
-                        timeElapsedMs: extension.getQueryObjectEXT(query, extension.QUERY_RESULT_EXT) / 1000000.0
-                    };
-                    this.timer.paused = paused;
-                    if (fragmentString || vertexString) {
-                        this.load(fragment, vertex);
-                    }
-                    resolve(result);
-                }
-                else {
-                    window.requestAnimationFrame(waitForTest);
-                }
-            };
-            waitForTest();
-        });
+        }
+    }
+    parseMesh_() {
+        if (this.canvas.hasAttribute('data-mesh')) {
+            const data = this.canvas.getAttribute('data-mesh');
+            if (data.indexOf('.obj') !== -1) {
+                this.mesh = this.defaultMesh = data;
+            }
+        }
+    }
+    createBuffers_() {
+        for (const key in this.buffers.values) {
+            const buffer = this.buffers.values[key];
+            this.uniforms.create(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, [buffer.input.index]);
+        }
+    }
+    createTextures_() {
+        const hasTextures = this.parseTextures_(this.fragmentString);
+        if (hasTextures) {
+            this.textureList.filter(x => x.url).forEach(x => {
+                this.setTexture(x.key, x.url, x.options);
+            });
+            this.textureList = [];
+        }
+    }
+    update_() {
+        super.update_();
+        this.updateBuffers_();
+        this.updateTextures_();
+    }
+    updateBuffers_() {
+        for (const key in this.buffers.values) {
+            const buffer = this.buffers.values[key];
+            this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, [buffer.input.index]);
+        }
+    }
+    updateTextures_() {
+        const gl = this.gl;
+        for (const key in this.textures.values) {
+            const texture = this.textures.values[key];
+            texture.tryUpdate(gl);
+            this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, texture.key, [texture.index]);
+        }
     }
     destroyContext_() {
         const gl = this.gl;
@@ -579,7 +568,7 @@ export default class Canvas extends Subscriber {
                 return texture;
             }, error => {
                 const message = Array.isArray(error.path) ? error.path.map((x) => x.error ? x.error.message : '').join(', ') : error.message;
-                Logger.log('GlslCanvas.loadTexture.error', key, urlElementOrData, message);
+                Logger.error('GlslCanvas.loadTexture.error', key, urlElementOrData, message);
                 this.trigger('textureError', { key, urlElementOrData, message });
             });
         }
@@ -626,36 +615,13 @@ export default class Canvas extends Subscriber {
         }
     }
     checkRender() {
-        if (this.isVisible_() && (this.sizeDidChanged_() || this.isAnimated_() || this.isDirty_())) {
+        if (this.isVisible_() && (this.sizeDidChanged_() || this.isDirty_() || this.isAnimated_())) {
             this.render();
             this.canvas.classList.add('playing');
         }
         else {
             this.canvas.classList.remove('playing');
         }
-    }
-    render() {
-        const gl = this.gl;
-        if (!gl) {
-            return;
-        }
-        const BW = gl.drawingBufferWidth;
-        const BH = gl.drawingBufferHeight;
-        this.updateUniforms_();
-        for (const key in this.buffers.values) {
-            const buffer = this.buffers.values[key];
-            this.uniforms.apply(gl, buffer.program);
-            buffer.render(gl, BW, BH);
-        }
-        gl.useProgram(this.program);
-        this.uniforms.apply(gl, this.program);
-        gl.viewport(0, 0, BW, BH);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
-        this.uniforms.clean();
-        this.textures.clean();
-        this.dirty = false;
-        this.trigger('render', this);
     }
 }
 Canvas.logger = Logger;

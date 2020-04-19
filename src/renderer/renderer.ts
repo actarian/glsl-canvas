@@ -1,7 +1,8 @@
 import { mat4 } from 'gl-matrix';
 import Buffers, { IOBuffer } from '../buffers/buffers';
+import OrbitCamera from '../camera/orbit-camera';
 import CanvasTimer from '../canvas/canvas-timer';
-import Context, { ContextMode, ContextVertexBuffers } from '../context/context';
+import { ContextMode, ContextVertexBuffers } from '../context/context';
 import Subscriber from '../core/subscriber';
 import BoxGeometry from '../geometry/box-geometry';
 import FlatGeometry from '../geometry/flat-geometry';
@@ -9,15 +10,10 @@ import Geometry from '../geometry/geometry';
 import SphereGeometry from '../geometry/sphere-geometry';
 import TorusGeometry from '../geometry/torus-geometry';
 import ObjLoader from '../loaders/obj-loader';
+import Logger from '../logger/logger';
+import Vector2 from '../math/vector2';
 import Textures, { ITextureInput } from '../textures/textures';
 import Uniforms, { UniformMethod, UniformType } from '../uniforms/uniforms';
-
-export const useDoubleSide: boolean = true;
-
-export interface IPoint {
-	x: number,
-	y: number,
-}
 
 export default class Renderer extends Subscriber {
 
@@ -29,7 +25,9 @@ export default class Renderer extends Subscriber {
 	textures: Textures = new Textures();
 	textureList: ITextureInput[] = [];
 
-	mouse: IPoint = { x: 0, y: 0 };
+	W: number = 0;
+	H: number = 0;
+	mouse: Vector2 = new Vector2();
 	radians: number = 0;
 	dirty: boolean = true;
 	animated: boolean = false;
@@ -38,6 +36,7 @@ export default class Renderer extends Subscriber {
 	vertexString: string;
 	fragmentString: string;
 
+	camera: OrbitCamera = new OrbitCamera();
 	geometry: Geometry;
 
 	vertexBuffers: ContextVertexBuffers;
@@ -46,7 +45,12 @@ export default class Renderer extends Subscriber {
 	modelViewMatrix: mat4;
 	normalMatrix: mat4;
 
-	mode: ContextMode | string;
+	mode: ContextMode;
+	mesh: string;
+	defaultMesh: string;
+	doubleSided: boolean;
+	cache: { [key: string]: Geometry } = {};
+	workpath: string;
 
 	constructor() {
 		super();
@@ -65,6 +69,7 @@ export default class Renderer extends Subscriber {
 		for (const key in this.buffers.values) {
 			const buffer: IOBuffer = this.buffers.values[key];
 			buffer.geometry.attachAttributes_(gl, buffer.program);
+			// this.uniforms.get('u_resolution').values = [1024, 1024];
 			this.uniforms.apply(gl, buffer.program);
 			/*
 			console.log('uniforms');
@@ -76,8 +81,10 @@ export default class Renderer extends Subscriber {
 			*/
 			buffer.render(gl, BW, BH);
 		}
+		// this.uniforms.get('u_resolution').values = [BW, BH];
 		this.geometry.attachAttributes_(gl, this.program);
 		this.uniforms.apply(gl, this.program);
+		// gl.viewport(0, 0, BW, BH);
 		this.drawFunc_(this.timer.delta);
 		this.uniforms.clean();
 		this.textures.clean();
@@ -97,6 +104,7 @@ export default class Renderer extends Subscriber {
 		const gl = this.gl;
 		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 		// Clear
+		gl.viewport(0, 0, this.W, this.H);
 		gl.clearColor(0.0, 0.0, 0.0, 1.0);
 		gl.clearDepth(1.0);
 		// Clear the canvas before we start drawing on it.
@@ -104,7 +112,7 @@ export default class Renderer extends Subscriber {
 		gl.enable(gl.DEPTH_TEST);
 		gl.depthFunc(gl.LEQUAL);
 		gl.enable(gl.CULL_FACE);
-		if (this.mode !== ContextMode.Flat && useDoubleSide) {
+		if (this.doubleSided && this.mode !== ContextMode.Flat) {
 			// back
 			// gl.frontFace(gl.CW);
 			gl.cullFace(gl.FRONT);
@@ -120,7 +128,6 @@ export default class Renderer extends Subscriber {
 	}
 
 	protected create_(): void {
-		// this.createVertex__();
 		this.createGeometry_();
 		this.createUniforms_();
 	}
@@ -129,49 +136,18 @@ export default class Renderer extends Subscriber {
 		// console.log('Geometry', Geometry);
 		// console.log('FlatGeometry', FlatGeometry);
 		// console.log('BoxGeometry', BoxGeometry);
-		this.mode = this.parseGeometry_();
-		let geometry: Geometry;
-		switch (this.mode) {
-			case ContextMode.Flat:
-				geometry = new FlatGeometry();
-				break;
-			case ContextMode.Box:
-				geometry = new BoxGeometry();
-				break;
-			case ContextMode.Sphere:
-				geometry = new SphereGeometry();
-				break;
-			case ContextMode.Torus:
-				geometry = new TorusGeometry();
-				break;
-			default:
-				geometry = new FlatGeometry();
-				const loader = new ObjLoader();
-				loader.load(this.mode).then(geometry => {
-					// console.log(geometry);
-					geometry.createAttributes_(this.gl, this.program);
-					this.geometry = geometry;
-					this.dirty = true;
-				});
-		}
-		geometry.create(this.gl, this.program);
-		this.geometry = geometry;
+		this.parseGeometry_();
+		this.setMode(this.mode);
 	}
 
-	protected parseGeometry_(): ContextMode | string {
-		// attribute vec4 a_position;
-		let mode: ContextMode | string = this.mode;
-		const regexp = /attribute\s+vec4\s+a_position\s*;\s*\/\/\s*([\w|\:\/\/|\.|\-|\_|\?|\&|\=]+)/gm;
+	protected parseGeometry_() {
+		const regexp = /^attribute\s+vec4\s+a_position\s*;\s*\/\/\s*([\w|\:\/\/|\.|\-|\_|\?|\&|\=]+)/gm;
 		const match = regexp.exec(this.vertexString);
 		if (match && match.length > 1) {
-			mode = match[1];
+			this.mesh = match[1];
+		} else {
+			this.mesh = this.defaultMesh;
 		}
-		// console.log('match', match);
-		return mode;
-	}
-
-	protected createVertex__(): void {
-		this.vertexBuffers = Context.createVertexBuffers(this.gl, this.program);
 	}
 
 	protected createUniforms_(): void {
@@ -265,13 +241,27 @@ export default class Renderer extends Subscriber {
 		return this.projectionMatrix;
 	}
 
-	protected updateModelViewMatrix_(deltaTime: number): mat4 {
-		// this.modelViewMatrix = mat4.create();
+	/*
+	protected updateModelViewMatrix__(deltaTime: number): mat4 {
 		this.modelViewMatrix = mat4.identity(this.modelViewMatrix);
 		mat4.translate(this.modelViewMatrix, this.modelViewMatrix, [0.0, 0.0, -6.0]); // amount to translate
 		mat4.rotate(this.modelViewMatrix, this.modelViewMatrix, this.radians, [0, 1, 0]); // axis to rotate around (Y)
 		// mat4.rotate(this.modelViewMatrix, this.modelViewMatrix, this.radians * 0.2, [1, 0, 0]); // axis to rotate around (X)
 		this.radians += deltaTime * 0.001;
+		return this.modelViewMatrix;
+	}
+	*/
+
+	protected updateModelViewMatrix_(deltaTime: number): mat4 {
+		this.modelViewMatrix = mat4.identity(this.modelViewMatrix);
+		mat4.translate(this.modelViewMatrix, this.modelViewMatrix, [0.0, 0.0, -this.camera.radius]); // amount to translate
+		mat4.rotate(this.modelViewMatrix, this.modelViewMatrix, this.camera.theta + this.radians, [0, 1, 0]); // axis to rotate around (Y)
+		mat4.rotate(this.modelViewMatrix, this.modelViewMatrix, this.camera.phi, [1, 0, 0]); // axis to rotate around (X)
+		if (!this.camera.mouse) {
+			this.camera.theta += (0 - this.camera.theta) / 20;
+			this.camera.phi += (0 - this.camera.phi) / 20;
+			this.radians += deltaTime * 0.0005;
+		}
 		return this.modelViewMatrix;
 	}
 
@@ -281,6 +271,68 @@ export default class Renderer extends Subscriber {
 		mat4.invert(this.normalMatrix, modelViewMatrix);
 		mat4.transpose(this.normalMatrix, this.normalMatrix);
 		return this.normalMatrix;
+	}
+
+	public setMode(mode: ContextMode) {
+		let geometry: Geometry;
+		if (mode === ContextMode.Mesh) {
+			geometry = this.cache[this.mesh];
+			if (geometry) {
+				this.geometry = geometry;
+				this.mode = ContextMode.Mesh;
+				this.dirty = true;
+				return;
+			}
+		}
+		let loader: ObjLoader;
+		switch (mode) {
+			case ContextMode.Flat:
+				geometry = new FlatGeometry();
+				this.uniforms.update(UniformMethod.UniformMatrix4fv, UniformType.Float, 'u_projectionMatrix', mat4.create() as number[]);
+				this.uniforms.update(UniformMethod.UniformMatrix4fv, UniformType.Float, 'u_modelViewMatrix', mat4.create() as number[]);
+				this.uniforms.update(UniformMethod.UniformMatrix4fv, UniformType.Float, 'u_normalMatrix', mat4.create() as number[]);
+				break;
+			case ContextMode.Box:
+				geometry = new BoxGeometry();
+				break;
+			case ContextMode.Sphere:
+				geometry = new SphereGeometry();
+				break;
+			case ContextMode.Torus:
+				geometry = new TorusGeometry();
+				break;
+			case ContextMode.Mesh:
+				geometry = new FlatGeometry();
+				if (this.mesh) {
+					loader = new ObjLoader();
+					loader.load(this.getResource(this.mesh)).then(geometry => {
+						geometry.createAttributes_(this.gl, this.program);
+						const cache: { [key: string]: Geometry } = {};
+						cache[this.mesh] = geometry;
+						this.cache = cache;
+						this.geometry = geometry;
+						this.dirty = true;
+					}, error => {
+						Logger.warn('GlslCanvas', error);
+						this.mode = ContextMode.Flat;
+					});
+				} else {
+					mode = ContextMode.Flat;
+				}
+				break;
+		}
+		geometry.create(this.gl, this.program);
+		this.geometry = geometry;
+		this.mode = mode;
+		this.dirty = true;
+	}
+
+	public setMesh(mesh: string) {
+		this.mesh = mesh;
+	}
+
+	public getResource(url: string): string {
+		return String((url.indexOf(':/') === -1 && this.workpath !== undefined) ? `${this.workpath}/${url}` : url);
 	}
 
 }

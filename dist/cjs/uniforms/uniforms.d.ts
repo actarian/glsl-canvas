@@ -56,7 +56,6 @@ export declare class UniformTexture extends Uniform {
 }
 export default class Uniforms extends IterableStringMap<Uniform> {
     dirty: boolean;
-    static isDifferent(a: any[], b: any[]): boolean;
     static isArrayOfInteger(array: any[]): boolean;
     static isArrayOfNumber(array: any[]): boolean;
     static isArrayOfBoolean(array: any[]): boolean;
@@ -71,4 +70,5 @@ export default class Uniforms extends IterableStringMap<Uniform> {
     createOrUpdate(method: UniformMethod, type: UniformType, key: string, values: any[]): void;
     apply(gl: WebGLRenderingContext | WebGL2RenderingContext, program: WebGLProgram): void;
     clean(): void;
+    static isDifferent(a: any[], b: any[]): boolean;
 }

@@ -1,61 +1,294 @@
 import Common from '../core/common';
 import Logger from '../logger/logger';
-export const ContextDefaultVertex = `
+export const DefaultWebGLBufferVertex = `
 #ifdef GL_ES
 precision mediump float;
 #endif
 
-attribute vec2 a_position;
+attribute vec4 a_position;
 attribute vec2 a_texcoord;
+attribute vec3 a_normal;
+attribute vec4 a_color;
 
 varying vec2 v_texcoord;
+varying vec3 v_normal;
+varying vec4 v_color;
+varying vec3 v_light;
 
-void main(){
-	gl_Position = vec4(a_position, 0.0, 1.0);
+uniform mat4 u_projectionMatrix;
+uniform mat4 u_modelViewMatrix;
+uniform mat4 u_normalMatrix;
+
+uniform vec3 u_lightAmbient;
+uniform vec3 u_lightColor;
+uniform vec3 u_lightDirection;
+
+void main(void) {
+	gl_Position = a_position;
 	v_texcoord = a_texcoord;
+	v_normal = a_normal;
+	v_color = a_color;
+
+	// light
+	vec4 normal = u_normalMatrix * vec4(a_normal, 1.0);
+	float incidence = max(dot(normal.xyz, u_lightDirection), 0.0);
+	v_light = u_lightAmbient + (u_lightColor * incidence);
 }
 `;
-export const ContextDefaultFragment = `
+export const DefaultWebGL2BufferVertex = `#version 300 es
+
+precision mediump float;
+
+in vec4 a_position;
+in vec2 a_texcoord;
+in vec3 a_normal;
+in vec4 a_color;
+
+out vec2 v_texcoord;
+out vec3 v_normal;
+out vec4 v_color;
+out vec3 v_light;
+
+uniform mat4 u_projectionMatrix;
+uniform mat4 u_modelViewMatrix;
+uniform mat4 u_normalMatrix;
+
+uniform vec3 u_lightAmbient;
+uniform vec3 u_lightColor;
+uniform vec3 u_lightDirection;
+
+void main() {
+	gl_Position = a_position;
+	v_texcoord = a_texcoord;
+	v_normal = a_normal;
+	v_color = a_color;
+
+	// light
+	vec4 normal = u_normalMatrix * vec4(a_normal, 1.0);
+	float incidence = max(dot(normal.xyz, u_lightDirection), 0.0);
+	v_light = u_lightAmbient + (u_lightColor * incidence);
+}
+`;
+export const DefaultWebGLFlatFragment = `
 #ifdef GL_ES
 precision mediump float;
 #endif
 
-void main(){
-	gl_FragColor = vec4(0.0);
-}
-`;
-export const ContextDefaultVertex2 = `#version 300 es
-
-in vec2 a_position;
-in vec2 a_texcoord;
-
-out vec2 v_texcoord;
+uniform vec2 u_resolution;
+uniform float u_time;
 
 void main() {
-	gl_Position = vec4(a_position, 0.0, 1.0);
-	v_texcoord = a_texcoord;
+	vec2 st = gl_FragCoord.xy / u_resolution.xy;
+	st.x *= u_resolution.x / u_resolution.y;
+	vec3 color = vec3(
+		abs(cos(u_time * 0.1)) * st.y,
+		abs(cos(u_time * 0.2)) * st.y,
+		abs(sin(u_time)) * st.y
+	);
+	gl_FragColor = vec4(color, 1.0);
 }
 `;
-export const ContextDefaultFragment2 = `#version 300 es
+export const DefaultWebGLMeshVertex = `
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+attribute vec4 a_position;
+attribute vec2 a_texcoord;
+attribute vec3 a_normal;
+attribute vec4 a_color;
+
+varying vec4 v_position;
+varying vec2 v_texcoord;
+varying vec3 v_normal;
+varying vec4 v_color;
+varying vec3 v_light;
+
+uniform float u_time;
+
+uniform mat4 u_projectionMatrix;
+uniform mat4 u_modelViewMatrix;
+uniform mat4 u_normalMatrix;
+
+uniform vec3 u_lightAmbient;
+uniform vec3 u_lightColor;
+uniform vec3 u_lightDirection;
+
+void main(void) {
+	vec4 v_position = a_position;
+	// v_position.y += sin(v_position.x * 0.1) * 10.0;
+	// v_position.xyz += a_normal * 0.025 + cos(u_time * 5.0) * a_normal * 0.025;
+	v_position = u_projectionMatrix * u_modelViewMatrix * v_position;
+	gl_Position = v_position;
+
+	v_texcoord = a_texcoord;
+	v_normal = a_normal;
+	v_color = a_color;
+
+	// light
+	vec4 normal = u_normalMatrix * vec4(a_normal, 1.0) * 1.5;
+	float incidence = max(dot(normal.xyz, u_lightDirection), 0.0);
+	v_light = u_lightAmbient + (u_lightColor * incidence);
+}
+`;
+export const DefaultWebGL2MeshVertex = `#version 300 es
+
+precision mediump float;
+
+in vec4 a_position;
+in vec2 a_texcoord;
+in vec3 a_normal;
+in vec4 a_color;
+
+out vec2 v_texcoord;
+out vec3 v_normal;
+out vec4 v_color;
+out vec3 v_light;
+
+uniform mat4 u_projectionMatrix;
+uniform mat4 u_modelViewMatrix;
+uniform mat4 u_normalMatrix;
+
+uniform vec3 u_lightAmbient;
+uniform vec3 u_lightColor;
+uniform vec3 u_lightDirection;
+
+void main() {
+	gl_Position = u_projectionMatrix * u_modelViewMatrix * a_position;
+	v_texcoord = a_texcoord;
+	v_normal = a_normal;
+	v_color = a_color;
+
+	// light
+	vec4 normal = u_normalMatrix * vec4(a_normal, 1.0);
+	float incidence = max(dot(normal.xyz, u_lightDirection), 0.0);
+	v_light = u_lightAmbient + (u_lightColor * incidence);
+}
+`;
+export const DefaultWebGLMeshFragment = `
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+varying vec2 v_texcoord;
+varying vec3 v_normal;
+varying vec3 v_light;
+varying vec4 v_color;
+
+uniform vec2 u_resolution;
+uniform float u_time;
+
+void main() {
+	vec2 uv = v_texcoord;
+	vec3 color = vec3(
+		abs(cos(u_time * 0.1)) * uv.y,
+		abs(cos(u_time * 0.2)) * uv.y,
+		abs(sin(u_time)) * uv.y
+	);
+	gl_FragColor = vec4(v_color.rgb * color * v_light, 1.0);
+}
+`;
+export const DefaultWebGL2FlatFragment = `#version 300 es
 
 precision mediump float;
 
 out vec4 outColor;
 
+uniform vec2 u_resolution;
+uniform float u_time;
+
 void main() {
-	outColor = vec4(0.0);
+	vec2 st = gl_FragCoord.xy / u_resolution.xy;
+	st.x *= u_resolution.x / u_resolution.y;
+	vec3 color = vec3(
+		abs(cos(u_time * 0.1)) * st.y,
+		abs(cos(u_time * 0.2)) * st.y,
+		abs(sin(u_time)) * st.y
+	);
+	outColor = vec4(color, 1.0);
+}
+`;
+export const DefaultWebGL2MeshFragment = `#version 300 es
+
+precision mediump float;
+
+in vec2 v_texcoord;
+in vec3 v_light;
+in vec4 v_color;
+
+out vec4 outColor;
+
+uniform vec2 u_resolution;
+uniform float u_time;
+
+void main() {
+	vec2 uv = v_texcoord;
+	vec3 color = vec3(
+		abs(cos(u_time * 0.1)) * uv.y,
+		abs(cos(u_time * 0.2)) * uv.y,
+		abs(sin(u_time)) * uv.y
+	);
+	outColor = vec4(v_color.rgb * color * v_light, 1.0);
 }
 `;
 export var ContextVersion;
 (function (ContextVersion) {
-    ContextVersion[ContextVersion["WebGl"] = 1] = "WebGl";
-    ContextVersion[ContextVersion["WebGl2"] = 2] = "WebGl2";
+    ContextVersion["WebGl"] = "webgl";
+    ContextVersion["WebGl2"] = "webgl2";
 })(ContextVersion || (ContextVersion = {}));
+export var ContextPrecision;
+(function (ContextPrecision) {
+    ContextPrecision["LowP"] = "lowp";
+    ContextPrecision["MediumP"] = "mediump";
+    ContextPrecision["HighP"] = "highp";
+})(ContextPrecision || (ContextPrecision = {}));
+export var ContextMode;
+(function (ContextMode) {
+    ContextMode["Flat"] = "flat";
+    ContextMode["Box"] = "box";
+    ContextMode["Sphere"] = "sphere";
+    ContextMode["Torus"] = "torus";
+    ContextMode["Mesh"] = "mesh";
+})(ContextMode || (ContextMode = {}));
+export const ContextDefault = {
+    'webgl': {
+        'flat': {
+            vertex: DefaultWebGLMeshVertex,
+            fragment: DefaultWebGLFlatFragment,
+        },
+        'mesh': {
+            vertex: DefaultWebGLMeshVertex,
+            fragment: DefaultWebGLMeshFragment,
+        }
+    },
+    'webgl2': {
+        'flat': {
+            vertex: DefaultWebGL2MeshVertex,
+            fragment: DefaultWebGL2FlatFragment,
+        },
+        'mesh': {
+            vertex: DefaultWebGL2MeshVertex,
+            fragment: DefaultWebGL2MeshFragment,
+        }
+    }
+};
 export var ContextError;
 (function (ContextError) {
     ContextError[ContextError["BrowserSupport"] = 1] = "BrowserSupport";
     ContextError[ContextError["Other"] = 2] = "Other";
 })(ContextError || (ContextError = {}));
+/*
+export interface IContextOptions {
+    alpha?: GLboolean;
+    antialias?: GLboolean;
+    depth?: GLboolean;
+    failIfMajorPerformanceCaveat?: boolean;
+    powerPreference?: WebGLPowerPreference;
+    premultipliedAlpha?: GLboolean;
+    preserveDrawingBuffer?: GLboolean;
+    stencil?: GLboolean;
+}
+*/
 export class ContextVertexBuffers {
 }
 export default class Context {
@@ -83,6 +316,24 @@ export default class Context {
             // console.error('GlslCanvas.Context.getContext2_.error', e);
         }
         return context;
+    }
+    static getFragmentVertex(gl, fragmentString) {
+        let vertexString;
+        if (fragmentString) {
+            if (Context.isWebGl2(gl)) {
+                fragmentString = fragmentString.replace(/^\#version\s*300\s*es\s*\n/, '');
+            }
+            const regexp = /(?:^\s*)((?:#if|#elif)(?:\s*)(defined\s*\(\s*VERTEX)(?:\s*\))|(?:#ifdef)(?:\s*VERTEX)(?:\s*))/gm;
+            const matches = regexp.exec(fragmentString);
+            if (matches !== null) {
+                vertexString = Context.isWebGl2(gl) ? `#version 300 es
+#define VERTEX
+${fragmentString}` : `#define VERTEX
+${fragmentString}`;
+            }
+        }
+        // console.log('vertexString', vertexString);
+        return vertexString;
     }
     static getIncludes(input) {
         if (input === undefined) {
@@ -119,6 +370,14 @@ export default class Context {
             return ContextVersion.WebGl;
         }
     }
+    static inferPrecision(fragmentString) {
+        const precision = fragmentString.match(/precision\s+(.+)\s+float/);
+        if (precision && precision.length > 1) {
+            Context.precision = precision[1];
+        }
+        // console.log('precision', Context.precision);
+        return Context.precision;
+    }
     static versionDiffers(gl, vertexString, fragmentString) {
         if (gl) {
             const currentVersion = this.isWebGl2(gl) ? ContextVersion.WebGl2 : ContextVersion.WebGl;
@@ -129,22 +388,25 @@ export default class Context {
             return false;
         }
     }
-    static getVertex(vertexString, fragmentString) {
+    static getBufferVertex(gl) {
+        return this.isWebGl2(gl) ? DefaultWebGL2BufferVertex : DefaultWebGLBufferVertex;
+    }
+    static getVertex(vertexString, fragmentString, mode = ContextMode.Flat) {
         if (vertexString) {
             return vertexString;
         }
         else {
             const version = this.inferVersion(vertexString, fragmentString);
-            return version === ContextVersion.WebGl2 ? ContextDefaultVertex2 : ContextDefaultVertex;
+            return ContextDefault[version][mode === ContextMode.Flat ? 'flat' : 'mesh'].vertex;
         }
     }
-    static getFragment(vertexString, fragmentString) {
+    static getFragment(vertexString, fragmentString, mode = ContextMode.Flat) {
         if (fragmentString) {
             return fragmentString;
         }
         else {
             const version = this.inferVersion(vertexString, fragmentString);
-            return version === ContextVersion.WebGl2 ? ContextDefaultFragment2 : ContextDefaultFragment;
+            return ContextDefault[version][mode === ContextMode.Flat ? 'flat' : 'mesh'].fragment;
         }
     }
     static tryInferContext(vertexString, fragmentString, canvas, attributes, extensions = [], errorCallback) {
@@ -219,6 +481,7 @@ export default class Context {
     }
     static createShader(gl, source, type, offset = 0) {
         const shader = gl.createShader(type);
+        source = source.replace(/precision\s+(.+)\s+float/, `precision ${Context.precision} float`);
         gl.shaderSource(shader, source);
         gl.compileShader(shader);
         const compiled = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
@@ -226,7 +489,7 @@ export default class Context {
             // Something went wrong during compilation; get the error
             Context.lastError = gl.getShaderInfoLog(shader);
             // console.log('lastError', Context.lastError);
-            Logger.error(`*** Error compiling shader ${shader}: ${Context.lastError}`);
+            Logger.error(`*** Error compiling shader: ${Context.lastError}`);
             // main.trigger('error', {
             gl.deleteShader(shader);
             throw ({
@@ -250,15 +513,17 @@ export default class Context {
             }
         }
         gl.linkProgram(program);
+        gl.validateProgram(program);
         // Check the link status
         const linked = gl.getProgramParameter(program, gl.LINK_STATUS);
         if (!linked) {
             // something went wrong with the link
             Context.lastError = gl.getProgramInfoLog(program);
-            Logger.log(`Error in program linking: ${Context.lastError}`);
+            Logger.error(`Error in program linking: ${Context.lastError}`);
             gl.deleteProgram(program);
             return null;
         }
+        gl.useProgram(program);
         return program;
     }
     static createVertexBuffers(gl, program) {
@@ -278,4 +543,5 @@ export default class Context {
         return vertexBuffers;
     }
 }
+Context.precision = ContextPrecision.MediumP;
 Context.lastError = '';

@@ -3,9 +3,9 @@ import Geometry from "./geometry";
 export default class TorusGeometry extends Geometry {
 	protected createData_() {
 		const radius: number = 1;
-		const tube: number = 0.2;
-		const tubularDivisions: number = 100;
-		const radialDivisions: number = 20;
+		const tube: number = 0.25;
+		const tubularDivisions: number = 200;
+		const radialDivisions: number = 40;
 		const p: number = 2;
 		const q: number = 3;
 		// buffers
