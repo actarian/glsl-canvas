@@ -1,5 +1,5 @@
 /**
- * @license glsl-canvas-js v0.2.1
+ * @license glsl-canvas-js v0.2.2
  * (c) 2020 Luca Zampetti <lzampetti@gmail.com>
  * License: MIT
  */
@@ -36,6 +36,30 @@ var glsl = (function (exports) {
 
     return self;
   }
+
+  var DefaultWebGLVertexAttributes_ = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nattribute vec4 a_position;\nattribute vec4 a_normal;\nattribute vec2 a_texcoord;\nattribute vec4 a_color;\n\nvarying vec4 v_position;\nvarying vec4 v_normal;\nvarying vec2 v_texcoord;\nvarying vec4 v_color;\n";
+  var DefaultWebGLFragmentAttributes_ = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nvarying vec4 v_position;\nvarying vec4 v_normal;\nvarying vec2 v_texcoord;\nvarying vec4 v_color;\n";
+  var DefaultWebGL2VertexAttributes_ = "#version 300 es\n\nprecision mediump float;\n\nin vec4 a_position;\nin vec4 a_normal;\nin vec2 a_texcoord;\nin vec4 a_color;\n\nout vec4 v_position;\nout vec4 v_normal;\nout vec2 v_texcoord;\nout vec4 v_color;\n";
+  var DefaultWebGL2FragmentAttributes_ = "#version 300 es\n\nprecision mediump float;\n\nin vec4 v_position;\nin vec4 v_normal;\nin vec2 v_texcoord;\nin vec4 v_color;\n\nout vec4 outColor;\n";
+  var DefaultWebGLUniform_ = "\nuniform mat4 u_projectionMatrix;\nuniform mat4 u_modelViewMatrix;\nuniform mat4 u_normalMatrix;\n\nuniform vec2 u_resolution;\nuniform float u_time;\n";
+  var DefaultWebGLFlatVertex_ = "\nvoid main() {\n\tv_position = a_position;\n\tv_normal = a_normal;\n\tv_texcoord = a_texcoord;\n\tv_color = a_color;\n\tgl_Position = a_position;\n}\n";
+  var DefaultWebGLMeshVertex_ = "\nvoid main(void) {\n\tv_position = u_projectionMatrix * u_modelViewMatrix * a_position;\n\tv_normal = u_normalMatrix * a_normal;\n\tv_texcoord = a_texcoord;\n\tv_color = a_color;\n\tgl_Position = v_position;\n}\n";
+  var DefaultWebGLFlatFragment_ = "\nvoid main() {\n\tvec2 st = gl_FragCoord.xy / u_resolution.xy;\n\tst.x *= u_resolution.x / u_resolution.y;\n\tvec3 color = vec3(\n\t\tabs(cos(u_time * 0.1)) * st.y,\n\t\tabs(cos(u_time * 0.2)) * st.y,\n\t\tabs(sin(u_time)) * st.y\n\t);\n\tgl_FragColor = vec4(color, 1.0);\n}\n";
+  var DefaultWebGL2FlatFragment_ = "\nvoid main() {\n\tvec2 st = gl_FragCoord.xy / u_resolution.xy;\n\tst.x *= u_resolution.x / u_resolution.y;\n\tvec3 color = vec3(\n\t\tabs(cos(u_time * 0.1)) * st.y,\n\t\tabs(cos(u_time * 0.2)) * st.y,\n\t\tabs(sin(u_time)) * st.y\n\t);\n\toutColor = vec4(color, 1.0);\n}\n";
+  var DefaultWebGLMeshFragment_ = "\nvoid main() {\n\tvec2 uv = v_texcoord;\n\tvec3 color = vec3(\n\t\tabs(cos(u_time * 0.1)) * uv.y,\n\t\tabs(cos(u_time * 0.2)) * uv.y,\n\t\tabs(sin(u_time)) * uv.y\n\t);\n\tfloat incidence = max(dot(v_normal.xyz, vec3(0.0, 1.0, 0.0)), 0.0);\n\tvec3 light = vec3(0.2) + (vec3(1.0) * incidence);\n\tgl_FragColor = vec4(v_color.rgb * color * light, 1.0);\n}\n";
+  var DefaultWebGL2MeshFragment_ = "\nvoid main() {\n\tvec2 uv = v_texcoord;\n\tvec3 color = vec3(\n\t\tabs(cos(u_time * 0.1)) * uv.y,\n\t\tabs(cos(u_time * 0.2)) * uv.y,\n\t\tabs(sin(u_time)) * uv.y\n\t);\n\tfloat incidence = max(dot(v_normal.xyz, vec3(0.0, 1.0, 0.0)), 0.0);\n\tvec3 light = vec3(0.2) + (vec3(1.0) * incidence);\n\toutColor = vec4(v_color.rgb * color * light, 1.0);\n}\n";
+  var DefaultWebGLBufferFragment_ = "\nvoid main(){\n\tgl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);\n}";
+  var DefaultWebGL2BufferFragment_ = "\nvoid main() {\n\toutColor = vec4(0.0, 0.0, 0.0, 1.0);\n}\n";
+  var DefaultWebGLMeshVertex = DefaultWebGLVertexAttributes_ + DefaultWebGLUniform_ + DefaultWebGLMeshVertex_;
+  var DefaultWebGL2MeshVertex = DefaultWebGL2VertexAttributes_ + DefaultWebGLUniform_ + DefaultWebGLMeshVertex_;
+  var DefaultWebGLFlatFragment = DefaultWebGLFragmentAttributes_ + DefaultWebGLUniform_ + DefaultWebGLFlatFragment_;
+  var DefaultWebGL2FlatFragment = DefaultWebGL2FragmentAttributes_ + DefaultWebGLUniform_ + DefaultWebGL2FlatFragment_;
+  var DefaultWebGLMeshFragment = DefaultWebGLFragmentAttributes_ + DefaultWebGLUniform_ + DefaultWebGLMeshFragment_;
+  var DefaultWebGL2MeshFragment = DefaultWebGL2FragmentAttributes_ + DefaultWebGLUniform_ + DefaultWebGL2MeshFragment_;
+  var DefaultWebGLBufferVertex = DefaultWebGLVertexAttributes_ + DefaultWebGLUniform_ + DefaultWebGLFlatVertex_;
+  var DefaultWebGL2BufferVertex = DefaultWebGL2VertexAttributes_ + DefaultWebGLUniform_ + DefaultWebGLFlatVertex_;
+  var DefaultWebGLBufferFragment = DefaultWebGLFragmentAttributes_ + DefaultWebGLUniform_ + DefaultWebGLBufferFragment_;
+  var DefaultWebGL2BufferFragment = DefaultWebGL2FragmentAttributes_ + DefaultWebGLUniform_ + DefaultWebGL2BufferFragment_;
 
   /**
    * @this {Promise}
@@ -380,15 +404,6 @@ var glsl = (function (exports) {
   }();
   Logger.level = LoggerLevel.Warn;
   Logger.enabled = true;
-
-  var DefaultWebGLBufferVertex = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nattribute vec4 a_position;\nattribute vec2 a_texcoord;\nattribute vec3 a_normal;\nattribute vec4 a_color;\n\nvarying vec2 v_texcoord;\nvarying vec3 v_normal;\nvarying vec4 v_color;\nvarying vec3 v_light;\n\nuniform mat4 u_projectionMatrix;\nuniform mat4 u_modelViewMatrix;\nuniform mat4 u_normalMatrix;\n\nuniform vec3 u_lightAmbient;\nuniform vec3 u_lightColor;\nuniform vec3 u_lightDirection;\n\nvoid main(void) {\n\tgl_Position = a_position;\n\tv_texcoord = a_texcoord;\n\tv_normal = a_normal;\n\tv_color = a_color;\n\n\t// light\n\tvec4 normal = u_normalMatrix * vec4(a_normal, 1.0);\n\tfloat incidence = max(dot(normal.xyz, u_lightDirection), 0.0);\n\tv_light = u_lightAmbient + (u_lightColor * incidence);\n}\n";
-  var DefaultWebGL2BufferVertex = "#version 300 es\n\nprecision mediump float;\n\nin vec4 a_position;\nin vec2 a_texcoord;\nin vec3 a_normal;\nin vec4 a_color;\n\nout vec2 v_texcoord;\nout vec3 v_normal;\nout vec4 v_color;\nout vec3 v_light;\n\nuniform mat4 u_projectionMatrix;\nuniform mat4 u_modelViewMatrix;\nuniform mat4 u_normalMatrix;\n\nuniform vec3 u_lightAmbient;\nuniform vec3 u_lightColor;\nuniform vec3 u_lightDirection;\n\nvoid main() {\n\tgl_Position = a_position;\n\tv_texcoord = a_texcoord;\n\tv_normal = a_normal;\n\tv_color = a_color;\n\n\t// light\n\tvec4 normal = u_normalMatrix * vec4(a_normal, 1.0);\n\tfloat incidence = max(dot(normal.xyz, u_lightDirection), 0.0);\n\tv_light = u_lightAmbient + (u_lightColor * incidence);\n}\n";
-  var DefaultWebGLFlatFragment = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nuniform vec2 u_resolution;\nuniform float u_time;\n\nvoid main() {\n\tvec2 st = gl_FragCoord.xy / u_resolution.xy;\n\tst.x *= u_resolution.x / u_resolution.y;\n\tvec3 color = vec3(\n\t\tabs(cos(u_time * 0.1)) * st.y,\n\t\tabs(cos(u_time * 0.2)) * st.y,\n\t\tabs(sin(u_time)) * st.y\n\t);\n\tgl_FragColor = vec4(color, 1.0);\n}\n";
-  var DefaultWebGLMeshVertex = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nattribute vec4 a_position;\nattribute vec2 a_texcoord;\nattribute vec3 a_normal;\nattribute vec4 a_color;\n\nvarying vec4 v_position;\nvarying vec2 v_texcoord;\nvarying vec3 v_normal;\nvarying vec4 v_color;\nvarying vec3 v_light;\n\nuniform float u_time;\n\nuniform mat4 u_projectionMatrix;\nuniform mat4 u_modelViewMatrix;\nuniform mat4 u_normalMatrix;\n\nuniform vec3 u_lightAmbient;\nuniform vec3 u_lightColor;\nuniform vec3 u_lightDirection;\n\nvoid main(void) {\n\tvec4 v_position = a_position;\n\t// v_position.y += sin(v_position.x * 0.1) * 10.0;\n\t// v_position.xyz += a_normal * 0.025 + cos(u_time * 5.0) * a_normal * 0.025;\n\tv_position = u_projectionMatrix * u_modelViewMatrix * v_position;\n\tgl_Position = v_position;\n\n\tv_texcoord = a_texcoord;\n\tv_normal = a_normal;\n\tv_color = a_color;\n\n\t// light\n\tvec4 normal = u_normalMatrix * vec4(a_normal, 1.0) * 1.5;\n\tfloat incidence = max(dot(normal.xyz, u_lightDirection), 0.0);\n\tv_light = u_lightAmbient + (u_lightColor * incidence);\n}\n";
-  var DefaultWebGL2MeshVertex = "#version 300 es\n\nprecision mediump float;\n\nin vec4 a_position;\nin vec2 a_texcoord;\nin vec3 a_normal;\nin vec4 a_color;\n\nout vec2 v_texcoord;\nout vec3 v_normal;\nout vec4 v_color;\nout vec3 v_light;\n\nuniform mat4 u_projectionMatrix;\nuniform mat4 u_modelViewMatrix;\nuniform mat4 u_normalMatrix;\n\nuniform vec3 u_lightAmbient;\nuniform vec3 u_lightColor;\nuniform vec3 u_lightDirection;\n\nvoid main() {\n\tgl_Position = u_projectionMatrix * u_modelViewMatrix * a_position;\n\tv_texcoord = a_texcoord;\n\tv_normal = a_normal;\n\tv_color = a_color;\n\n\t// light\n\tvec4 normal = u_normalMatrix * vec4(a_normal, 1.0);\n\tfloat incidence = max(dot(normal.xyz, u_lightDirection), 0.0);\n\tv_light = u_lightAmbient + (u_lightColor * incidence);\n}\n";
-  var DefaultWebGLMeshFragment = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nvarying vec2 v_texcoord;\nvarying vec3 v_normal;\nvarying vec3 v_light;\nvarying vec4 v_color;\n\nuniform vec2 u_resolution;\nuniform float u_time;\n\nvoid main() {\n\tvec2 uv = v_texcoord;\n\tvec3 color = vec3(\n\t\tabs(cos(u_time * 0.1)) * uv.y,\n\t\tabs(cos(u_time * 0.2)) * uv.y,\n\t\tabs(sin(u_time)) * uv.y\n\t);\n\tgl_FragColor = vec4(v_color.rgb * color * v_light, 1.0);\n}\n";
-  var DefaultWebGL2FlatFragment = "#version 300 es\n\nprecision mediump float;\n\nout vec4 outColor;\n\nuniform vec2 u_resolution;\nuniform float u_time;\n\nvoid main() {\n\tvec2 st = gl_FragCoord.xy / u_resolution.xy;\n\tst.x *= u_resolution.x / u_resolution.y;\n\tvec3 color = vec3(\n\t\tabs(cos(u_time * 0.1)) * st.y,\n\t\tabs(cos(u_time * 0.2)) * st.y,\n\t\tabs(sin(u_time)) * st.y\n\t);\n\toutColor = vec4(color, 1.0);\n}\n";
-  var DefaultWebGL2MeshFragment = "#version 300 es\n\nprecision mediump float;\n\nin vec2 v_texcoord;\nin vec3 v_light;\nin vec4 v_color;\n\nout vec4 outColor;\n\nuniform vec2 u_resolution;\nuniform float u_time;\n\nvoid main() {\n\tvec2 uv = v_texcoord;\n\tvec3 color = vec3(\n\t\tabs(cos(u_time * 0.1)) * uv.y,\n\t\tabs(cos(u_time * 0.2)) * uv.y,\n\t\tabs(sin(u_time)) * uv.y\n\t);\n\toutColor = vec4(v_color.rgb * color * v_light, 1.0);\n}\n";
 
   (function (ContextVersion) {
     ContextVersion["WebGl"] = "webgl";
@@ -929,9 +944,6 @@ var glsl = (function (exports) {
     return FlatGeometry;
   }(Geometry);
 
-  var BuffersDefaultFragment = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nvoid main(){\n\tgl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);\n}";
-  var BuffersDefaultFragment2 = "#version 300 es\n\nprecision mediump float;\n\nout vec4 outColor;\n\nvoid main() {\n\toutColor = vec4(0.0, 0.0, 0.0, 1.0);\n}\n";
-
   (function (BufferFloatType) {
     BufferFloatType[BufferFloatType["FLOAT"] = 0] = "FLOAT";
     BufferFloatType[BufferFloatType["HALF_FLOAT"] = 1] = "HALF_FLOAT";
@@ -1067,7 +1079,7 @@ var glsl = (function (exports) {
       var fragmentShader = Context.createShader(gl, this.fragmentString, gl.FRAGMENT_SHADER, 1);
 
       if (!fragmentShader) {
-        fragmentShader = Context.createShader(gl, Context.isWebGl2(gl) ? BuffersDefaultFragment2 : BuffersDefaultFragment, gl.FRAGMENT_SHADER);
+        fragmentShader = Context.createShader(gl, Context.isWebGl2(gl) ? DefaultWebGL2BufferFragment : DefaultWebGLBufferFragment, gl.FRAGMENT_SHADER);
         this.isValid = false;
       } else {
         this.isValid = true;
@@ -1231,6 +1243,141 @@ var glsl = (function (exports) {
 
     return Vector2;
   }();
+
+  var Vector3 = function () {
+    function Vector3(x, y, z) {
+      if (x === void 0) {
+        x = 0;
+      }
+
+      if (y === void 0) {
+        y = 0;
+      }
+
+      if (z === void 0) {
+        z = 0;
+      }
+
+      this.isVector3 = true;
+      this.x = x;
+      this.y = y;
+      this.z = z;
+    }
+
+    var _proto = Vector3.prototype;
+
+    _proto.copy = function copy(v) {
+      this.x = v.x;
+      this.y = v.y;
+      this.z = v.z;
+      return this;
+    };
+
+    _proto.length = function length() {
+      return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+    };
+
+    _proto.normalize = function normalize() {
+      return this.divideScalar(this.length() || 1);
+    };
+
+    _proto.divideScalar = function divideScalar(scalar) {
+      return this.multiplyScalar(1 / scalar);
+    };
+
+    _proto.multiplyScalar = function multiplyScalar(scalar) {
+      this.x *= scalar;
+      this.y *= scalar;
+      this.z *= scalar;
+      return this;
+    };
+
+    _proto.subVectors = function subVectors(a, b) {
+      this.x = a.x - b.x;
+      this.y = a.y - b.y;
+      this.z = a.z - b.z;
+      return this;
+    };
+
+    _proto.addVectors = function addVectors(a, b) {
+      this.x = a.x + b.x;
+      this.y = a.y + b.y;
+      this.z = a.z + b.z;
+      return this;
+    };
+
+    _proto.crossVectors = function crossVectors(a, b) {
+      var ax = a.x,
+          ay = a.y,
+          az = a.z;
+      var bx = b.x,
+          by = b.y,
+          bz = b.z;
+      this.x = ay * bz - az * by;
+      this.y = az * bx - ax * bz;
+      this.z = ax * by - ay * bx;
+      return this;
+    };
+
+    return Vector3;
+  }();
+
+  var PI = Math.PI;
+  var RAD = PI / 180;
+
+  var OrbitCamera = function (_Vector) {
+    _inheritsLoose(OrbitCamera, _Vector);
+
+    function OrbitCamera(theta, phi, radius) {
+      var _this;
+
+      _this = _Vector.call(this) || this;
+      _this.position = new Vector3();
+      _this.value = new Float32Array([0, 0, 0]);
+      _this.mouse = null;
+      _this.dirty = false;
+      _this.theta = (theta || 0) * RAD;
+      _this.phi = (phi || 0) * RAD;
+      _this.radius = radius || 6.0;
+      return _this;
+    }
+
+    var _proto = OrbitCamera.prototype;
+
+    _proto.down = function down(x, y) {
+      this.mouse = new Vector2(x, y);
+    };
+
+    _proto.move = function move(x, y) {
+      var mouse = this.mouse;
+
+      if (mouse && (mouse.x !== x || mouse.y !== y)) {
+        var theta = (x - mouse.x) * 180 * RAD;
+        var phi = (y - mouse.y) * 180 * RAD;
+        mouse.x = x;
+        mouse.y = y;
+        this.theta += theta;
+        this.phi = Math.max(-60 * RAD, Math.min(60 * RAD, this.phi + phi));
+      }
+    };
+
+    _proto.up = function up() {
+      this.mouse = null;
+    };
+
+    _proto.wheel = function wheel(d) {
+      this.radius = Math.max(4.0, Math.min(10.0, this.radius + d * 0.02));
+    };
+
+    OrbitCamera.fromVector = function fromVector(vector) {
+      var radius = vector.length();
+      var theta = Math.acos(vector.y / radius);
+      var phi = Math.atan(vector.x / vector.z);
+      return new OrbitCamera(theta, phi, radius);
+    };
+
+    return OrbitCamera;
+  }(Vector3);
 
   /**
    * Common utilities
@@ -1601,140 +1748,6 @@ var glsl = (function (exports) {
     return out;
   }
 
-  var Vector3 = function () {
-    function Vector3(x, y, z) {
-      if (x === void 0) {
-        x = 0;
-      }
-
-      if (y === void 0) {
-        y = 0;
-      }
-
-      if (z === void 0) {
-        z = 0;
-      }
-
-      this.isVector3 = true;
-      this.x = x;
-      this.y = y;
-      this.z = z;
-    }
-
-    var _proto = Vector3.prototype;
-
-    _proto.copy = function copy(v) {
-      this.x = v.x;
-      this.y = v.y;
-      this.z = v.z;
-      return this;
-    };
-
-    _proto.length = function length() {
-      return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
-    };
-
-    _proto.normalize = function normalize() {
-      return this.divideScalar(this.length() || 1);
-    };
-
-    _proto.divideScalar = function divideScalar(scalar) {
-      return this.multiplyScalar(1 / scalar);
-    };
-
-    _proto.multiplyScalar = function multiplyScalar(scalar) {
-      this.x *= scalar;
-      this.y *= scalar;
-      this.z *= scalar;
-      return this;
-    };
-
-    _proto.subVectors = function subVectors(a, b) {
-      this.x = a.x - b.x;
-      this.y = a.y - b.y;
-      this.z = a.z - b.z;
-      return this;
-    };
-
-    _proto.addVectors = function addVectors(a, b) {
-      this.x = a.x + b.x;
-      this.y = a.y + b.y;
-      this.z = a.z + b.z;
-      return this;
-    };
-
-    _proto.crossVectors = function crossVectors(a, b) {
-      var ax = a.x,
-          ay = a.y,
-          az = a.z;
-      var bx = b.x,
-          by = b.y,
-          bz = b.z;
-      this.x = ay * bz - az * by;
-      this.y = az * bx - ax * bz;
-      this.z = ax * by - ay * bx;
-      return this;
-    };
-
-    return Vector3;
-  }();
-
-  var PI = Math.PI;
-  var RAD = PI / 180;
-
-  var OrbitCamera = function (_Vector) {
-    _inheritsLoose(OrbitCamera, _Vector);
-
-    function OrbitCamera(theta, phi, radius) {
-      var _this;
-
-      _this = _Vector.call(this) || this;
-      _this.position = new Vector3();
-      _this.value = new Float32Array([0, 0, 0]);
-      _this.dirty = false;
-      _this.theta = (theta || 0) * RAD;
-      _this.phi = (phi || 0) * RAD;
-      _this.radius = radius || 6.0;
-      return _this;
-    }
-
-    var _proto = OrbitCamera.prototype;
-
-    _proto.down = function down(x, y) {
-      this.mouse = new Vector2(x, y);
-    };
-
-    _proto.move = function move(x, y) {
-      var mouse = this.mouse;
-
-      if (mouse && (mouse.x !== x || mouse.y !== y)) {
-        var theta = (x - mouse.x) * 180 * RAD;
-        var phi = (y - mouse.y) * 180 * RAD;
-        mouse.x = x;
-        mouse.y = y;
-        this.theta += theta;
-        this.phi = Math.max(-60 * RAD, Math.min(60 * RAD, this.phi + phi));
-      }
-    };
-
-    _proto.up = function up() {
-      this.mouse = null;
-    };
-
-    _proto.wheel = function wheel(d) {
-      this.radius = Math.max(4.0, Math.min(10.0, this.radius + d * 0.02));
-    };
-
-    OrbitCamera.fromVector = function fromVector(vector) {
-      var radius = vector.length();
-      var theta = Math.acos(vector.y / radius);
-      var phi = Math.atan(vector.x / vector.z);
-      return new OrbitCamera(theta, phi, radius);
-    };
-
-    return OrbitCamera;
-  }(Vector3);
-
   var CanvasTimer = function () {
     function CanvasTimer() {
       this.delay = 0.0;
@@ -1999,7 +2012,7 @@ var glsl = (function (exports) {
           positions.push(vertex.x, vertex.y, vertex.z);
           normal.subVectors(vertex, p1).normalize();
           normals.push(normal.x, normal.y, normal.z);
-          texcoords.push(i / tubularDivisions);
+          texcoords.push(i / tubularDivisions * 2.0 * Math.round(q));
           texcoords.push(j / radialDivisions);
           colors.push(1.0, 1.0, 1.0, 1.0);
         }
@@ -3138,9 +3151,6 @@ var glsl = (function (exports) {
       this.uniforms.create(exports.UniformMethod.UniformMatrix4fv, exports.UniformType.Float, 'u_modelViewMatrix', this.modelViewMatrix);
       this.normalMatrix = create();
       this.uniforms.create(exports.UniformMethod.UniformMatrix4fv, exports.UniformType.Float, 'u_normalMatrix', this.normalMatrix);
-      this.uniforms.create(exports.UniformMethod.Uniform3f, exports.UniformType.Float, 'u_lightAmbient', [0.3, 0.3, 0.3]);
-      this.uniforms.create(exports.UniformMethod.Uniform3f, exports.UniformType.Float, 'u_lightColor', [1.0, 1.0, 1.0]);
-      this.uniforms.create(exports.UniformMethod.Uniform3f, exports.UniformType.Float, 'u_lightDirection', [0.0, 0.0, 1.0]);
     };
 
     _proto.update_ = function update_() {
@@ -3344,21 +3354,6 @@ var glsl = (function (exports) {
       return _this;
     }
 
-    Canvas.of = function of(canvas, options) {
-      return Canvas.items.find(function (x) {
-        return x.canvas === canvas;
-      }) || new Canvas(canvas, options);
-    };
-
-    Canvas.loadAll = function loadAll() {
-      var canvases = [].slice.call(document.getElementsByClassName('glsl-canvas')).filter(function (x) {
-        return x instanceof HTMLCanvasElement;
-      });
-      return canvases.map(function (x) {
-        return Canvas.of(x);
-      });
-    };
-
     var _proto = Canvas.prototype;
 
     _proto.getShaders_ = function getShaders_() {
@@ -3410,18 +3405,18 @@ var glsl = (function (exports) {
       this.onWheel = this.onWheel.bind(this);
       this.onClick = this.onClick.bind(this);
       this.onMove = this.onMove.bind(this);
-      this.onMousedown = this.onMousedown.bind(this);
-      this.onMousemove = this.onMousemove.bind(this);
-      this.onMouseover = this.onMouseover.bind(this);
-      this.onMouseout = this.onMouseout.bind(this);
-      this.onMouseup = this.onMouseup.bind(this);
-      this.onTouchmove = this.onTouchmove.bind(this);
-      this.onTouchend = this.onTouchend.bind(this);
-      this.onTouchstart = this.onTouchstart.bind(this);
+      this.onMouseDown = this.onMouseDown.bind(this);
+      this.onMouseMove = this.onMouseMove.bind(this);
+      this.onMouseOver = this.onMouseOver.bind(this);
+      this.onMouseOut = this.onMouseOut.bind(this);
+      this.onMouseUp = this.onMouseUp.bind(this);
+      this.onTouchMove = this.onTouchMove.bind(this);
+      this.onTouchEnd = this.onTouchEnd.bind(this);
+      this.onTouchStart = this.onTouchStart.bind(this);
       this.onLoop = this.onLoop.bind(this);
       window.addEventListener('scroll', this.onScroll);
-      document.addEventListener('mousemove', this.onMousemove, false);
-      document.addEventListener('touchmove', this.onTouchmove);
+      document.addEventListener('mousemove', this.onMouseMove, false);
+      document.addEventListener('touchmove', this.onTouchMove);
       this.addCanvasListeners_();
     };
 
@@ -3429,12 +3424,12 @@ var glsl = (function (exports) {
       this.controls = this.canvas.hasAttribute('controls');
       this.canvas.addEventListener('wheel', this.onWheel);
       this.canvas.addEventListener('click', this.onClick);
-      this.canvas.addEventListener('mousedown', this.onMousedown);
-      this.canvas.addEventListener('touchstart', this.onTouchstart);
+      this.canvas.addEventListener('mousedown', this.onMouseDown);
+      this.canvas.addEventListener('touchstart', this.onTouchStart);
 
       if (this.controls) {
-        this.canvas.addEventListener('mouseover', this.onMouseover);
-        this.canvas.addEventListener('mouseout', this.onMouseout);
+        this.canvas.addEventListener('mouseover', this.onMouseOver);
+        this.canvas.addEventListener('mouseout', this.onMouseOut);
 
         if (!this.canvas.hasAttribute('data-autoplay')) {
           this.pause();
@@ -3445,22 +3440,22 @@ var glsl = (function (exports) {
     _proto.removeCanvasListeners_ = function removeCanvasListeners_() {
       this.canvas.removeEventListener('wheel', this.onWheel);
       this.canvas.removeEventListener('click', this.onClick);
-      this.canvas.removeEventListener('mousedown', this.onMousedown);
-      this.canvas.removeEventListener('mouseup', this.onMouseup);
-      this.canvas.removeEventListener('touchstart', this.onTouchstart);
-      this.canvas.removeEventListener('touchend', this.onTouchend);
+      this.canvas.removeEventListener('mousedown', this.onMouseDown);
+      this.canvas.removeEventListener('mouseup', this.onMouseUp);
+      this.canvas.removeEventListener('touchstart', this.onTouchStart);
+      this.canvas.removeEventListener('touchend', this.onTouchEnd);
 
       if (this.controls) {
-        this.canvas.removeEventListener('mouseover', this.onMouseover);
-        this.canvas.removeEventListener('mouseout', this.onMouseout);
+        this.canvas.removeEventListener('mouseover', this.onMouseOver);
+        this.canvas.removeEventListener('mouseout', this.onMouseOut);
       }
     };
 
     _proto.removeListeners_ = function removeListeners_() {
       window.cancelAnimationFrame(this.rafId);
       window.removeEventListener('scroll', this.onScroll);
-      document.removeEventListener('mousemove', this.onMousemove);
-      document.removeEventListener('touchmove', this.onTouchmove);
+      document.removeEventListener('mousemove', this.onMouseMove);
+      document.removeEventListener('touchmove', this.onTouchMove);
       this.removeCanvasListeners_();
     };
 
@@ -3470,6 +3465,7 @@ var glsl = (function (exports) {
 
     _proto.onWheel = function onWheel(e) {
       this.camera.wheel(e.deltaY);
+      this.dirty = this.mode !== ContextMode.Flat;
       this.trigger('wheel', e);
     };
 
@@ -3482,10 +3478,8 @@ var glsl = (function (exports) {
     };
 
     _proto.onDown = function onDown(mx, my) {
-      mx *= this.devicePixelRatio;
-      my *= this.devicePixelRatio;
-      this.mouse.x = mx;
-      this.mouse.y = my;
+      this.mouse.x = mx * this.devicePixelRatio;
+      this.mouse.y = my * this.devicePixelRatio;
       var rect = this.rect;
       var min = Math.min(rect.width, rect.height);
       this.camera.down(mx / min, my / min);
@@ -3502,6 +3496,7 @@ var glsl = (function (exports) {
         this.mouse.y = y;
         var min = Math.min(rect.width, rect.height);
         this.camera.move(mx / min, my / min);
+        this.dirty = this.mode !== ContextMode.Flat && this.camera.mouse !== null;
         this.trigger('move', this.mouse);
       }
     };
@@ -3516,50 +3511,32 @@ var glsl = (function (exports) {
       this.trigger('out', e);
     };
 
-    _proto.onMousedown = function onMousedown(e) {
-      this.onDown(e.clientX || e.pageX, e.clientY || e.pageY);
-      document.addEventListener('mouseup', this.onMouseup);
-      document.removeEventListener('touchstart', this.onTouchstart);
-      document.removeEventListener('touchmove', this.onTouchmove);
+    _proto.onMouseDown = function onMouseDown(e) {
+      this.onDown(e.clientX, e.clientY);
+      document.addEventListener('mouseup', this.onMouseUp);
+      document.removeEventListener('touchstart', this.onTouchStart);
+      document.removeEventListener('touchmove', this.onTouchMove);
     };
 
-    _proto.onMousemove = function onMousemove(e) {
-      this.onMove(e.clientX || e.pageX, e.clientY || e.pageY);
+    _proto.onMouseMove = function onMouseMove(e) {
+      this.onMove(e.clientX, e.clientY);
     };
 
-    _proto.onMouseup = function onMouseup(e) {
+    _proto.onMouseUp = function onMouseUp(e) {
       this.onUp(e);
     };
 
-    _proto.onMouseover = function onMouseover(e) {
+    _proto.onMouseOver = function onMouseOver(e) {
       this.play();
       this.trigger('over', e);
     };
 
-    _proto.onMouseout = function onMouseout(e) {
+    _proto.onMouseOut = function onMouseOut(e) {
       this.pause();
       this.trigger('out', e);
     };
 
-    _proto.onTouchmove = function onTouchmove(e) {
-      var touch = [].slice.call(e.touches).reduce(function (p, touch) {
-        p = p || new Vector2();
-        p.x += touch.clientX;
-        p.y += touch.clientY;
-        return p;
-      }, null);
-
-      if (touch) {
-        this.onMove(touch.x / e.touches.length, touch.y / e.touches.length);
-      }
-    };
-
-    _proto.onTouchend = function onTouchend(e) {
-      this.onUp(e);
-      document.removeEventListener('touchend', this.onTouchend);
-    };
-
-    _proto.onTouchstart = function onTouchstart(e) {
+    _proto.onTouchStart = function onTouchStart(e) {
       var touch = [].slice.call(e.touches).reduce(function (p, touch) {
         p = p || new Vector2();
         p.x += touch.clientX;
@@ -3576,14 +3553,32 @@ var glsl = (function (exports) {
       }
 
       this.trigger('over', e);
-      document.addEventListener('touchend', this.onTouchend);
-      document.removeEventListener('mousedown', this.onMousedown);
-      document.removeEventListener('mousemove', this.onMousemove);
+      document.addEventListener('touchend', this.onTouchEnd);
+      document.removeEventListener('mousedown', this.onMouseDown);
+      document.removeEventListener('mousemove', this.onMouseMove);
 
       if (this.controls) {
-        this.canvas.removeEventListener('mouseover', this.onMouseover);
-        this.canvas.removeEventListener('mouseout', this.onMouseout);
+        this.canvas.removeEventListener('mouseover', this.onMouseOver);
+        this.canvas.removeEventListener('mouseout', this.onMouseOut);
       }
+    };
+
+    _proto.onTouchMove = function onTouchMove(e) {
+      var touch = [].slice.call(e.touches).reduce(function (p, touch) {
+        p = p || new Vector2();
+        p.x += touch.clientX;
+        p.y += touch.clientY;
+        return p;
+      }, null);
+
+      if (touch) {
+        this.onMove(touch.x / e.touches.length, touch.y / e.touches.length);
+      }
+    };
+
+    _proto.onTouchEnd = function onTouchEnd(e) {
+      this.onUp(e);
+      document.removeEventListener('touchend', this.onTouchEnd);
     };
 
     _proto.onLoop = function onLoop(time) {
@@ -3632,7 +3627,7 @@ var glsl = (function (exports) {
     };
 
     _proto.isAnimated_ = function isAnimated_() {
-      return (this.animated || this.textures.animated) && !this.timer.paused;
+      return (this.animated || this.textures.animated || this.mode !== ContextMode.Flat) && !this.timer.paused;
     };
 
     _proto.isDirty_ = function isDirty_() {
@@ -3917,7 +3912,11 @@ var glsl = (function (exports) {
       this.destroyContext_();
       this.animated = false;
       this.valid = false;
-      Canvas.items.splice(Canvas.items.indexOf(this), 1);
+      var index = Canvas.items.indexOf(this);
+
+      if (index !== -1) {
+        Canvas.items.splice(index, 1);
+      }
     };
 
     _proto.loadTexture = function loadTexture(key, urlElementOrData, options) {
@@ -4023,29 +4022,42 @@ var glsl = (function (exports) {
 
     return Canvas;
   }(Renderer);
-  Canvas.logger = Logger;
   Canvas.items = [];
 
+  function of(canvas, options) {
+    return Canvas.items.find(function (x) {
+      return x.canvas === canvas;
+    }) || new Canvas(canvas, options);
+  }
+  function loadAll() {
+    var canvases = [].slice.call(document.getElementsByClassName('glsl-canvas')).filter(function (x) {
+      return x instanceof HTMLCanvasElement;
+    });
+    return canvases.map(function (x) {
+      return of(x);
+    });
+  }
+
   if (document) {
-    document.addEventListener("DOMContentLoaded", function () {
-      Canvas.loadAll();
+    document.addEventListener('DOMContentLoaded', function () {
+      loadAll();
     });
   }
 
   exports.BoxGeometry = BoxGeometry;
   exports.Buffer = Buffer;
   exports.Buffers = Buffers;
-  exports.BuffersDefaultFragment = BuffersDefaultFragment;
-  exports.BuffersDefaultFragment2 = BuffersDefaultFragment2;
   exports.Canvas = Canvas;
   exports.CanvasTimer = CanvasTimer;
   exports.Common = Common;
   exports.Context = Context;
   exports.ContextVertexBuffers = ContextVertexBuffers;
+  exports.DefaultWebGL2BufferFragment = DefaultWebGL2BufferFragment;
   exports.DefaultWebGL2BufferVertex = DefaultWebGL2BufferVertex;
   exports.DefaultWebGL2FlatFragment = DefaultWebGL2FlatFragment;
   exports.DefaultWebGL2MeshFragment = DefaultWebGL2MeshFragment;
   exports.DefaultWebGL2MeshVertex = DefaultWebGL2MeshVertex;
+  exports.DefaultWebGLBufferFragment = DefaultWebGLBufferFragment;
   exports.DefaultWebGLBufferVertex = DefaultWebGLBufferVertex;
   exports.DefaultWebGLFlatFragment = DefaultWebGLFlatFragment;
   exports.DefaultWebGLMeshFragment = DefaultWebGLMeshFragment;
@@ -4060,6 +4072,8 @@ var glsl = (function (exports) {
   exports.METHODS_FLOATV = METHODS_FLOATV;
   exports.METHODS_INT = METHODS_INT;
   exports.METHODS_INTV = METHODS_INTV;
+  exports.ObjLoader = ObjLoader;
+  exports.OrbitCamera = OrbitCamera;
   exports.Renderer = Renderer;
   exports.SphereGeometry = SphereGeometry;
   exports.Subscriber = Subscriber;
@@ -4068,12 +4082,15 @@ var glsl = (function (exports) {
   exports.TextureImageExtensions = TextureImageExtensions;
   exports.TextureVideoExtensions = TextureVideoExtensions;
   exports.Textures = Textures;
+  exports.TorusGeometry = TorusGeometry;
   exports.Uniform = Uniform;
   exports.UniformTexture = UniformTexture;
   exports.Uniforms = Uniforms;
   exports.Vector2 = Vector2;
   exports.Vector3 = Vector3;
   exports.isTextureData = isTextureData;
+  exports.loadAll = loadAll;
+  exports.of = of;
 
   return exports;
 

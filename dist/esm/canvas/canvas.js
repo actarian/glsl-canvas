@@ -1,4 +1,3 @@
-// import '@babel/polyfill';
 import 'promise-polyfill';
 import Buffers from '../buffers/buffers';
 import Context, { ContextMode } from '../context/context';
@@ -45,13 +44,6 @@ export default class Canvas extends Renderer {
             Logger.error('GlslCanvas.getShaders_.error', error);
         });
         Canvas.items.push(this);
-    }
-    static of(canvas, options) {
-        return Canvas.items.find(x => x.canvas === canvas) || new Canvas(canvas, options);
-    }
-    static loadAll() {
-        const canvases = [].slice.call(document.getElementsByClassName('glsl-canvas')).filter((x) => x instanceof HTMLCanvasElement);
-        return canvases.map(x => Canvas.of(x));
     }
     getShaders_() {
         return new Promise((resolve, reject) => {
@@ -104,30 +96,30 @@ export default class Canvas extends Renderer {
         this.onWheel = this.onWheel.bind(this);
         this.onClick = this.onClick.bind(this);
         this.onMove = this.onMove.bind(this);
-        this.onMousedown = this.onMousedown.bind(this);
-        this.onMousemove = this.onMousemove.bind(this);
-        this.onMouseover = this.onMouseover.bind(this);
-        this.onMouseout = this.onMouseout.bind(this);
-        this.onMouseup = this.onMouseup.bind(this);
-        this.onTouchmove = this.onTouchmove.bind(this);
-        this.onTouchend = this.onTouchend.bind(this);
-        this.onTouchstart = this.onTouchstart.bind(this);
+        this.onMouseDown = this.onMouseDown.bind(this);
+        this.onMouseMove = this.onMouseMove.bind(this);
+        this.onMouseOver = this.onMouseOver.bind(this);
+        this.onMouseOut = this.onMouseOut.bind(this);
+        this.onMouseUp = this.onMouseUp.bind(this);
+        this.onTouchMove = this.onTouchMove.bind(this);
+        this.onTouchEnd = this.onTouchEnd.bind(this);
+        this.onTouchStart = this.onTouchStart.bind(this);
         this.onLoop = this.onLoop.bind(this);
         // window.addEventListener('resize', this.onResize);
         window.addEventListener('scroll', this.onScroll);
-        document.addEventListener('mousemove', this.onMousemove, false);
-        document.addEventListener('touchmove', this.onTouchmove);
+        document.addEventListener('mousemove', this.onMouseMove, false);
+        document.addEventListener('touchmove', this.onTouchMove);
         this.addCanvasListeners_();
     }
     addCanvasListeners_() {
         this.controls = this.canvas.hasAttribute('controls');
         this.canvas.addEventListener('wheel', this.onWheel);
         this.canvas.addEventListener('click', this.onClick);
-        this.canvas.addEventListener('mousedown', this.onMousedown);
-        this.canvas.addEventListener('touchstart', this.onTouchstart);
+        this.canvas.addEventListener('mousedown', this.onMouseDown);
+        this.canvas.addEventListener('touchstart', this.onTouchStart);
         if (this.controls) {
-            this.canvas.addEventListener('mouseover', this.onMouseover);
-            this.canvas.addEventListener('mouseout', this.onMouseout);
+            this.canvas.addEventListener('mouseover', this.onMouseOver);
+            this.canvas.addEventListener('mouseout', this.onMouseOut);
             if (!this.canvas.hasAttribute('data-autoplay')) {
                 this.pause();
             }
@@ -136,21 +128,21 @@ export default class Canvas extends Renderer {
     removeCanvasListeners_() {
         this.canvas.removeEventListener('wheel', this.onWheel);
         this.canvas.removeEventListener('click', this.onClick);
-        this.canvas.removeEventListener('mousedown', this.onMousedown);
-        this.canvas.removeEventListener('mouseup', this.onMouseup);
-        this.canvas.removeEventListener('touchstart', this.onTouchstart);
-        this.canvas.removeEventListener('touchend', this.onTouchend);
+        this.canvas.removeEventListener('mousedown', this.onMouseDown);
+        this.canvas.removeEventListener('mouseup', this.onMouseUp);
+        this.canvas.removeEventListener('touchstart', this.onTouchStart);
+        this.canvas.removeEventListener('touchend', this.onTouchEnd);
         if (this.controls) {
-            this.canvas.removeEventListener('mouseover', this.onMouseover);
-            this.canvas.removeEventListener('mouseout', this.onMouseout);
+            this.canvas.removeEventListener('mouseover', this.onMouseOver);
+            this.canvas.removeEventListener('mouseout', this.onMouseOut);
         }
     }
     removeListeners_() {
         window.cancelAnimationFrame(this.rafId);
         // window.removeEventListener('resize', this.onResize);
         window.removeEventListener('scroll', this.onScroll);
-        document.removeEventListener('mousemove', this.onMousemove);
-        document.removeEventListener('touchmove', this.onTouchmove);
+        document.removeEventListener('mousemove', this.onMouseMove);
+        document.removeEventListener('touchmove', this.onTouchMove);
         this.removeCanvasListeners_();
     }
     onScroll(e) {
@@ -158,6 +150,7 @@ export default class Canvas extends Renderer {
     }
     onWheel(e) {
         this.camera.wheel(e.deltaY);
+        this.dirty = this.mode !== ContextMode.Flat;
         this.trigger('wheel', e);
     }
     onClick(e) {
@@ -167,10 +160,8 @@ export default class Canvas extends Renderer {
         this.trigger('click', e);
     }
     onDown(mx, my) {
-        mx *= this.devicePixelRatio;
-        my *= this.devicePixelRatio;
-        this.mouse.x = mx;
-        this.mouse.y = my;
+        this.mouse.x = mx * this.devicePixelRatio;
+        this.mouse.y = my * this.devicePixelRatio;
         const rect = this.rect;
         const min = Math.min(rect.width, rect.height);
         this.camera.down(mx / min, my / min);
@@ -186,6 +177,7 @@ export default class Canvas extends Renderer {
             this.mouse.y = y;
             const min = Math.min(rect.width, rect.height);
             this.camera.move(mx / min, my / min);
+            this.dirty = this.mode !== ContextMode.Flat && this.camera.mouse !== null;
             this.trigger('move', this.mouse);
         }
     }
@@ -196,42 +188,27 @@ export default class Canvas extends Renderer {
         }
         this.trigger('out', e);
     }
-    onMousedown(e) {
-        this.onDown(e.clientX || e.pageX, e.clientY || e.pageY);
-        document.addEventListener('mouseup', this.onMouseup);
-        document.removeEventListener('touchstart', this.onTouchstart);
-        document.removeEventListener('touchmove', this.onTouchmove);
+    onMouseDown(e) {
+        this.onDown(e.clientX, e.clientY);
+        document.addEventListener('mouseup', this.onMouseUp);
+        document.removeEventListener('touchstart', this.onTouchStart);
+        document.removeEventListener('touchmove', this.onTouchMove);
     }
-    onMousemove(e) {
-        this.onMove(e.clientX || e.pageX, e.clientY || e.pageY);
+    onMouseMove(e) {
+        this.onMove(e.clientX, e.clientY);
     }
-    onMouseup(e) {
+    onMouseUp(e) {
         this.onUp(e);
     }
-    onMouseover(e) {
+    onMouseOver(e) {
         this.play();
         this.trigger('over', e);
     }
-    onMouseout(e) {
+    onMouseOut(e) {
         this.pause();
         this.trigger('out', e);
     }
-    onTouchmove(e) {
-        const touch = [].slice.call(e.touches).reduce((p, touch) => {
-            p = p || new Vector2();
-            p.x += touch.clientX;
-            p.y += touch.clientY;
-            return p;
-        }, null);
-        if (touch) {
-            this.onMove(touch.x / e.touches.length, touch.y / e.touches.length);
-        }
-    }
-    onTouchend(e) {
-        this.onUp(e);
-        document.removeEventListener('touchend', this.onTouchend);
-    }
-    onTouchstart(e) {
+    onTouchStart(e) {
         const touch = [].slice.call(e.touches).reduce((p, touch) => {
             p = p || new Vector2();
             p.x += touch.clientX;
@@ -245,13 +222,28 @@ export default class Canvas extends Renderer {
             this.play();
         }
         this.trigger('over', e);
-        document.addEventListener('touchend', this.onTouchend);
-        document.removeEventListener('mousedown', this.onMousedown);
-        document.removeEventListener('mousemove', this.onMousemove);
+        document.addEventListener('touchend', this.onTouchEnd);
+        document.removeEventListener('mousedown', this.onMouseDown);
+        document.removeEventListener('mousemove', this.onMouseMove);
         if (this.controls) {
-            this.canvas.removeEventListener('mouseover', this.onMouseover);
-            this.canvas.removeEventListener('mouseout', this.onMouseout);
+            this.canvas.removeEventListener('mouseover', this.onMouseOver);
+            this.canvas.removeEventListener('mouseout', this.onMouseOut);
         }
+    }
+    onTouchMove(e) {
+        const touch = [].slice.call(e.touches).reduce((p, touch) => {
+            p = p || new Vector2();
+            p.x += touch.clientX;
+            p.y += touch.clientY;
+            return p;
+        }, null);
+        if (touch) {
+            this.onMove(touch.x / e.touches.length, touch.y / e.touches.length);
+        }
+    }
+    onTouchEnd(e) {
+        this.onUp(e);
+        document.removeEventListener('touchend', this.onTouchEnd);
     }
     onLoop(time) {
         this.checkRender();
@@ -282,7 +274,7 @@ export default class Canvas extends Renderer {
         return (rect.top + rect.height) > 0 && rect.top < (window.innerHeight || document.documentElement.clientHeight);
     }
     isAnimated_() {
-        return (this.animated || this.textures.animated) && !this.timer.paused;
+        return (this.animated || this.textures.animated || this.mode !== ContextMode.Flat) && !this.timer.paused;
     }
     isDirty_() {
         return this.dirty || this.uniforms.dirty || this.textures.dirty;
@@ -336,24 +328,6 @@ export default class Canvas extends Renderer {
             const url = matches[3];
             if (Texture.isTextureUrl(url)) {
                 this.textureList.push({ key, url });
-                /*
-                if (matches[3]) {
-                    const ext = matches[3].split('?')[0].split('.').pop().toLowerCase();
-                    const url = matches[3];
-                    if (url && TextureExtensions.indexOf(ext) !== -1) {
-                        // let options;
-                        // if (matches[6]) {
-                        // 	try {
-                        // 		options = new Function(`return ${matches[6]};`)();
-                        // 	} catch (e) {
-                        // 		// console.log('wrong texture options');
-                        // 	}
-                        // }
-                        // console.log(options, matches[6]);
-                        // this.textureList.push({ key, url, options });
-                        this.textureList.push({ key, url });
-                    }
-                */
             }
             else if (!this.buffers.has(key)) {
                 // create empty texture
@@ -552,7 +526,10 @@ export default class Canvas extends Renderer {
         this.destroyContext_();
         this.animated = false;
         this.valid = false;
-        Canvas.items.splice(Canvas.items.indexOf(this), 1);
+        const index = Canvas.items.indexOf(this);
+        if (index !== -1) {
+            Canvas.items.splice(index, 1);
+        }
     }
     loadTexture(key, urlElementOrData, options = {}) {
         if (this.valid) {
@@ -624,10 +601,4 @@ export default class Canvas extends Renderer {
         }
     }
 }
-Canvas.logger = Logger;
 Canvas.items = [];
-if (document) {
-    document.addEventListener("DOMContentLoaded", () => {
-        Canvas.loadAll();
-    });
-}

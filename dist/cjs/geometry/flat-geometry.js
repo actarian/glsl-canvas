@@ -25,12 +25,10 @@ var FlatGeometry = /** @class */ (function (_super) {
             1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
             1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
         ];
-        /*
-        console.log('positions', this.positions.length);
-        console.log('normals', this.normals.length);
-        console.log('texcoords', this.texcoords.length);
-        console.log('colors', this.colors.length);
-        */
+        // console.log('positions', this.positions.length);
+        // console.log('normals', this.normals.length);
+        // console.log('texcoords', this.texcoords.length);
+        // console.log('colors', this.colors.length);
     };
     return FlatGeometry;
 }(geometry_1.default));

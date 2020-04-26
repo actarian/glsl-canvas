@@ -64,13 +64,6 @@ export default class Renderer extends Subscriber {
         this.dirty = false;
         this.trigger('render', this);
     }
-    /*
-    protected drawArrays_(deltaTime: number) {
-        const gl = this.gl;
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
-    }
-    */
     drawArrays_(deltaTime) {
         const gl = this.gl;
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -150,9 +143,6 @@ export default class Renderer extends Subscriber {
         this.uniforms.create(UniformMethod.UniformMatrix4fv, UniformType.Float, 'u_modelViewMatrix', this.modelViewMatrix);
         this.normalMatrix = mat4.create();
         this.uniforms.create(UniformMethod.UniformMatrix4fv, UniformType.Float, 'u_normalMatrix', this.normalMatrix);
-        this.uniforms.create(UniformMethod.Uniform3f, UniformType.Float, 'u_lightAmbient', [0.3, 0.3, 0.3]);
-        this.uniforms.create(UniformMethod.Uniform3f, UniformType.Float, 'u_lightColor', [1.0, 1.0, 1.0]);
-        this.uniforms.create(UniformMethod.Uniform3f, UniformType.Float, 'u_lightDirection', [0.0, 0.0, 1.0]);
         // }
     }
     update_() {
@@ -205,16 +195,6 @@ export default class Renderer extends Subscriber {
         mat4.perspective(this.projectionMatrix, fieldOfView, aspect, zNear, zFar);
         return this.projectionMatrix;
     }
-    /*
-    protected updateModelViewMatrix__(deltaTime: number): mat4 {
-        this.modelViewMatrix = mat4.identity(this.modelViewMatrix);
-        mat4.translate(this.modelViewMatrix, this.modelViewMatrix, [0.0, 0.0, -6.0]); // amount to translate
-        mat4.rotate(this.modelViewMatrix, this.modelViewMatrix, this.radians, [0, 1, 0]); // axis to rotate around (Y)
-        // mat4.rotate(this.modelViewMatrix, this.modelViewMatrix, this.radians * 0.2, [1, 0, 0]); // axis to rotate around (X)
-        this.radians += deltaTime * 0.001;
-        return this.modelViewMatrix;
-    }
-    */
     updateModelViewMatrix_(deltaTime) {
         this.modelViewMatrix = mat4.identity(this.modelViewMatrix);
         mat4.translate(this.modelViewMatrix, this.modelViewMatrix, [0.0, 0.0, -this.camera.radius]); // amount to translate

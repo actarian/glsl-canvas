@@ -2,7 +2,7 @@
 // Title: vscode-glsl-canvas Easing examples
 
 #ifdef GL_ES
-precision highp float;
+precision mediump float;
 #endif
 
 /***   u n i f o r m s   ***/

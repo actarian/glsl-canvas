@@ -88,12 +88,10 @@ var BoxGeometry = /** @class */ (function (_super) {
             colors = colors.concat(c, c, c, c, c, c);
         }
         this.colors = colors;
-        /*
-        console.log('positions', this.positions.length);
-        console.log('normals', this.normals.length);
-        console.log('texcoords', this.texcoords.length);
-        console.log('colors', this.colors.length);
-        */
+        // console.log('positions', this.positions.length);
+        // console.log('normals', this.normals.length);
+        // console.log('texcoords', this.texcoords.length);
+        // console.log('colors', this.colors.length);
     };
     return BoxGeometry;
 }(geometry_1.default));

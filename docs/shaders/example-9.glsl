@@ -1,7 +1,7 @@
 // Author: Patricio Gonzalez Vivo
 
 #ifdef GL_ES
-precision highp float;
+precision mediump float;
 #endif
 
 #define PI 3.1415926535
@@ -51,7 +51,7 @@ vec4 sphereTexture(in sampler2D _tex, in vec2 _uv, float _time) {
     if (i == 0) {
         aspect = u_textureResolution[0].y / u_textureResolution[0].x;
     } else {
-        aspect = u_textureResolution[1].y / u_textureResolution[1].x;    
+        aspect = u_textureResolution[1].y / u_textureResolution[1].x;
     }
     st.x = fract(st.x * aspect + _time);
     return texture2D(_tex, st);
@@ -77,7 +77,7 @@ void main(){
     } else {
         color = sphereTexture(u_texture[1], st, u_time * 0.01).rgb;
     }
-    
+
     float speedSun = 0.50;
     vec3 sunPos = normalize(vec3(cos(u_time * speedSun - HALF_PI), 0.0, sin(speedSun * u_time - HALF_PI)));
     vec3 surface = normalize(sphereNormals(st)*2.0-1.0);

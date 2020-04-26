@@ -12,23 +12,22 @@ ___
 
 ## How to use
 
-*With link*
+### With link
 
 Load the latest version of ```glsl-canvas.js``` on your page by adding this line to your HTML:
 ```html
 <script type="text/javascript" src="https://unpkg.com/glsl-canvas-js/dist/umd/glsl-canvas.min.js"></script>
 ```
 
-*With npm*
+### With npm
 
 If you are using npm package manager type this command on your terminal:
 
 ```bash
 npm install glsl-canvas-js --save
 ```
-___
 
-*Run with html*
+### Run with html
 
 Add a canvas element on your page with class name ```glsl-canvas``` and assign a shader through a url using the ```data-fragment-url``` attribute.  
 Or write your shader directly in code using the ```data-fragment``` attribute.
@@ -50,13 +49,13 @@ const options = {
   fragmentString: `...`,
   alpha: false,
   antialias: true,
+  mode: 'flat',
   extensions: ['EXT_shader_texture_lod']
 };
 const glsl = new glsl.Canvas(canvas, options);
 ```
 
 All the ```.glsl-canvas``` instances will be stored in the ```glsl.Canvas.items``` array.
-___
 
 ### Import es6 module
  
@@ -69,10 +68,49 @@ const options = {
   fragmentString: `...`,
   alpha: false,
   antialias: true,
+  mode: 'flat',
   extensions: ['EXT_shader_texture_lod']
 };
 const glsl = new Canvas(canvas, options);
 ```
+
+### Init options
+GlslCanvas options inherit from [WebGLContextAttributes](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/getContextAttributes). Here the complete list.  
+
+```js
+const glsl = new Canvas(canvas, {
+    vertexString: '...',
+    fragmentString: '...',
+    backgroundColor: 'rgba(0.0, 0.0, 0.0, 0.0)',
+    alpha: true,
+    antialias: true,
+    depth: true,
+    desynchronized: false,
+    failIfMajorPerformanceCaveat: false,
+    powerPreference: 'default',
+    premultipliedAlpha: false,
+    preserveDrawingBuffer: false,
+    stencil: false,
+    doubleSided: false,
+    extensions: ['EXT_shader_texture_lod'],
+    workpath: 'rootfolder',
+    mode: 'mesh',
+    mesh: 'myfolder/myfile.obj',
+    onError: (error) => {}
+});
+```
+___
+
+### Default Shader Attributes
+
+These attributes are automatically loaded for you.
+
+| name           | |
+|----------------|-|
+| `a_position`   | a ```vec4``` with vertex position. |
+| `a_normal`     | a ```vec4``` with normal values. |
+| `a_texture`    | a ```vec2``` with texture coords mapping. |
+| `a_color`      | a ```vec4``` with face color info. |
 ___
 
 ### Default Uniforms
@@ -95,6 +133,7 @@ ___
 | `data-vertex`        | load a vertex shader by providing the content of the shader as a string |
 | `data-fragment-url`  | load a fragment shader by providing a valid url |
 | `data-vertex-url`    | load a vertex shader by providing a valid url |
+| `data-mode`          | setup one of those modes ```flat```, ```box```, ```sphere```, ```torus```, ```mesh``` |
 | `data-textures`      | load a list of texture urls separated by commas (ex: ```data-textures="color.jpg,normal.png,bump.jpg"```). Textures will be assigned in order to ```uniform sampler2D``` variables with names following this style: ```u_texture_0```, ```u_texture_1```, ```u_texture_2```, etc. |
 | `controls`           | enable play on over functionality |
 | `data-autoplay`      | enable autoplay with controls feature |
@@ -140,6 +179,68 @@ You can include other GLSL code using a traditional `#include "file.glsl"` macro
 #include "common/functions.glsl"
 
 void main(){
+```
+___
+
+## Multiple buffers 
+
+You can use shader buffers by requiring definition with `#ifdef` or `defined` directly in `.glsl` code.  
+Just ask for `BUFFER_`N definition and a `u_buffer`N uniform will be created for you: 
+
+```glsl
+
+uniform sampler2D u_buffer0;
+
+#ifdef BUFFER_0
+
+void main() {
+    vec4 color = texture2D(u_buffer0, uv, 0.0);
+    ...
+    gl_FragColor = color;
+}
+
+#else
+
+void main() {
+    vec4 color = texture2D(u_buffer0, uv, 0.0);
+    ...
+    gl_FragColor = color;
+}
+
+#endif
+
+```
+___
+
+## Vertex & Fragment shader
+
+You can define both vertex and fragment shader on same file by requiring vertex definition with `#ifdef` or `defined` directly in `.glsl` code.  
+Just ask for `VERTEX` definition and the vertex shader will be created for you: 
+
+```glsl
+#if defined(VERTEX)
+
+// attribute vec4 a_position; // data/dolphin.obj
+attribute vec4 a_position;
+attribute vec4 a_normal;
+attribute vec2 a_texcoord;
+attribute vec4 a_color;
+
+void main(void) {
+	v_position = a_position;
+	v_position = u_projectionMatrix * u_modelViewMatrix * v_position;
+	v_normal = u_normalMatrix * a_normal;
+	v_texcoord = a_texcoord;
+	v_color = a_color;
+	gl_Position = v_position;
+}
+
+// fragment shader
+#else
+
+void main() {
+  ...
+}
 ```
 ___
 

@@ -15,12 +15,21 @@
 	<div class="examples">
 		<div class="example">
 			<h4>fragment via attribute</h4>
-			<canvas class="glsl-canvas_" controls data-fragment-url="shaders/example-3d.glsl"></canvas>
+			<canvas class="canvas" data-fragment-url="shaders/example-3d.glsl"></canvas>
 			<button type="button" class="btn btn-toggle">toggle</button>
 		</div>
 		<div class="example">
 			<h4>buffers</h4>
-			<canvas class="glsl-canvas_" controls data-fragment-url="shaders/example-3d-buffer.glsl"></canvas>
+			<canvas class="canvas" data-fragment-url="shaders/example-3d-buffer.glsl"></canvas>
+			<button type="button" class="btn btn-toggle">toggle</button>
+		</div>
+	</div>
+
+	<h3>Default</h3>
+	<div class="examples">
+		<div class="example">
+			<h4>default</h4>
+			<canvas class="canvas"></canvas>
 			<button type="button" class="btn btn-toggle">toggle</button>
 		</div>
 	</div>
@@ -31,11 +40,11 @@
 	stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
 	document.body.appendChild(stats.dom);
 	// glsl.Canvas.logger.enabled = false;
-	var canvases = [].slice.call(document.querySelectorAll('.glsl-canvas_'))
+	var canvases = [].slice.call(document.querySelectorAll('.canvas'))
 		.map(function(element, i) {
-			// var canvas = glsl.Canvas.of(element, { mode: 'mesh', mesh: './data/mage.obj' });
-			var canvas = glsl.Canvas.of(element, { mode: 'mesh', mesh: './data/lego.obj' });
-			// var canvas = glsl.Canvas.of(element, { mode: 'box' });
+			// var canvas = glsl.of(element, { mode: 'mesh', mesh: './data/mage.obj' });
+			// var canvas = glsl.of(element, { mode: 'mesh', mesh: './data/dolphin.obj' });
+			var canvas = glsl.of(element, { mode: 'torus' });
 			canvas.on('render', function() {
 				stats.end();
 				stats.begin();

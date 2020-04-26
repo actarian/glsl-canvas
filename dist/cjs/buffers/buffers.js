@@ -1,11 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
+var chunks_1 = require("../context/chunks");
 var context_1 = tslib_1.__importDefault(require("../context/context"));
 var iterable_1 = tslib_1.__importDefault(require("../core/iterable"));
 var flat_geometry_1 = tslib_1.__importDefault(require("../geometry/flat-geometry"));
-exports.BuffersDefaultFragment = "\n#ifdef GL_ES\nprecision mediump float;\n#endif\n\nvoid main(){\n\tgl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);\n}";
-exports.BuffersDefaultFragment2 = "#version 300 es\n\nprecision mediump float;\n\nout vec4 outColor;\n\nvoid main() {\n\toutColor = vec4(0.0, 0.0, 0.0, 1.0);\n}\n";
 var BufferFloatType;
 (function (BufferFloatType) {
     BufferFloatType[BufferFloatType["FLOAT"] = 0] = "FLOAT";
@@ -134,7 +133,7 @@ var IOBuffer = /** @class */ (function () {
         var vertexShader = context_1.default.createShader(gl, this.vertexString, gl.VERTEX_SHADER);
         var fragmentShader = context_1.default.createShader(gl, this.fragmentString, gl.FRAGMENT_SHADER, 1);
         if (!fragmentShader) {
-            fragmentShader = context_1.default.createShader(gl, context_1.default.isWebGl2(gl) ? exports.BuffersDefaultFragment2 : exports.BuffersDefaultFragment, gl.FRAGMENT_SHADER);
+            fragmentShader = context_1.default.createShader(gl, context_1.default.isWebGl2(gl) ? chunks_1.DefaultWebGL2BufferFragment : chunks_1.DefaultWebGLBufferFragment, gl.FRAGMENT_SHADER);
             this.isValid = false;
         }
         else {

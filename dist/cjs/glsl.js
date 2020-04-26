@@ -1,29 +1,33 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
 var buffers_1 = require("./buffers/buffers");
 exports.Buffer = buffers_1.Buffer;
 exports.BufferFloatType = buffers_1.BufferFloatType;
-exports.BuffersDefaultFragment = buffers_1.BuffersDefaultFragment;
-exports.BuffersDefaultFragment2 = buffers_1.BuffersDefaultFragment2;
 exports.Buffers = buffers_1.default;
 exports.IOBuffer = buffers_1.IOBuffer;
+var orbit_camera_1 = require("./camera/orbit-camera");
+exports.OrbitCamera = orbit_camera_1.default;
 var canvas_1 = require("./canvas/canvas");
 exports.Canvas = canvas_1.default;
 var canvas_timer_1 = require("./canvas/canvas-timer");
 exports.CanvasTimer = canvas_timer_1.default;
+var chunks_1 = require("./context/chunks");
+exports.DefaultWebGL2BufferFragment = chunks_1.DefaultWebGL2BufferFragment;
+exports.DefaultWebGL2BufferVertex = chunks_1.DefaultWebGL2BufferVertex;
+exports.DefaultWebGL2FlatFragment = chunks_1.DefaultWebGL2FlatFragment;
+exports.DefaultWebGL2MeshFragment = chunks_1.DefaultWebGL2MeshFragment;
+exports.DefaultWebGL2MeshVertex = chunks_1.DefaultWebGL2MeshVertex;
+exports.DefaultWebGLBufferFragment = chunks_1.DefaultWebGLBufferFragment;
+exports.DefaultWebGLBufferVertex = chunks_1.DefaultWebGLBufferVertex;
+exports.DefaultWebGLFlatFragment = chunks_1.DefaultWebGLFlatFragment;
+exports.DefaultWebGLMeshFragment = chunks_1.DefaultWebGLMeshFragment;
+exports.DefaultWebGLMeshVertex = chunks_1.DefaultWebGLMeshVertex;
 var context_1 = require("./context/context");
 exports.ContextError = context_1.ContextError;
 exports.ContextVersion = context_1.ContextVersion;
 exports.ContextVertexBuffers = context_1.ContextVertexBuffers;
 exports.Context = context_1.default;
-exports.DefaultWebGL2BufferVertex = context_1.DefaultWebGL2BufferVertex;
-exports.DefaultWebGL2FlatFragment = context_1.DefaultWebGL2FlatFragment;
-exports.DefaultWebGL2MeshFragment = context_1.DefaultWebGL2MeshFragment;
-exports.DefaultWebGL2MeshVertex = context_1.DefaultWebGL2MeshVertex;
-exports.DefaultWebGLBufferVertex = context_1.DefaultWebGLBufferVertex;
-exports.DefaultWebGLFlatFragment = context_1.DefaultWebGLFlatFragment;
-exports.DefaultWebGLMeshFragment = context_1.DefaultWebGLMeshFragment;
-exports.DefaultWebGLMeshVertex = context_1.DefaultWebGLMeshVertex;
 var common_1 = require("./core/common");
 exports.Common = common_1.default;
 var iterable_1 = require("./core/iterable");
@@ -39,6 +43,10 @@ var geometry_1 = require("./geometry/geometry");
 exports.Geometry = geometry_1.default;
 var sphere_geometry_1 = require("./geometry/sphere-geometry");
 exports.SphereGeometry = sphere_geometry_1.default;
+var torus_geometry_1 = require("./geometry/torus-geometry");
+exports.TorusGeometry = torus_geometry_1.default;
+var obj_loader_1 = require("./loaders/obj-loader");
+exports.ObjLoader = obj_loader_1.default;
 var logger_1 = require("./logger/logger");
 exports.Logger = logger_1.default;
 var vector2_1 = require("./math/vector2");
@@ -66,10 +74,18 @@ exports.Uniform = uniforms_1.Uniform;
 exports.UniformMethod = uniforms_1.UniformMethod;
 exports.UniformTexture = uniforms_1.UniformTexture;
 exports.UniformType = uniforms_1.UniformType;
-/*
-declare global {
-    interface Window { GlslCanvas: any; }
+var canvas_2 = tslib_1.__importDefault(require("./canvas/canvas"));
+function of(canvas, options) {
+    return canvas_2.default.items.find(function (x) { return x.canvas === canvas; }) || new canvas_2.default(canvas, options);
 }
-window.GlslCanvas = window.GlslCanvas || Canvas;
-// (<any>(window)).GlslCanvas = Canvas;
-*/
+exports.of = of;
+function loadAll() {
+    var canvases = [].slice.call(document.getElementsByClassName('glsl-canvas')).filter(function (x) { return x instanceof HTMLCanvasElement; });
+    return canvases.map(function (x) { return of(x); });
+}
+exports.loadAll = loadAll;
+if (document) {
+    document.addEventListener('DOMContentLoaded', function () {
+        loadAll();
+    });
+}

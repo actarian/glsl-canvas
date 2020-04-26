@@ -1,6 +1,6 @@
-import Common from "../core/common";
-import Geometry, { IGeometry } from "../geometry/geometry";
-import Vector3 from "../math/vector3";
+import Common from '../core/common';
+import Geometry, { IGeometry } from '../geometry/geometry';
+import Vector3 from '../math/vector3';
 
 const COLORS = [
 	[1, 1, 1],
@@ -91,11 +91,7 @@ export default class ObjLoader {
 				colors.push(rgb[0], rgb[1], rgb[2], 1.0);
 			});
 			CI++;
-			/*
-			console.log(positions.length, normals.length, texcoords.length, colors.length,
-				positions.length / 3 * 2 === texcoords.length,
-				positions.length / 3 * 4 === colors.length);
-			*/
+			// console.log(positions.length, normals.length, texcoords.length, colors.length, positions.length / 3 * 2 === texcoords.length, positions.length / 3 * 4 === colors.length);
 		}
 	}
 
@@ -148,13 +144,7 @@ export default class ObjLoader {
 					return indices;
 				});
 				F[F.length] = f;
-			} /*
-			else if (line.indexOf('polygons') !== -1) {
-				// # 8588 polygons
-				const poly = parseInt(line.split(' ')[1]);
-				console.log('poly', poly);
 			}
-			*/
 		});
 		if (F.length) {
 			this.parseFaces(F, V, VN, VT, positions, normals, texcoords, colors);

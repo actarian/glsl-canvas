@@ -1,6 +1,6 @@
 
 #ifdef GL_ES
-precision highp float;
+precision mediump float;
 #endif
 
 uniform vec2 u_resolution;
@@ -23,7 +23,7 @@ vec3 pixellate(vec2 uv, vec3 color) {
 }
 
 void main() {
-   	vec2 uv = gl_FragCoord.xy / u_resolution.xy; 
+   	vec2 uv = gl_FragCoord.xy / u_resolution.xy;
     vec3 video = texture2D(u_video, uv).rgb;
     vec3 color = gl_FragCoord.x < u_x ? pixellate(uv, video) : video;
     gl_FragColor = vec4(color, 1.0);

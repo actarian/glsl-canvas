@@ -30,13 +30,10 @@ export default class Geometry implements IGeometry {
 			if (this.positions) {
 				this.size = this.positions.length / 3;
 			}
-			/*
-			console.log(options);
-			this.positions = Geometry.fromIndices(options.indices, options.positions, 3);
-			this.normals = Geometry.fromIndices(options.indices, options.normals, 3);
-			this.texcoords = Geometry.fromIndices(options.indices, options.texcoords, 2);
-			this.colors = Geometry.fromIndices(options.indices, options.colors, 4);
-			*/
+			// this.positions = Geometry.fromIndices(options.indices, options.positions, 3);
+			// this.normals = Geometry.fromIndices(options.indices, options.normals, 3);
+			// this.texcoords = Geometry.fromIndices(options.indices, options.texcoords, 2);
+			// this.colors = Geometry.fromIndices(options.indices, options.colors, 4);
 		}
 	}
 
@@ -80,12 +77,10 @@ export default class Geometry implements IGeometry {
 			this.colorLocation = this.createAttribLocation_(gl, program, 'a_color', this.colors.length / this.size, gl.FLOAT);
 			gl.bindAttribLocation(program, this.colorLocation, 'a_color');
 		}
-		/*
-		console.log('positionLocation', this.positionLocation);
-		console.log('texcoordLocation', this.texcoordLocation);
-		console.log('normalLocation', this.normalLocation);
-		console.log('colorLocation', this.colorLocation);
-		*/
+		// console.log('positionLocation', this.positionLocation);
+		// console.log('texcoordLocation', this.texcoordLocation);
+		// console.log('normalLocation', this.normalLocation);
+		// console.log('colorLocation', this.colorLocation);
 	}
 
 	attachAttributes_(gl: WebGLRenderingContext | WebGL2RenderingContext, program: WebGLProgram) {

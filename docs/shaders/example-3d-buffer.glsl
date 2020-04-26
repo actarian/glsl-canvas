@@ -1,19 +1,15 @@
 #ifdef GL_ES
-precision highp float;
+precision mediump float;
 #endif
 
 varying vec4 v_position;
+varying vec4 v_normal;
 varying vec2 v_texcoord;
-varying vec3 v_normal;
 varying vec4 v_color;
-varying vec3 v_light;
 
 uniform mat4 u_projectionMatrix;
 uniform mat4 u_modelViewMatrix;
 uniform mat4 u_normalMatrix;
-uniform vec3 u_lightAmbient;
-uniform vec3 u_lightColor;
-uniform vec3 u_lightDirection;
 uniform vec2 u_resolution;
 
 uniform vec2 u_textureResolution;
@@ -26,8 +22,8 @@ uniform sampler2D u_buffer0;
 
 attribute vec4 a_position; // data/duck-toy.obj
 // attribute vec4 a_position;
+attribute vec4 a_normal;
 attribute vec2 a_texcoord;
-attribute vec3 a_normal;
 attribute vec4 a_color;
 
 mat4 rotationAxis(float angle, vec3 axis) {
@@ -52,9 +48,8 @@ float easeQuintInOut(float t) {
 }
 
 void main(void) {
-	vec4 v_position = a_position;
+	v_position = a_position;
 	// v_position.y += sin(v_position.x * 0.1) * 10.0;
-
 	// float d = (5.0 + cos(u_time) * 2.5);
 	float a = sin((u_time * 4.0) + a_position.y) * 0.1;
 	float b = cos(((u_time + 1.5) * 10.0) + a_position.y * 2.0) * 0.05;
@@ -62,18 +57,12 @@ void main(void) {
 	v_position.z += a - b;
 	v_position.xyz = rotateZ(v_position.xyz, cos(u_time + a_position.x) * (2.0 * a));
 	// v_position.x -= a + c;
-	// v_position.xyz += a_normal * 0.025 + (cos(u_time * 5.0)) * a_normal * 0.025;
+	// v_position.xyz += a_normal.xyz * 0.025 + (cos(u_time * 5.0)) * a_normal.xyz * 0.025;
 	v_position = u_projectionMatrix * u_modelViewMatrix * v_position;
-	gl_Position = v_position;
-
+	v_normal = u_normalMatrix * a_normal;
 	v_texcoord = a_texcoord;
-	v_normal = normalize(a_normal);
 	v_color = a_color;
-
-	// light
-	vec4 normal = u_normalMatrix * vec4(a_normal, 1.0) * 1.5;
-	float incidence = max(dot(normal.xyz, u_lightDirection), 0.0);
-	v_light = u_lightAmbient + (u_lightColor * incidence);
+	gl_Position = v_position;
 }
 
 #elif defined(BUFFER_0)
@@ -114,7 +103,6 @@ float circle(in vec2 p, in float w) {
 }
 
 void main() {
-	vec3 a_light = v_light;
 	vec3 color = vec3(1.0);
 	vec3 bufferColor = texture2D(u_buffer0, uv).rgb;
 	// bufferColor *= 0.99;
@@ -144,17 +132,19 @@ void main() {
 	// uv.x = fract(uv.x + u_time * 0.5);
 	vec4 buffer = texture2D(u_buffer0, uv);
 	*/
-	vec4 normal = u_normalMatrix * vec4(v_normal, 1.0);
-	float fresnel = dot(normal.xyz, vec3(0.0, 0.0, 1.0));
+	float fresnel = dot(v_normal.xyz, vec3(0.0, 0.0, 1.0));
 	fresnel = 1.0 - pow(fresnel, 1.0);
 
-	gl_FragColor = vec4((color.rgb * v_light) * v_light, 0.1 + (fresnel + buffer.r) * 2.0);
+	// light
+	float incidence = max(dot(v_normal.xyz, vec3(0.0, 1.0, 0.0)), 0.0);
+	vec3 light = vec3(0.2) + (vec3(1.0) * incidence);
+	gl_FragColor = vec4((color.rgb * light) * light, 0.1 + (fresnel + buffer.r) * 2.0);
 
 	// gl_FragColor = vec4(fresnel + color.rgb, fresnel + buffer.r);
 	// gl_FragColor = vec4(vec3(fresnel), 1.0);
-	// gl_FragColor = vec4(v_color.rgb * color.rgb * buffer.rgb * buffer.rgb * v_light, buffer.r);
+	// gl_FragColor = vec4(v_color.rgb * color.rgb * buffer.rgb * buffer.rgb * light, buffer.r);
 	// gl_FragColor = buffer;
-	// gl_FragColor = vec4(v_color.rgb * v_light, 1.0);
+	// gl_FragColor = vec4(v_color.rgb * light, 1.0);
 }
 
 #endif

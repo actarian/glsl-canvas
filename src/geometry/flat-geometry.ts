@@ -1,4 +1,4 @@
-import Geometry from "./geometry";
+import Geometry from './geometry';
 
 export default class FlatGeometry extends Geometry {
 
@@ -20,12 +20,10 @@ export default class FlatGeometry extends Geometry {
 			1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
 			1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
 		];
-		/*
-		console.log('positions', this.positions.length);
-		console.log('normals', this.normals.length);
-		console.log('texcoords', this.texcoords.length);
-		console.log('colors', this.colors.length);
-		*/
+		// console.log('positions', this.positions.length);
+		// console.log('normals', this.normals.length);
+		// console.log('texcoords', this.texcoords.length);
+		// console.log('colors', this.colors.length);
 	}
 
 }

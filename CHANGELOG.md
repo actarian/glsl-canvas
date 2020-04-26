@@ -3,6 +3,14 @@ All notable changes to the "glsl-canvas" library will be documented in this file
 
 ---
 
+## [0.2.2] - 2020-04-26
+### Added
+- modes: flat, box, sphere, torus, mesh.
+- obj loader/parser.
+- VERTEX macro.
+
+---
+
 ## [0.2.1] - 2020-03-22
 ### Modified
 - global name `glsl`

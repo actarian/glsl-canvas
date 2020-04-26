@@ -1,4 +1,4 @@
-import Geometry, { IGeometry } from "../geometry/geometry";
+import Geometry, { IGeometry } from '../geometry/geometry';
 export default class ObjLoader {
     load(url: string): Promise<Geometry>;
     parseIndices(faceIndices: number[][], k: number, l: number, source: number[][], output: number[], name: string): void;

@@ -1,4 +1,4 @@
-import Geometry from "./geometry";
+import Geometry from './geometry';
 export default class BoxGeometry extends Geometry {
     createData_() {
         this.size = 36;
@@ -81,11 +81,9 @@ export default class BoxGeometry extends Geometry {
             colors = colors.concat(c, c, c, c, c, c);
         }
         this.colors = colors;
-        /*
-        console.log('positions', this.positions.length);
-        console.log('normals', this.normals.length);
-        console.log('texcoords', this.texcoords.length);
-        console.log('colors', this.colors.length);
-        */
+        // console.log('positions', this.positions.length);
+        // console.log('normals', this.normals.length);
+        // console.log('texcoords', this.texcoords.length);
+        // console.log('colors', this.colors.length);
     }
 }

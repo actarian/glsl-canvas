@@ -80,6 +80,7 @@
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static tsd-is-external"><a href="context.html#lasterror" class="tsd-kind-icon">last<wbr>Error</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static tsd-is-external"><a href="context.html#precision" class="tsd-kind-icon">precision</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section tsd-is-external">
@@ -88,12 +89,15 @@
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external"><a href="context.html#createprogram" class="tsd-kind-icon">create<wbr>Program</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external"><a href="context.html#createshader" class="tsd-kind-icon">create<wbr>Shader</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external"><a href="context.html#createvertexbuffers" class="tsd-kind-icon">create<wbr>Vertex<wbr>Buffers</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external"><a href="context.html#getbuffervertex" class="tsd-kind-icon">get<wbr>Buffer<wbr>Vertex</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external"><a href="context.html#getcontext2_" class="tsd-kind-icon">get<wbr>Context2_</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external"><a href="context.html#getcontext_" class="tsd-kind-icon">get<wbr>Context_</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external"><a href="context.html#getfragment" class="tsd-kind-icon">get<wbr>Fragment</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external"><a href="context.html#getfragmentvertex" class="tsd-kind-icon">get<wbr>Fragment<wbr>Vertex</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external"><a href="context.html#getincludes" class="tsd-kind-icon">get<wbr>Includes</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external"><a href="context.html#getvertex" class="tsd-kind-icon">get<wbr>Vertex</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external"><a href="context.html#infercontext" class="tsd-kind-icon">infer<wbr>Context</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external"><a href="context.html#inferprecision" class="tsd-kind-icon">infer<wbr>Precision</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external"><a href="context.html#inferversion" class="tsd-kind-icon">infer<wbr>Version</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external"><a href="context.html#iswebgl" class="tsd-kind-icon">is<wbr>Web<wbr>Gl</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external"><a href="context.html#iswebgl2" class="tsd-kind-icon">is<wbr>Web<wbr>Gl2</a></li>
@@ -113,7 +117,17 @@
 					<div class="tsd-signature tsd-kind-icon">last<wbr>Error<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &quot;&quot;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L82">context/context.ts:82</a></li>
+							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/context/context.ts#L60">src/context/context.ts:60</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-static tsd-is-external">
+					<a name="precision" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> precision</h3>
+					<div class="tsd-signature tsd-kind-icon">precision<span class="tsd-signature-symbol">:</span> <a href="../enums/contextprecision.html" class="tsd-signature-type">ContextPrecision</a><span class="tsd-signature-symbol"> = ContextPrecision.MediumP</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/context/context.ts#L59">src/context/context.ts:59</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -130,7 +144,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L266">context/context.ts:266</a></li>
+									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/context/context.ts#L277">src/context/context.ts:277</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -162,7 +176,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L243">context/context.ts:243</a></li>
+									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/context/context.ts#L253">src/context/context.ts:253</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -194,7 +208,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L289">context/context.ts:289</a></li>
+									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/context/context.ts#L302">src/context/context.ts:302</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -211,6 +225,29 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
+					<a name="getbuffervertex" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> get<wbr>Buffer<wbr>Vertex</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Buffer<wbr>Vertex<span class="tsd-signature-symbol">(</span>gl<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">WebGLRenderingContext</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">WebGL2RenderingContext</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/context/context.ts#L163">src/context/context.ts:163</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>gl: <span class="tsd-signature-type">WebGLRenderingContext</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">WebGL2RenderingContext</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
 					<a name="getcontext2_" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagStatic">Static</span> get<wbr>Context2_</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
@@ -220,7 +257,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L99">context/context.ts:99</a></li>
+									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/context/context.ts#L77">src/context/context.ts:77</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -246,7 +283,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L84">context/context.ts:84</a></li>
+									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/context/context.ts#L62">src/context/context.ts:62</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -266,13 +303,13 @@
 					<a name="getfragment" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagStatic">Static</span> get<wbr>Fragment</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
-						<li class="tsd-signature tsd-kind-icon">get<wbr>Fragment<span class="tsd-signature-symbol">(</span>vertexString<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span>, fragmentString<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Fragment<span class="tsd-signature-symbol">(</span>vertexString<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span>, fragmentString<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span>, mode<span class="tsd-signature-symbol">?: </span><a href="../enums/contextmode.html" class="tsd-signature-type">ContextMode</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L166">context/context.ts:166</a></li>
+									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/context/context.ts#L176">src/context/context.ts:176</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -282,6 +319,35 @@
 								</li>
 								<li>
 									<h5><span class="tsd-flag ts-flagOptional">Optional</span> fragmentString: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> mode: <a href="../enums/contextmode.html" class="tsd-signature-type">ContextMode</a><span class="tsd-signature-symbol"> = ContextMode.Flat</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
+					<a name="getfragmentvertex" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> get<wbr>Fragment<wbr>Vertex</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Fragment<wbr>Vertex<span class="tsd-signature-symbol">(</span>gl<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">WebGLRenderingContext</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">WebGL2RenderingContext</span>, fragmentString<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/context/context.ts#L87">src/context/context.ts:87</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>gl: <span class="tsd-signature-type">WebGLRenderingContext</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">WebGL2RenderingContext</span></h5>
+								</li>
+								<li>
+									<h5>fragmentString: <span class="tsd-signature-type">string</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
@@ -298,7 +364,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L109">context/context.ts:109</a></li>
+									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/context/context.ts#L106">src/context/context.ts:106</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -315,13 +381,13 @@
 					<a name="getvertex" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagStatic">Static</span> get<wbr>Vertex</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
-						<li class="tsd-signature tsd-kind-icon">get<wbr>Vertex<span class="tsd-signature-symbol">(</span>vertexString<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span>, fragmentString<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Vertex<span class="tsd-signature-symbol">(</span>vertexString<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span>, fragmentString<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span>, mode<span class="tsd-signature-symbol">?: </span><a href="../enums/contextmode.html" class="tsd-signature-type">ContextMode</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L157">context/context.ts:157</a></li>
+									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/context/context.ts#L167">src/context/context.ts:167</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -331,6 +397,9 @@
 								</li>
 								<li>
 									<h5><span class="tsd-flag ts-flagOptional">Optional</span> fragmentString: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> mode: <a href="../enums/contextmode.html" class="tsd-signature-type">ContextMode</a><span class="tsd-signature-symbol"> = ContextMode.Flat</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
@@ -347,7 +416,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L238">context/context.ts:238</a></li>
+									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/context/context.ts#L248">src/context/context.ts:248</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -370,6 +439,29 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
+					<a name="inferprecision" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> infer<wbr>Precision</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
+						<li class="tsd-signature tsd-kind-icon">infer<wbr>Precision<span class="tsd-signature-symbol">(</span>fragmentString<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../enums/contextprecision.html" class="tsd-signature-type">ContextPrecision</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/context/context.ts#L144">src/context/context.ts:144</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>fragmentString: <span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="../enums/contextprecision.html" class="tsd-signature-type">ContextPrecision</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
 					<a name="inferversion" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagStatic">Static</span> infer<wbr>Version</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
@@ -379,7 +471,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L138">context/context.ts:138</a></li>
+									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/context/context.ts#L135">src/context/context.ts:135</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -405,7 +497,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L128">context/context.ts:128</a></li>
+									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/context/context.ts#L125">src/context/context.ts:125</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -428,7 +520,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L132">context/context.ts:132</a></li>
+									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/context/context.ts#L129">src/context/context.ts:129</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -451,7 +543,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L212">context/context.ts:212</a></li>
+									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/context/context.ts#L222">src/context/context.ts:222</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -480,7 +572,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L175">context/context.ts:175</a></li>
+									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/context/context.ts#L185">src/context/context.ts:185</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -518,7 +610,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L147">context/context.ts:147</a></li>
+									<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/context/context.ts#L153">src/context/context.ts:153</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -557,6 +649,9 @@
 							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-static tsd-is-external">
 								<a href="context.html#lasterror" class="tsd-kind-icon">last<wbr>Error</a>
 							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-static tsd-is-external">
+								<a href="context.html#precision" class="tsd-kind-icon">precision</a>
+							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
 								<a href="context.html#createprogram" class="tsd-kind-icon">create<wbr>Program</a>
 							</li>
@@ -565,6 +660,9 @@
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
 								<a href="context.html#createvertexbuffers" class="tsd-kind-icon">create<wbr>Vertex<wbr>Buffers</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
+								<a href="context.html#getbuffervertex" class="tsd-kind-icon">get<wbr>Buffer<wbr>Vertex</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
 								<a href="context.html#getcontext2_" class="tsd-kind-icon">get<wbr>Context2_</a>
@@ -576,6 +674,9 @@
 								<a href="context.html#getfragment" class="tsd-kind-icon">get<wbr>Fragment</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
+								<a href="context.html#getfragmentvertex" class="tsd-kind-icon">get<wbr>Fragment<wbr>Vertex</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
 								<a href="context.html#getincludes" class="tsd-kind-icon">get<wbr>Includes</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
@@ -583,6 +684,9 @@
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
 								<a href="context.html#infercontext" class="tsd-kind-icon">infer<wbr>Context</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
+								<a href="context.html#inferprecision" class="tsd-kind-icon">infer<wbr>Precision</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static tsd-is-external">
 								<a href="context.html#inferversion" class="tsd-kind-icon">infer<wbr>Version</a>

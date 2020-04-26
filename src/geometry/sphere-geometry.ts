@@ -1,5 +1,5 @@
-import Vector3 from "../math/vector3";
-import Geometry from "./geometry";
+import Vector3 from '../math/vector3';
+import Geometry from './geometry';
 
 export default class SphereGeometry extends Geometry {
 
@@ -75,12 +75,10 @@ export default class SphereGeometry extends Geometry {
 		// for each face.
 		this.colors = Geometry.fromIndices(indices, colors, 4);
 		// this.unrapUvw(this.positions);
-		/*
-		console.log('positions', this.positions.length);
-		console.log('normal', this.normal.length);
-		console.log('texcoords', this.texcoords.length);
-		console.log('color', this.color.length);
-		*/
+		// console.log('positions', this.positions.length);
+		// console.log('normals', this.normals.length);
+		// console.log('texcoords', this.texcoords.length);
+		// console.log('colors', this.colors.length);
 	}
 
 	/*

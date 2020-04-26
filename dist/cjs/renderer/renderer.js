@@ -69,13 +69,6 @@ var Renderer = /** @class */ (function (_super) {
         this.dirty = false;
         this.trigger('render', this);
     };
-    /*
-    protected drawArrays_(deltaTime: number) {
-        const gl = this.gl;
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
-    }
-    */
     Renderer.prototype.drawArrays_ = function (deltaTime) {
         var gl = this.gl;
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -155,9 +148,6 @@ var Renderer = /** @class */ (function (_super) {
         this.uniforms.create(uniforms_1.UniformMethod.UniformMatrix4fv, uniforms_1.UniformType.Float, 'u_modelViewMatrix', this.modelViewMatrix);
         this.normalMatrix = gl_matrix_1.mat4.create();
         this.uniforms.create(uniforms_1.UniformMethod.UniformMatrix4fv, uniforms_1.UniformType.Float, 'u_normalMatrix', this.normalMatrix);
-        this.uniforms.create(uniforms_1.UniformMethod.Uniform3f, uniforms_1.UniformType.Float, 'u_lightAmbient', [0.3, 0.3, 0.3]);
-        this.uniforms.create(uniforms_1.UniformMethod.Uniform3f, uniforms_1.UniformType.Float, 'u_lightColor', [1.0, 1.0, 1.0]);
-        this.uniforms.create(uniforms_1.UniformMethod.Uniform3f, uniforms_1.UniformType.Float, 'u_lightDirection', [0.0, 0.0, 1.0]);
         // }
     };
     Renderer.prototype.update_ = function () {
@@ -210,16 +200,6 @@ var Renderer = /** @class */ (function (_super) {
         gl_matrix_1.mat4.perspective(this.projectionMatrix, fieldOfView, aspect, zNear, zFar);
         return this.projectionMatrix;
     };
-    /*
-    protected updateModelViewMatrix__(deltaTime: number): mat4 {
-        this.modelViewMatrix = mat4.identity(this.modelViewMatrix);
-        mat4.translate(this.modelViewMatrix, this.modelViewMatrix, [0.0, 0.0, -6.0]); // amount to translate
-        mat4.rotate(this.modelViewMatrix, this.modelViewMatrix, this.radians, [0, 1, 0]); // axis to rotate around (Y)
-        // mat4.rotate(this.modelViewMatrix, this.modelViewMatrix, this.radians * 0.2, [1, 0, 0]); // axis to rotate around (X)
-        this.radians += deltaTime * 0.001;
-        return this.modelViewMatrix;
-    }
-    */
     Renderer.prototype.updateModelViewMatrix_ = function (deltaTime) {
         this.modelViewMatrix = gl_matrix_1.mat4.identity(this.modelViewMatrix);
         gl_matrix_1.mat4.translate(this.modelViewMatrix, this.modelViewMatrix, [0.0, 0.0, -this.camera.radius]); // amount to translate

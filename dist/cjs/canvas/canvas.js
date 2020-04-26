@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
-// import '@babel/polyfill';
 require("promise-polyfill");
 var buffers_1 = tslib_1.__importDefault(require("../buffers/buffers"));
 var context_1 = tslib_1.__importStar(require("../context/context"));
@@ -52,13 +51,6 @@ var Canvas = /** @class */ (function (_super) {
         Canvas.items.push(_this);
         return _this;
     }
-    Canvas.of = function (canvas, options) {
-        return Canvas.items.find(function (x) { return x.canvas === canvas; }) || new Canvas(canvas, options);
-    };
-    Canvas.loadAll = function () {
-        var canvases = [].slice.call(document.getElementsByClassName('glsl-canvas')).filter(function (x) { return x instanceof HTMLCanvasElement; });
-        return canvases.map(function (x) { return Canvas.of(x); });
-    };
     Canvas.prototype.getShaders_ = function () {
         var _this = this;
         return new Promise(function (resolve, reject) {
@@ -111,30 +103,30 @@ var Canvas = /** @class */ (function (_super) {
         this.onWheel = this.onWheel.bind(this);
         this.onClick = this.onClick.bind(this);
         this.onMove = this.onMove.bind(this);
-        this.onMousedown = this.onMousedown.bind(this);
-        this.onMousemove = this.onMousemove.bind(this);
-        this.onMouseover = this.onMouseover.bind(this);
-        this.onMouseout = this.onMouseout.bind(this);
-        this.onMouseup = this.onMouseup.bind(this);
-        this.onTouchmove = this.onTouchmove.bind(this);
-        this.onTouchend = this.onTouchend.bind(this);
-        this.onTouchstart = this.onTouchstart.bind(this);
+        this.onMouseDown = this.onMouseDown.bind(this);
+        this.onMouseMove = this.onMouseMove.bind(this);
+        this.onMouseOver = this.onMouseOver.bind(this);
+        this.onMouseOut = this.onMouseOut.bind(this);
+        this.onMouseUp = this.onMouseUp.bind(this);
+        this.onTouchMove = this.onTouchMove.bind(this);
+        this.onTouchEnd = this.onTouchEnd.bind(this);
+        this.onTouchStart = this.onTouchStart.bind(this);
         this.onLoop = this.onLoop.bind(this);
         // window.addEventListener('resize', this.onResize);
         window.addEventListener('scroll', this.onScroll);
-        document.addEventListener('mousemove', this.onMousemove, false);
-        document.addEventListener('touchmove', this.onTouchmove);
+        document.addEventListener('mousemove', this.onMouseMove, false);
+        document.addEventListener('touchmove', this.onTouchMove);
         this.addCanvasListeners_();
     };
     Canvas.prototype.addCanvasListeners_ = function () {
         this.controls = this.canvas.hasAttribute('controls');
         this.canvas.addEventListener('wheel', this.onWheel);
         this.canvas.addEventListener('click', this.onClick);
-        this.canvas.addEventListener('mousedown', this.onMousedown);
-        this.canvas.addEventListener('touchstart', this.onTouchstart);
+        this.canvas.addEventListener('mousedown', this.onMouseDown);
+        this.canvas.addEventListener('touchstart', this.onTouchStart);
         if (this.controls) {
-            this.canvas.addEventListener('mouseover', this.onMouseover);
-            this.canvas.addEventListener('mouseout', this.onMouseout);
+            this.canvas.addEventListener('mouseover', this.onMouseOver);
+            this.canvas.addEventListener('mouseout', this.onMouseOut);
             if (!this.canvas.hasAttribute('data-autoplay')) {
                 this.pause();
             }
@@ -143,21 +135,21 @@ var Canvas = /** @class */ (function (_super) {
     Canvas.prototype.removeCanvasListeners_ = function () {
         this.canvas.removeEventListener('wheel', this.onWheel);
         this.canvas.removeEventListener('click', this.onClick);
-        this.canvas.removeEventListener('mousedown', this.onMousedown);
-        this.canvas.removeEventListener('mouseup', this.onMouseup);
-        this.canvas.removeEventListener('touchstart', this.onTouchstart);
-        this.canvas.removeEventListener('touchend', this.onTouchend);
+        this.canvas.removeEventListener('mousedown', this.onMouseDown);
+        this.canvas.removeEventListener('mouseup', this.onMouseUp);
+        this.canvas.removeEventListener('touchstart', this.onTouchStart);
+        this.canvas.removeEventListener('touchend', this.onTouchEnd);
         if (this.controls) {
-            this.canvas.removeEventListener('mouseover', this.onMouseover);
-            this.canvas.removeEventListener('mouseout', this.onMouseout);
+            this.canvas.removeEventListener('mouseover', this.onMouseOver);
+            this.canvas.removeEventListener('mouseout', this.onMouseOut);
         }
     };
     Canvas.prototype.removeListeners_ = function () {
         window.cancelAnimationFrame(this.rafId);
         // window.removeEventListener('resize', this.onResize);
         window.removeEventListener('scroll', this.onScroll);
-        document.removeEventListener('mousemove', this.onMousemove);
-        document.removeEventListener('touchmove', this.onTouchmove);
+        document.removeEventListener('mousemove', this.onMouseMove);
+        document.removeEventListener('touchmove', this.onTouchMove);
         this.removeCanvasListeners_();
     };
     Canvas.prototype.onScroll = function (e) {
@@ -165,6 +157,7 @@ var Canvas = /** @class */ (function (_super) {
     };
     Canvas.prototype.onWheel = function (e) {
         this.camera.wheel(e.deltaY);
+        this.dirty = this.mode !== context_1.ContextMode.Flat;
         this.trigger('wheel', e);
     };
     Canvas.prototype.onClick = function (e) {
@@ -174,10 +167,8 @@ var Canvas = /** @class */ (function (_super) {
         this.trigger('click', e);
     };
     Canvas.prototype.onDown = function (mx, my) {
-        mx *= this.devicePixelRatio;
-        my *= this.devicePixelRatio;
-        this.mouse.x = mx;
-        this.mouse.y = my;
+        this.mouse.x = mx * this.devicePixelRatio;
+        this.mouse.y = my * this.devicePixelRatio;
         var rect = this.rect;
         var min = Math.min(rect.width, rect.height);
         this.camera.down(mx / min, my / min);
@@ -193,6 +184,7 @@ var Canvas = /** @class */ (function (_super) {
             this.mouse.y = y;
             var min = Math.min(rect.width, rect.height);
             this.camera.move(mx / min, my / min);
+            this.dirty = this.mode !== context_1.ContextMode.Flat && this.camera.mouse !== null;
             this.trigger('move', this.mouse);
         }
     };
@@ -203,42 +195,27 @@ var Canvas = /** @class */ (function (_super) {
         }
         this.trigger('out', e);
     };
-    Canvas.prototype.onMousedown = function (e) {
-        this.onDown(e.clientX || e.pageX, e.clientY || e.pageY);
-        document.addEventListener('mouseup', this.onMouseup);
-        document.removeEventListener('touchstart', this.onTouchstart);
-        document.removeEventListener('touchmove', this.onTouchmove);
+    Canvas.prototype.onMouseDown = function (e) {
+        this.onDown(e.clientX, e.clientY);
+        document.addEventListener('mouseup', this.onMouseUp);
+        document.removeEventListener('touchstart', this.onTouchStart);
+        document.removeEventListener('touchmove', this.onTouchMove);
     };
-    Canvas.prototype.onMousemove = function (e) {
-        this.onMove(e.clientX || e.pageX, e.clientY || e.pageY);
+    Canvas.prototype.onMouseMove = function (e) {
+        this.onMove(e.clientX, e.clientY);
     };
-    Canvas.prototype.onMouseup = function (e) {
+    Canvas.prototype.onMouseUp = function (e) {
         this.onUp(e);
     };
-    Canvas.prototype.onMouseover = function (e) {
+    Canvas.prototype.onMouseOver = function (e) {
         this.play();
         this.trigger('over', e);
     };
-    Canvas.prototype.onMouseout = function (e) {
+    Canvas.prototype.onMouseOut = function (e) {
         this.pause();
         this.trigger('out', e);
     };
-    Canvas.prototype.onTouchmove = function (e) {
-        var touch = [].slice.call(e.touches).reduce(function (p, touch) {
-            p = p || new vector2_1.default();
-            p.x += touch.clientX;
-            p.y += touch.clientY;
-            return p;
-        }, null);
-        if (touch) {
-            this.onMove(touch.x / e.touches.length, touch.y / e.touches.length);
-        }
-    };
-    Canvas.prototype.onTouchend = function (e) {
-        this.onUp(e);
-        document.removeEventListener('touchend', this.onTouchend);
-    };
-    Canvas.prototype.onTouchstart = function (e) {
+    Canvas.prototype.onTouchStart = function (e) {
         var touch = [].slice.call(e.touches).reduce(function (p, touch) {
             p = p || new vector2_1.default();
             p.x += touch.clientX;
@@ -252,13 +229,28 @@ var Canvas = /** @class */ (function (_super) {
             this.play();
         }
         this.trigger('over', e);
-        document.addEventListener('touchend', this.onTouchend);
-        document.removeEventListener('mousedown', this.onMousedown);
-        document.removeEventListener('mousemove', this.onMousemove);
+        document.addEventListener('touchend', this.onTouchEnd);
+        document.removeEventListener('mousedown', this.onMouseDown);
+        document.removeEventListener('mousemove', this.onMouseMove);
         if (this.controls) {
-            this.canvas.removeEventListener('mouseover', this.onMouseover);
-            this.canvas.removeEventListener('mouseout', this.onMouseout);
+            this.canvas.removeEventListener('mouseover', this.onMouseOver);
+            this.canvas.removeEventListener('mouseout', this.onMouseOut);
         }
+    };
+    Canvas.prototype.onTouchMove = function (e) {
+        var touch = [].slice.call(e.touches).reduce(function (p, touch) {
+            p = p || new vector2_1.default();
+            p.x += touch.clientX;
+            p.y += touch.clientY;
+            return p;
+        }, null);
+        if (touch) {
+            this.onMove(touch.x / e.touches.length, touch.y / e.touches.length);
+        }
+    };
+    Canvas.prototype.onTouchEnd = function (e) {
+        this.onUp(e);
+        document.removeEventListener('touchend', this.onTouchEnd);
     };
     Canvas.prototype.onLoop = function (time) {
         this.checkRender();
@@ -292,7 +284,7 @@ var Canvas = /** @class */ (function (_super) {
         return (rect.top + rect.height) > 0 && rect.top < (window.innerHeight || document.documentElement.clientHeight);
     };
     Canvas.prototype.isAnimated_ = function () {
-        return (this.animated || this.textures.animated) && !this.timer.paused;
+        return (this.animated || this.textures.animated || this.mode !== context_1.ContextMode.Flat) && !this.timer.paused;
     };
     Canvas.prototype.isDirty_ = function () {
         return this.dirty || this.uniforms.dirty || this.textures.dirty;
@@ -347,24 +339,6 @@ var Canvas = /** @class */ (function (_super) {
             var url = matches[3];
             if (textures_1.Texture.isTextureUrl(url)) {
                 this.textureList.push({ key: key, url: url });
-                /*
-                if (matches[3]) {
-                    const ext = matches[3].split('?')[0].split('.').pop().toLowerCase();
-                    const url = matches[3];
-                    if (url && TextureExtensions.indexOf(ext) !== -1) {
-                        // let options;
-                        // if (matches[6]) {
-                        // 	try {
-                        // 		options = new Function(`return ${matches[6]};`)();
-                        // 	} catch (e) {
-                        // 		// console.log('wrong texture options');
-                        // 	}
-                        // }
-                        // console.log(options, matches[6]);
-                        // this.textureList.push({ key, url, options });
-                        this.textureList.push({ key, url });
-                    }
-                */
             }
             else if (!this.buffers.has(key)) {
                 // create empty texture
@@ -565,7 +539,10 @@ var Canvas = /** @class */ (function (_super) {
         this.destroyContext_();
         this.animated = false;
         this.valid = false;
-        Canvas.items.splice(Canvas.items.indexOf(this), 1);
+        var index = Canvas.items.indexOf(this);
+        if (index !== -1) {
+            Canvas.items.splice(index, 1);
+        }
     };
     Canvas.prototype.loadTexture = function (key, urlElementOrData, options) {
         var _this = this;
@@ -643,13 +620,7 @@ var Canvas = /** @class */ (function (_super) {
             this.canvas.classList.remove('playing');
         }
     };
-    Canvas.logger = logger_1.default;
     Canvas.items = [];
     return Canvas;
 }(renderer_1.default));
 exports.default = Canvas;
-if (document) {
-    document.addEventListener("DOMContentLoaded", function () {
-        Canvas.loadAll();
-    });
-}

@@ -83,12 +83,10 @@ var SphereGeometry = /** @class */ (function (_super) {
         // for each face.
         this.colors = geometry_1.default.fromIndices(indices, colors, 4);
         // this.unrapUvw(this.positions);
-        /*
-        console.log('positions', this.positions.length);
-        console.log('normal', this.normal.length);
-        console.log('texcoords', this.texcoords.length);
-        console.log('color', this.color.length);
-        */
+        // console.log('positions', this.positions.length);
+        // console.log('normals', this.normals.length);
+        // console.log('texcoords', this.texcoords.length);
+        // console.log('colors', this.colors.length);
     };
     return SphereGeometry;
 }(geometry_1.default));

@@ -75,14 +75,19 @@
 				<a href="#how-to-use" id="how-to-use" style="color: inherit; text-decoration: none;">
 					<h2>How to use</h2>
 				</a>
-				<p><em>With link</em></p>
+				<a href="#with-link" id="with-link" style="color: inherit; text-decoration: none;">
+					<h3>With link</h3>
+				</a>
 				<p>Load the latest version of <code>glsl-canvas.js</code> on your page by adding this line to your HTML:</p>
 				<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">type</span>=<span class="hljs-string">"text/javascript"</span> <span class="hljs-attr">src</span>=<span class="hljs-string">"https://unpkg.com/glsl-canvas-js/dist/umd/glsl-canvas.min.js"</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span></code></pre>
-				<p><em>With npm</em></p>
+				<a href="#with-npm" id="with-npm" style="color: inherit; text-decoration: none;">
+					<h3>With npm</h3>
+				</a>
 				<p>If you are using npm package manager type this command on your terminal:</p>
 				<pre><code class="language-bash">npm install glsl-canvas-js --save</code></pre>
-				<hr>
-				<p><em>Run with html</em></p>
+				<a href="#run-with-html" id="run-with-html" style="color: inherit; text-decoration: none;">
+					<h3>Run with html</h3>
+				</a>
 				<p>Add a canvas element on your page with class name <code>glsl-canvas</code> and assign a shader through a url using the <code>data-fragment-url</code> attribute.<br>Or write your shader directly in code using the <code>data-fragment</code> attribute.</p>
 				<pre><code class="language-html"><span class="hljs-tag">&lt;<span class="hljs-name">canvas</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"glsl-canvas"</span> <span class="hljs-attr">data-fragment-url</span>=<span class="hljs-string">"fragment.glsl"</span> <span class="hljs-attr">width</span>=<span class="hljs-string">"500"</span> <span class="hljs-attr">height</span>=<span class="hljs-string">"500"</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">canvas</span>&gt;</span></code></pre>
 				<p><code>GlslCanvas</code> will automatically load a WebGL context in that <code>&lt;canvas&gt;</code> element, compile the shader and animate it for you.</p>
@@ -96,11 +101,11 @@
   <span class="hljs-attr">fragmentString</span>: <span class="hljs-string">`...`</span>,
   <span class="hljs-attr">alpha</span>: <span class="hljs-literal">false</span>,
   <span class="hljs-attr">antialias</span>: <span class="hljs-literal">true</span>,
+  <span class="hljs-attr">mode</span>: <span class="hljs-string">'flat'</span>,
   <span class="hljs-attr">extensions</span>: [<span class="hljs-string">'EXT_shader_texture_lod'</span>]
 };
 <span class="hljs-keyword">const</span> glsl = <span class="hljs-keyword">new</span> glsl.Canvas(canvas, options);</code></pre>
 				<p>All the <code>.glsl-canvas</code> instances will be stored in the <code>glsl.Canvas.items</code> array.</p>
-				<hr>
 				<a href="#import-es6-module" id="import-es6-module" style="color: inherit; text-decoration: none;">
 					<h3>Import es6 module</h3>
 				</a>
@@ -112,9 +117,63 @@
   <span class="hljs-attr">fragmentString</span>: <span class="hljs-string">`...`</span>,
   <span class="hljs-attr">alpha</span>: <span class="hljs-literal">false</span>,
   <span class="hljs-attr">antialias</span>: <span class="hljs-literal">true</span>,
+  <span class="hljs-attr">mode</span>: <span class="hljs-string">'flat'</span>,
   <span class="hljs-attr">extensions</span>: [<span class="hljs-string">'EXT_shader_texture_lod'</span>]
 };
 <span class="hljs-keyword">const</span> glsl = <span class="hljs-keyword">new</span> Canvas(canvas, options);</code></pre>
+				<a href="#init-options" id="init-options" style="color: inherit; text-decoration: none;">
+					<h3>Init options</h3>
+				</a>
+				<p>GlslCanvas options inherit from <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/getContextAttributes">WebGLContextAttributes</a>. Here the complete list.  </p>
+				<pre><code class="language-js"><span class="hljs-keyword">const</span> glsl = <span class="hljs-keyword">new</span> Canvas(canvas, {
+    <span class="hljs-attr">vertexString</span>: <span class="hljs-string">'...'</span>,
+    <span class="hljs-attr">fragmentString</span>: <span class="hljs-string">'...'</span>,
+    <span class="hljs-attr">backgroundColor</span>: <span class="hljs-string">'rgba(0.0, 0.0, 0.0, 0.0)'</span>,
+    <span class="hljs-attr">alpha</span>: <span class="hljs-literal">true</span>,
+    <span class="hljs-attr">antialias</span>: <span class="hljs-literal">true</span>,
+    <span class="hljs-attr">depth</span>: <span class="hljs-literal">true</span>,
+    <span class="hljs-attr">desynchronized</span>: <span class="hljs-literal">false</span>,
+    <span class="hljs-attr">failIfMajorPerformanceCaveat</span>: <span class="hljs-literal">false</span>,
+    <span class="hljs-attr">powerPreference</span>: <span class="hljs-string">'default'</span>,
+    <span class="hljs-attr">premultipliedAlpha</span>: <span class="hljs-literal">false</span>,
+    <span class="hljs-attr">preserveDrawingBuffer</span>: <span class="hljs-literal">false</span>,
+    <span class="hljs-attr">stencil</span>: <span class="hljs-literal">false</span>,
+    <span class="hljs-attr">doubleSided</span>: <span class="hljs-literal">false</span>,
+    <span class="hljs-attr">extensions</span>: [<span class="hljs-string">'EXT_shader_texture_lod'</span>],
+    <span class="hljs-attr">workpath</span>: <span class="hljs-string">'rootfolder'</span>,
+    <span class="hljs-attr">mode</span>: <span class="hljs-string">'mesh'</span>,
+    <span class="hljs-attr">mesh</span>: <span class="hljs-string">'myfolder/myfile.obj'</span>,
+    <span class="hljs-attr">onError</span>: <span class="hljs-function">(<span class="hljs-params">error</span>) =&gt;</span> {}
+});</code></pre>
+				<hr>
+				<a href="#default-shader-attributes" id="default-shader-attributes" style="color: inherit; text-decoration: none;">
+					<h3>Default Shader Attributes</h3>
+				</a>
+				<p>These attributes are automatically loaded for you.</p>
+				<table>
+					<thead>
+						<tr>
+							<th>name</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody><tr>
+							<td><code>a_position</code></td>
+							<td>a <code>vec4</code> with vertex position.</td>
+						</tr>
+						<tr>
+							<td><code>a_normal</code></td>
+							<td>a <code>vec4</code> with normal values.</td>
+						</tr>
+						<tr>
+							<td><code>a_texture</code></td>
+							<td>a <code>vec2</code> with texture coords mapping.</td>
+						</tr>
+						<tr>
+							<td><code>a_color</code></td>
+							<td>a <code>vec4</code> with face color info.</td>
+						</tr>
+				</tbody></table>
 				<hr>
 				<a href="#default-uniforms" id="default-uniforms" style="color: inherit; text-decoration: none;">
 					<h3>Default Uniforms</h3>
@@ -170,6 +229,10 @@
 						<tr>
 							<td><code>data-vertex-url</code></td>
 							<td>load a vertex shader by providing a valid url</td>
+						</tr>
+						<tr>
+							<td><code>data-mode</code></td>
+							<td>setup one of those modes <code>flat</code>, <code>box</code>, <code>sphere</code>, <code>torus</code>, <code>mesh</code></td>
 						</tr>
 						<tr>
 							<td><code>data-textures</code></td>
@@ -287,6 +350,60 @@
 
 void main(){</code></pre>
 				<hr>
+				<a href="#multiple-buffers" id="multiple-buffers" style="color: inherit; text-decoration: none;">
+					<h2>Multiple buffers</h2>
+				</a>
+				<p>You can use shader buffers by requiring definition with <code>#ifdef</code> or <code>defined</code> directly in <code>.glsl</code> code.<br>Just ask for <code>BUFFER_</code>N definition and a <code>u_buffer</code>N uniform will be created for you: </p>
+				<pre><code class="language-glsl">
+<span class="hljs-keyword">uniform</span> <span class="hljs-type">sampler2D</span> u_buffer0;
+
+<span class="hljs-meta">#ifdef BUFFER_0</span>
+
+<span class="hljs-type">void</span> main() {
+    <span class="hljs-type">vec4</span> color = <span class="hljs-built_in">texture2D</span>(u_buffer0, uv, <span class="hljs-number">0.0</span>);
+    ...
+    <span class="hljs-built_in">gl_FragColor</span> = color;
+}
+
+<span class="hljs-meta">#else</span>
+
+<span class="hljs-type">void</span> main() {
+    <span class="hljs-type">vec4</span> color = <span class="hljs-built_in">texture2D</span>(u_buffer0, uv, <span class="hljs-number">0.0</span>);
+    ...
+    <span class="hljs-built_in">gl_FragColor</span> = color;
+}
+
+<span class="hljs-meta">#endif</span>
+</code></pre>
+				<hr>
+				<a href="#vertex-amp-fragment-shader" id="vertex-amp-fragment-shader" style="color: inherit; text-decoration: none;">
+					<h2>Vertex &amp; Fragment shader</h2>
+				</a>
+				<p>You can define both vertex and fragment shader on same file by requiring vertex definition with <code>#ifdef</code> or <code>defined</code> directly in <code>.glsl</code> code.<br>Just ask for <code>VERTEX</code> definition and the vertex shader will be created for you: </p>
+				<pre><code class="language-glsl"><span class="hljs-meta">#if defined(VERTEX)</span>
+
+<span class="hljs-comment">// attribute vec4 a_position; // data/dolphin.obj</span>
+<span class="hljs-keyword">attribute</span> <span class="hljs-type">vec4</span> a_position;
+<span class="hljs-keyword">attribute</span> <span class="hljs-type">vec4</span> a_normal;
+<span class="hljs-keyword">attribute</span> <span class="hljs-type">vec2</span> a_texcoord;
+<span class="hljs-keyword">attribute</span> <span class="hljs-type">vec4</span> a_color;
+
+<span class="hljs-type">void</span> main(<span class="hljs-type">void</span>) {
+    v_position = a_position;
+    v_position = u_projectionMatrix * u_modelViewMatrix * v_position;
+    v_normal = u_normalMatrix * a_normal;
+    v_texcoord = a_texcoord;
+    v_color = a_color;
+    <span class="hljs-built_in">gl_Position</span> = v_position;
+}
+
+<span class="hljs-comment">// fragment shader</span>
+<span class="hljs-meta">#else</span>
+
+<span class="hljs-type">void</span> main() {
+  ...
+}</code></pre>
+				<hr>
 				<a href="#tips" id="tips" style="color: inherit; text-decoration: none;">
 					<h2>Tips</h2>
 				</a>
@@ -301,13 +418,13 @@ glsl.load(fragment, vertex);</code></pre>
 				<p>You can also send your custom uniforms to a shader with <code>.setUniform(&#39;name&#39;, ...values)</code>. GlslCanvas will parse the value you provide to determine its type. If the value is a <code>string</code>, GlslCanvas will parse it as the url of a texture.</p>
 				<pre><code class="language-javascript">
 <span class="hljs-comment">// assign .5 to 'uniform float u_brightness'</span>
-glsl.setUniform(<span class="hljs-string">'u_brightness'</span>, <span class="hljs-number">0.5</span>);
+glsl.setUniform(<span class="hljs-string">'u_brightness'</span>, <span class="hljs-number">0.5</span>); 
 
 <span class="hljs-comment">// assign (.2,.3) to 'uniform vec2 u_position'</span>
 glsl.setUniform(<span class="hljs-string">'u_position'</span>, <span class="hljs-number">0.2</span>, <span class="hljs-number">0.3</span>);
 
 <span class="hljs-comment">// assign a red color to 'uniform vec3 u_color'</span>
-glsl.setUniform(<span class="hljs-string">'u_color'</span>, <span class="hljs-number">1.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>);
+glsl.setUniform(<span class="hljs-string">'u_color'</span>, <span class="hljs-number">1.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>); 
 
 <span class="hljs-comment">// load a new texture and assign it to 'uniform sampler2D u_texture'</span>
 glsl.setUniform(<span class="hljs-string">'u_texture'</span>, <span class="hljs-string">'data/texture.jpg'</span>);</code></pre>
@@ -350,7 +467,7 @@ glsl.setUniform(<span class="hljs-string">'u_texture'</span>, <span class="hljs-
 					<h2>Contact</h2>
 				</a>
 				<ul>
-					<li>Luca Zampetti <a href="mailto:&#108;&#x7a;&#97;&#109;&#112;&#101;&#116;&#x74;&#x69;&#x40;&#x67;&#x6d;&#97;&#105;&#108;&#46;&#x63;&#111;&#109;">&#108;&#x7a;&#97;&#109;&#112;&#101;&#116;&#x74;&#x69;&#x40;&#x67;&#x6d;&#97;&#105;&#108;&#46;&#x63;&#111;&#109;</a></li>
+					<li>Luca Zampetti <a href="mailto:&#108;&#122;&#x61;&#x6d;&#x70;&#x65;&#x74;&#x74;&#x69;&#64;&#103;&#x6d;&#x61;&#105;&#108;&#46;&#99;&#x6f;&#x6d;">&#108;&#122;&#x61;&#x6d;&#x70;&#x65;&#x74;&#x74;&#x69;&#64;&#103;&#x6d;&#x61;&#105;&#108;&#46;&#99;&#x6f;&#x6d;</a></li>
 					<li>Follow <a href="https://twitter.com/actarian">@actarian</a> on Twitter</li>
 				</ul>
 				<p><a href="https://twitter.com/actarian"><img src="https://img.shields.io/twitter/follow/actarian.svg?style=social&label=Follow%20@actarian" alt="Twitter Follow"></a></p>
@@ -429,9 +546,6 @@ glsl.setUniform(<span class="hljs-string">'u_texture'</span>, <span class="hljs-
 						<a href="classes/uniforms.html" class="tsd-kind-icon">Uniforms</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-is-external">
-						<a href="interfaces/icontextoptions.html" class="tsd-kind-icon">IContext<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-is-external">
 						<a href="interfaces/itexturedata.html" class="tsd-kind-icon">ITexture<wbr>Data</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-is-external">
@@ -442,18 +556,6 @@ glsl.setUniform(<span class="hljs-string">'u_texture'</span>, <span class="hljs-
 					</li>
 					<li class=" tsd-kind-interface tsd-is-external">
 						<a href="interfaces/iuniformoption.html" class="tsd-kind-icon">IUniform<wbr>Option</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-is-external">
-						<a href="globals.html#contextdefaultfragment" class="tsd-kind-icon">Context<wbr>Default<wbr>Fragment</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-is-external">
-						<a href="globals.html#contextdefaultfragment2" class="tsd-kind-icon">Context<wbr>Default<wbr>Fragment2</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-is-external">
-						<a href="globals.html#contextdefaultvertex" class="tsd-kind-icon">Context<wbr>Default<wbr>Vertex</a>
-					</li>
-					<li class=" tsd-kind-variable tsd-is-external">
-						<a href="globals.html#contextdefaultvertex2" class="tsd-kind-icon">Context<wbr>Default<wbr>Vertex2</a>
 					</li>
 					<li class=" tsd-kind-variable tsd-is-external">
 						<a href="globals.html#methods_float" class="tsd-kind-icon">METHODS_<wbr>FLOAT</a>

@@ -68,7 +68,7 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<a href="icontextoptions.html" class="tsd-signature-type">IContextOptions</a>
+						<span class="tsd-signature-type">WebGLContextAttributes</span>
 						<ul class="tsd-hierarchy">
 							<li>
 								<span class="target">ICanvasOptions</span>
@@ -88,10 +88,15 @@
 								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external"><a href="icanvasoptions.html#antialias" class="tsd-kind-icon">antialias</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-external"><a href="icanvasoptions.html#backgroundcolor" class="tsd-kind-icon">background<wbr>Color</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external"><a href="icanvasoptions.html#depth" class="tsd-kind-icon">depth</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external"><a href="icanvasoptions.html#desynchronized" class="tsd-kind-icon">desynchronized</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-external"><a href="icanvasoptions.html#doublesided" class="tsd-kind-icon">double<wbr>Sided</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-external"><a href="icanvasoptions.html#extensions" class="tsd-kind-icon">extensions</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external"><a href="icanvasoptions.html#failifmajorperformancecaveat" class="tsd-kind-icon">fail<wbr>IfMajor<wbr>Performance<wbr>Caveat</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-external"><a href="icanvasoptions.html#fragmentstring" class="tsd-kind-icon">fragment<wbr>String</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-external"><a href="icanvasoptions.html#mesh" class="tsd-kind-icon">mesh</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-external"><a href="icanvasoptions.html#mode" class="tsd-kind-icon">mode</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-external"><a href="icanvasoptions.html#onerror" class="tsd-kind-icon">on<wbr>Error</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external"><a href="icanvasoptions.html#powerpreference" class="tsd-kind-icon">power<wbr>Preference</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external"><a href="icanvasoptions.html#premultipliedalpha" class="tsd-kind-icon">premultiplied<wbr>Alpha</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external"><a href="icanvasoptions.html#preservedrawingbuffer" class="tsd-kind-icon">preserve<wbr>Drawing<wbr>Buffer</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external"><a href="icanvasoptions.html#stencil" class="tsd-kind-icon">stencil</a></li>
@@ -107,22 +112,22 @@
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external">
 					<a name="alpha" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagOptional">Optional</span> alpha</h3>
-					<div class="tsd-signature tsd-kind-icon">alpha<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">GLboolean</span></div>
+					<div class="tsd-signature tsd-kind-icon">alpha<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
-						<p>Inherited from <a href="icontextoptions.html">IContextOptions</a>.<a href="icontextoptions.html#alpha">alpha</a></p>
+						<p>Inherited from <a href="icanvasoptions.html">ICanvasOptions</a>.<a href="icanvasoptions.html#alpha">alpha</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L65">context/context.ts:65</a></li>
+							<li>Defined in node_modules/typescript/lib/lib.dom.d.ts:1872</li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external">
 					<a name="antialias" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagOptional">Optional</span> antialias</h3>
-					<div class="tsd-signature tsd-kind-icon">antialias<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">GLboolean</span></div>
+					<div class="tsd-signature tsd-kind-icon">antialias<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
-						<p>Inherited from <a href="icontextoptions.html">IContextOptions</a>.<a href="icontextoptions.html#antialias">antialias</a></p>
+						<p>Inherited from <a href="icanvasoptions.html">ICanvasOptions</a>.<a href="icanvasoptions.html#antialias">antialias</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L66">context/context.ts:66</a></li>
+							<li>Defined in node_modules/typescript/lib/lib.dom.d.ts:1873</li>
 						</ul>
 					</aside>
 				</section>
@@ -132,18 +137,39 @@
 					<div class="tsd-signature tsd-kind-icon">background<wbr>Color<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/canvas/canvas.ts#L20">canvas/canvas.ts:20</a></li>
+							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/canvas/canvas.ts#L14">src/canvas/canvas.ts:14</a></li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external">
 					<a name="depth" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagOptional">Optional</span> depth</h3>
-					<div class="tsd-signature tsd-kind-icon">depth<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">GLboolean</span></div>
+					<div class="tsd-signature tsd-kind-icon">depth<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
-						<p>Inherited from <a href="icontextoptions.html">IContextOptions</a>.<a href="icontextoptions.html#depth">depth</a></p>
+						<p>Inherited from <a href="icanvasoptions.html">ICanvasOptions</a>.<a href="icanvasoptions.html#depth">depth</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L67">context/context.ts:67</a></li>
+							<li>Defined in node_modules/typescript/lib/lib.dom.d.ts:1874</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external">
+					<a name="desynchronized" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> desynchronized</h3>
+					<div class="tsd-signature tsd-kind-icon">desynchronized<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
+					<aside class="tsd-sources">
+						<p>Inherited from <a href="icanvasoptions.html">ICanvasOptions</a>.<a href="icanvasoptions.html#desynchronized">desynchronized</a></p>
+						<ul>
+							<li>Defined in node_modules/typescript/lib/lib.dom.d.ts:1875</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-external">
+					<a name="doublesided" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> double<wbr>Sided</h3>
+					<div class="tsd-signature tsd-kind-icon">double<wbr>Sided<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/canvas/canvas.ts#L20">src/canvas/canvas.ts:20</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -153,7 +179,7 @@
 					<div class="tsd-signature tsd-kind-icon">extensions<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/canvas/canvas.ts#L23">canvas/canvas.ts:23</a></li>
+							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/canvas/canvas.ts#L17">src/canvas/canvas.ts:17</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -162,9 +188,9 @@
 					<h3><span class="tsd-flag ts-flagOptional">Optional</span> fail<wbr>IfMajor<wbr>Performance<wbr>Caveat</h3>
 					<div class="tsd-signature tsd-kind-icon">fail<wbr>IfMajor<wbr>Performance<wbr>Caveat<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
-						<p>Inherited from <a href="icontextoptions.html">IContextOptions</a>.<a href="icontextoptions.html#failifmajorperformancecaveat">failIfMajorPerformanceCaveat</a></p>
+						<p>Inherited from <a href="icanvasoptions.html">ICanvasOptions</a>.<a href="icanvasoptions.html#failifmajorperformancecaveat">failIfMajorPerformanceCaveat</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L68">context/context.ts:68</a></li>
+							<li>Defined in node_modules/typescript/lib/lib.dom.d.ts:1876</li>
 						</ul>
 					</aside>
 				</section>
@@ -174,7 +200,27 @@
 					<div class="tsd-signature tsd-kind-icon">fragment<wbr>String<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/canvas/canvas.ts#L19">canvas/canvas.ts:19</a></li>
+							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/canvas/canvas.ts#L13">src/canvas/canvas.ts:13</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-external">
+					<a name="mesh" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> mesh</h3>
+					<div class="tsd-signature tsd-kind-icon">mesh<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/canvas/canvas.ts#L19">src/canvas/canvas.ts:19</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-external">
+					<a name="mode" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> mode</h3>
+					<div class="tsd-signature tsd-kind-icon">mode<span class="tsd-signature-symbol">:</span> <a href="../enums/contextmode.html" class="tsd-signature-type">ContextMode</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/canvas/canvas.ts#L18">src/canvas/canvas.ts:18</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -184,40 +230,51 @@
 					<div class="tsd-signature tsd-kind-icon">on<wbr>Error<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Function</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/canvas/canvas.ts#L22">canvas/canvas.ts:22</a></li>
+							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/canvas/canvas.ts#L16">src/canvas/canvas.ts:16</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external">
+					<a name="powerpreference" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> power<wbr>Preference</h3>
+					<div class="tsd-signature tsd-kind-icon">power<wbr>Preference<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">WebGLPowerPreference</span></div>
+					<aside class="tsd-sources">
+						<p>Inherited from <a href="icanvasoptions.html">ICanvasOptions</a>.<a href="icanvasoptions.html#powerpreference">powerPreference</a></p>
+						<ul>
+							<li>Defined in node_modules/typescript/lib/lib.dom.d.ts:1877</li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external">
 					<a name="premultipliedalpha" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagOptional">Optional</span> premultiplied<wbr>Alpha</h3>
-					<div class="tsd-signature tsd-kind-icon">premultiplied<wbr>Alpha<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">GLboolean</span></div>
+					<div class="tsd-signature tsd-kind-icon">premultiplied<wbr>Alpha<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
-						<p>Inherited from <a href="icontextoptions.html">IContextOptions</a>.<a href="icontextoptions.html#premultipliedalpha">premultipliedAlpha</a></p>
+						<p>Inherited from <a href="icanvasoptions.html">ICanvasOptions</a>.<a href="icanvasoptions.html#premultipliedalpha">premultipliedAlpha</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L70">context/context.ts:70</a></li>
+							<li>Defined in node_modules/typescript/lib/lib.dom.d.ts:1878</li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external">
 					<a name="preservedrawingbuffer" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagOptional">Optional</span> preserve<wbr>Drawing<wbr>Buffer</h3>
-					<div class="tsd-signature tsd-kind-icon">preserve<wbr>Drawing<wbr>Buffer<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">GLboolean</span></div>
+					<div class="tsd-signature tsd-kind-icon">preserve<wbr>Drawing<wbr>Buffer<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
-						<p>Inherited from <a href="icontextoptions.html">IContextOptions</a>.<a href="icontextoptions.html#preservedrawingbuffer">preserveDrawingBuffer</a></p>
+						<p>Inherited from <a href="icanvasoptions.html">ICanvasOptions</a>.<a href="icanvasoptions.html#preservedrawingbuffer">preserveDrawingBuffer</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L71">context/context.ts:71</a></li>
+							<li>Defined in node_modules/typescript/lib/lib.dom.d.ts:1879</li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external">
 					<a name="stencil" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagOptional">Optional</span> stencil</h3>
-					<div class="tsd-signature tsd-kind-icon">stencil<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">GLboolean</span></div>
+					<div class="tsd-signature tsd-kind-icon">stencil<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
-						<p>Inherited from <a href="icontextoptions.html">IContextOptions</a>.<a href="icontextoptions.html#stencil">stencil</a></p>
+						<p>Inherited from <a href="icanvasoptions.html">ICanvasOptions</a>.<a href="icanvasoptions.html#stencil">stencil</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/context/context.ts#L72">context/context.ts:72</a></li>
+							<li>Defined in node_modules/typescript/lib/lib.dom.d.ts:1880</li>
 						</ul>
 					</aside>
 				</section>
@@ -227,7 +284,7 @@
 					<div class="tsd-signature tsd-kind-icon">vertex<wbr>String<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/canvas/canvas.ts#L18">canvas/canvas.ts:18</a></li>
+							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/canvas/canvas.ts#L12">src/canvas/canvas.ts:12</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -237,7 +294,7 @@
 					<div class="tsd-signature tsd-kind-icon">workpath<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/a56f9b1/src/canvas/canvas.ts#L21">canvas/canvas.ts:21</a></li>
+							<li>Defined in <a href="https://github.com/actarian/glsl-canvas/blob/8821c5f/src/canvas/canvas.ts#L15">src/canvas/canvas.ts:15</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -270,6 +327,12 @@
 							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external">
 								<a href="icanvasoptions.html#depth" class="tsd-kind-icon">depth</a>
 							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external">
+								<a href="icanvasoptions.html#desynchronized" class="tsd-kind-icon">desynchronized</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-external">
+								<a href="icanvasoptions.html#doublesided" class="tsd-kind-icon">double<wbr>Sided</a>
+							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-external">
 								<a href="icanvasoptions.html#extensions" class="tsd-kind-icon">extensions</a>
 							</li>
@@ -280,7 +343,16 @@
 								<a href="icanvasoptions.html#fragmentstring" class="tsd-kind-icon">fragment<wbr>String</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-external">
+								<a href="icanvasoptions.html#mesh" class="tsd-kind-icon">mesh</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-external">
+								<a href="icanvasoptions.html#mode" class="tsd-kind-icon">mode</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-external">
 								<a href="icanvasoptions.html#onerror" class="tsd-kind-icon">on<wbr>Error</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external">
+								<a href="icanvasoptions.html#powerpreference" class="tsd-kind-icon">power<wbr>Preference</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external">
 								<a href="icanvasoptions.html#premultipliedalpha" class="tsd-kind-icon">premultiplied<wbr>Alpha</a>

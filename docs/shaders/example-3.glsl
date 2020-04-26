@@ -2,7 +2,7 @@
 #extension GL_OES_standard_derivatives : enable
 
 #ifdef GL_ES
-precision highp float;
+precision mediump float;
 #endif
 
 uniform vec2 u_resolution;

@@ -1,24 +1,7 @@
+import { DefaultWebGL2BufferFragment, DefaultWebGLBufferFragment } from '../context/chunks';
 import Context from '../context/context';
 import IterableStringMap from '../core/iterable';
 import FlatGeometry from '../geometry/flat-geometry';
-export const BuffersDefaultFragment = `
-#ifdef GL_ES
-precision mediump float;
-#endif
-
-void main(){
-	gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-}`;
-export const BuffersDefaultFragment2 = `#version 300 es
-
-precision mediump float;
-
-out vec4 outColor;
-
-void main() {
-	outColor = vec4(0.0, 0.0, 0.0, 1.0);
-}
-`;
 export var BufferFloatType;
 (function (BufferFloatType) {
     BufferFloatType[BufferFloatType["FLOAT"] = 0] = "FLOAT";
@@ -145,7 +128,7 @@ export class IOBuffer {
         const vertexShader = Context.createShader(gl, this.vertexString, gl.VERTEX_SHADER);
         let fragmentShader = Context.createShader(gl, this.fragmentString, gl.FRAGMENT_SHADER, 1);
         if (!fragmentShader) {
-            fragmentShader = Context.createShader(gl, Context.isWebGl2(gl) ? BuffersDefaultFragment2 : BuffersDefaultFragment, gl.FRAGMENT_SHADER);
+            fragmentShader = Context.createShader(gl, Context.isWebGl2(gl) ? DefaultWebGL2BufferFragment : DefaultWebGLBufferFragment, gl.FRAGMENT_SHADER);
             this.isValid = false;
         }
         else {
