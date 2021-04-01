@@ -18,8 +18,8 @@ uniform float u_time;
 #if defined(VERTEX)
 
 // attribute vec4 a_position; // myfolder/myfile.obj
-// attribute vec4 a_position; // data/dolphin.obj
-attribute vec4 a_position;
+attribute vec4 a_position; // data/dolphin.obj
+// attribute vec4 a_position;
 attribute vec4 a_normal;
 attribute vec2 a_texcoord;
 attribute vec4 a_color;

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.IOBuffer = exports.Buffer = exports.BufferFloatType = void 0;
 var tslib_1 = require("tslib");
 var chunks_1 = require("../context/chunks");
 var context_1 = tslib_1.__importDefault(require("../context/context"));
@@ -217,7 +218,7 @@ var Buffers = /** @class */ (function (_super) {
         get: function () {
             return Object.keys(this.values).length * 4;
         },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
     Buffers.getBuffers = function (gl, fragmentString, vertexString) {

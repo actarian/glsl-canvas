@@ -76,7 +76,8 @@ video {
   border-radius: 5px;
   overflow: hidden;
   box-sizing: border-box;
-  object-fit: cover; }
+  -o-object-fit: cover;
+     object-fit: cover; }
 
 * {
   -webkit-user-select: none;

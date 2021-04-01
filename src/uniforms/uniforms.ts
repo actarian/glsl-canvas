@@ -283,18 +283,18 @@ export default class Uniforms extends IterableStringMap<Uniform> {
 
 	apply(gl: WebGLRenderingContext | WebGL2RenderingContext, program: WebGLProgram) {
 		gl.useProgram(program);
-		for (const key in this.values) {
+		Object.keys(this.values).forEach((key) => {
 			// if (typeof this.values[key].apply === 'function') {
 			this.values[key].apply(gl, program);
 			// }
-		}
+		});
 		// this.forEach(uniform => uniform.apply(gl, program));
 	}
 
 	clean() {
-		for (const key in this.values) {
+		Object.keys(this.values).forEach((key) => {
 			this.values[key].dirty = false;
-		}
+		});
 		this.dirty = false;
 	}
 

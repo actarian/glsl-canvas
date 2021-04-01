@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ContextVertexBuffers = exports.ContextError = exports.ContextDefault = exports.ContextMode = exports.ContextPrecision = exports.ContextVersion = void 0;
 var tslib_1 = require("tslib");
 var common_1 = tslib_1.__importDefault(require("../core/common"));
 var logger_1 = tslib_1.__importDefault(require("../logger/logger"));
@@ -99,7 +100,8 @@ var Context = /** @class */ (function () {
         // console.log('vertexString', vertexString);
         return vertexString;
     };
-    Context.getIncludes = function (input) {
+    Context.getIncludes = function (input, workpath) {
+        if (workpath === void 0) { workpath = ''; }
         if (input === undefined) {
             return Promise.resolve(input);
         }
@@ -107,10 +109,16 @@ var Context = /** @class */ (function () {
         var promises = [];
         var i = 0;
         var match;
-        while ((match = regex.exec(input)) !== null) {
+        var _loop_1 = function () {
             promises.push(Promise.resolve(input.slice(i, match.index)));
             i = match.index + match[0].length;
-            promises.push(common_1.default.fetch(match[1]));
+            var filePath = match[1];
+            var url = common_1.default.getResource(filePath, workpath);
+            var nextWorkpath = filePath.indexOf(':/') === -1 ? common_1.default.dirname(url) : '';
+            promises.push(common_1.default.fetch(url).then(function (input) { return Context.getIncludes(input, nextWorkpath); }));
+        };
+        while ((match = regex.exec(input)) !== null) {
+            _loop_1();
         }
         promises.push(Promise.resolve(input.slice(i)));
         return Promise.all(promises).then(function (chunks) {

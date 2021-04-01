@@ -26,6 +26,44 @@ var Common = /** @class */ (function () {
             xhr.send(null);
         });
     };
+    Common.getResource = function (filepath, workpath) {
+        if (workpath === void 0) { workpath = ''; }
+        var resource = (filepath.indexOf(':/') === -1) ? Common.join(workpath, filepath) : filepath;
+        return resource;
+    };
+    Common.join = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var comp = [];
+        args.forEach(function (a) {
+            var parts = a.split(/(?<!\/)\/(?!\/)/g);
+            if (parts.length && parts[parts.length - 1] === '') {
+                parts.pop();
+            }
+            parts.forEach(function (x) {
+                switch (x) {
+                    case '':
+                        comp = [];
+                        break;
+                    case '.':
+                        break;
+                    case '..':
+                        comp.pop();
+                        break;
+                    default:
+                        comp.push(x);
+                }
+            });
+        });
+        return comp.join('/');
+    };
+    Common.dirname = function (path) {
+        var comp = path.split(/(?<!\/)\/(?!\/)/g);
+        comp.pop();
+        return comp.join('/');
+    };
     return Common;
 }());
 exports.default = Common;

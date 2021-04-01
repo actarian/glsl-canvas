@@ -41,4 +41,11 @@ export default class OrbitCamera extends Vector3 {
         const phi = Math.atan(vector.x / vector.z); //phi
         return new OrbitCamera(theta, phi, radius);
     }
+    static toFloat32Array(camera) {
+        const spr = Math.sin(camera.phi) * camera.radius;
+        const x = spr * Math.sin(camera.theta);
+        const y = Math.cos(camera.phi) * camera.radius;
+        const z = spr * Math.cos(camera.theta);
+        return new Float32Array([x, y, z]);
+    }
 }

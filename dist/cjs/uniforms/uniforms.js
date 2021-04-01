@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.UniformTexture = exports.Uniform = exports.METHODS_FLOATV = exports.METHODS_INTV = exports.METHODS_FLOAT = exports.METHODS_INT = exports.UniformType = exports.UniformMethod = void 0;
 var tslib_1 = require("tslib");
 var iterable_1 = tslib_1.__importDefault(require("../core/iterable"));
 var logger_1 = tslib_1.__importDefault(require("../logger/logger"));
@@ -264,18 +265,20 @@ var Uniforms = /** @class */ (function (_super) {
         }
     };
     Uniforms.prototype.apply = function (gl, program) {
+        var _this = this;
         gl.useProgram(program);
-        for (var key in this.values) {
+        Object.keys(this.values).forEach(function (key) {
             // if (typeof this.values[key].apply === 'function') {
-            this.values[key].apply(gl, program);
+            _this.values[key].apply(gl, program);
             // }
-        }
+        });
         // this.forEach(uniform => uniform.apply(gl, program));
     };
     Uniforms.prototype.clean = function () {
-        for (var key in this.values) {
-            this.values[key].dirty = false;
-        }
+        var _this = this;
+        Object.keys(this.values).forEach(function (key) {
+            _this.values[key].dirty = false;
+        });
         this.dirty = false;
     };
     /*

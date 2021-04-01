@@ -32,6 +32,8 @@ export default class Canvas extends Renderer {
 	visible: boolean = false;
 	controls: boolean = false;
 	rafId: number;
+	vertexPath: string = '';
+	fragmentPath: string = '';
 
 	static items: Canvas[] = [];
 
@@ -59,8 +61,8 @@ export default class Canvas extends Renderer {
 		this.defaultMesh = this.mesh;
 		this.workpath = options.workpath;
 		canvas.style.backgroundColor = options.backgroundColor || 'rgba(0,0,0,0)';
-		this.getShaders_().then((success) => {
-			this.load().then(success => {
+		this.getShaders_().then((_) => {
+			this.load().then(_ => {
 				if (!this.program) {
 					return;
 				}
@@ -74,7 +76,7 @@ export default class Canvas extends Renderer {
 	}
 
 	private getShaders_(): Promise<string[]> {
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			this.vertexString = this.options.vertexString || this.vertexString;
 			this.fragmentString = this.options.fragmentString || this.fragmentString;
 			const canvas = this.canvas;
@@ -92,18 +94,21 @@ export default class Canvas extends Renderer {
 				this.fragmentString = canvas.getAttribute('data-fragment');
 			}
 			if (Object.keys(urls).length) {
-				Promise.all(Object.keys(urls).map((key, i) => {
-					const url: string = urls[key];
+				Promise.all(Object.keys(urls).map((key) => {
+					const url = Common.getResource(urls[key], this.workpath);
 					return Common.fetch(url)
 						// .then((response) => response.text())
 						.then((body) => {
+							const path = Common.dirname(urls[key]);
 							if (key === 'vertex') {
+								this.vertexPath = path;
 								return this.vertexString = body;
 							} else {
+								this.fragmentPath = path;
 								return this.fragmentString = body;
 							}
 						})
-				})).then(shaders => {
+				})).then(_ => {
 					resolve([this.vertexString, this.fragmentString]);
 				});
 			} else {
@@ -113,12 +118,12 @@ export default class Canvas extends Renderer {
 	}
 
 	private addListeners_(): void {
-        /*
-        const resize = (e: Event) => {
-            this.rect = this.canvas.getBoundingClientRect();
-            this.trigger('resize', e);
-        };
-        */
+		/*
+		const resize = (e: Event) => {
+			this.rect = this.canvas.getBoundingClientRect();
+			this.trigger('resize', e);
+		};
+		*/
 		this.onScroll = this.onScroll.bind(this);
 		this.onWheel = this.onWheel.bind(this);
 		this.onClick = this.onClick.bind(this);
@@ -176,11 +181,11 @@ export default class Canvas extends Renderer {
 		this.removeCanvasListeners_();
 	}
 
-	private onScroll(e: Event) {
+	private onScroll(_: Event) {
 		this.rect = this.canvas.getBoundingClientRect();
 	}
 
-	private onWheel(e: MouseWheelEvent) {
+	private onWheel(e: WheelEvent) {
 		this.camera.wheel(e.deltaY);
 		this.dirty = this.mode !== ContextMode.Flat;
 		this.trigger('wheel', e);
@@ -194,9 +199,13 @@ export default class Canvas extends Renderer {
 	}
 
 	private onDown(mx: number, my: number) {
-		this.mouse.x = mx * this.devicePixelRatio;
-		this.mouse.y = my * this.devicePixelRatio;
 		const rect = this.rect;
+		mx = (mx - rect.left);
+		my = (rect.height - (my - rect.top));
+		const x = mx * this.devicePixelRatio;
+		const y = my * this.devicePixelRatio;
+		this.mouse.x = x;
+		this.mouse.y = y;
 		const min = Math.min(rect.width, rect.height);
 		this.camera.down(mx / min, my / min);
 		this.trigger('down', this.mouse);
@@ -204,8 +213,10 @@ export default class Canvas extends Renderer {
 
 	private onMove(mx: number, my: number) {
 		const rect = this.rect;
-		const x = (mx - rect.left) * this.devicePixelRatio;
-		const y = (rect.height - (my - rect.top)) * this.devicePixelRatio;
+		mx = (mx - rect.left);
+		my = (rect.height - (my - rect.top));
+		const x = mx * this.devicePixelRatio;
+		const y = my * this.devicePixelRatio;
 		if (x !== this.mouse.x ||
 			y !== this.mouse.y) {
 			this.mouse.x = x;
@@ -290,7 +301,7 @@ export default class Canvas extends Renderer {
 		document.removeEventListener('touchend', this.onTouchEnd);
 	}
 
-	private onLoop(time?: number) {
+	private onLoop(_?: number) {
 		this.checkRender();
 		this.rafId = window.requestAnimationFrame(this.onLoop);
 	}
@@ -350,19 +361,19 @@ export default class Canvas extends Renderer {
 			this.H = H;
 			this.canvas.width = W;
 			this.canvas.height = H;
-            /*
-            if (gl.canvas.width !== W ||
-                gl.canvas.height !== H) {
-                gl.canvas.width = W;
-                gl.canvas.height = H;
-                // Set the viewport to match
-                // gl.viewport(0, 0, W, H);
-            }
-            */
-			for (const key in this.buffers.values) {
+			/*
+			if (gl.canvas.width !== W ||
+				gl.canvas.height !== H) {
+				gl.canvas.width = W;
+				gl.canvas.height = H;
+				// Set the viewport to match
+				// gl.viewport(0, 0, W, H);
+			}
+			*/
+			Object.keys(this.buffers.values).forEach((key) => {
 				const buffer: IOBuffer = this.buffers.values[key];
 				buffer.resize(gl, W, H);
-			}
+			});
 			this.rect = this.canvas.getBoundingClientRect();
 			this.trigger('resize');
 			// gl.useProgram(this.program);
@@ -403,8 +414,8 @@ export default class Canvas extends Renderer {
 	): Promise<boolean> {
 		const fragmentVertexString: string = Context.getFragmentVertex(this.gl, fragmentString || this.fragmentString);
 		return Promise.all([
-			Context.getIncludes(fragmentString || this.fragmentString),
-			Context.getIncludes(fragmentVertexString || vertexString || this.vertexString)
+			Context.getIncludes(fragmentString || this.fragmentString, this.fragmentPath === '' ? this.workpath : this.fragmentPath),
+			Context.getIncludes(fragmentVertexString || vertexString || this.vertexString, this.vertexPath === '' ? this.workpath : this.vertexPath)
 		]).then(array => {
 			this.fragmentString = array[0];
 			this.vertexString = array[1];
@@ -520,10 +531,10 @@ export default class Canvas extends Renderer {
 	}
 
 	protected createBuffers_() {
-		for (const key in this.buffers.values) {
+		Object.keys(this.buffers.values).forEach((key) => {
 			const buffer: IOBuffer = this.buffers.values[key];
 			this.uniforms.create(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, [buffer.input.index]);
-		}
+		});
 	}
 
 	protected createTextures_() {
@@ -543,19 +554,19 @@ export default class Canvas extends Renderer {
 	}
 
 	protected updateBuffers_(): void {
-		for (const key in this.buffers.values) {
+		Object.keys(this.buffers.values).forEach((key) => {
 			const buffer: IOBuffer = this.buffers.values[key];
 			this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, buffer.key, [buffer.input.index]);
-		}
+		});
 	}
 
 	protected updateTextures_(): void {
 		const gl = this.gl;
-		for (const key in this.textures.values) {
+		Object.keys(this.textures.values).forEach((key) => {
 			const texture: Texture = this.textures.values[key];
 			texture.tryUpdate(gl);
 			this.uniforms.update(UniformMethod.Uniform1i, UniformType.Sampler2D, texture.key, [texture.index]);
-		}
+		});
 	}
 
 	private destroyContext_(): void {
@@ -564,14 +575,14 @@ export default class Canvas extends Renderer {
 		if (this.program) {
 			gl.deleteProgram(this.program);
 		}
-		for (const key in this.buffers.values) {
+		Object.keys(this.buffers.values).forEach((key) => {
 			const buffer: IOBuffer = this.buffers.values[key];
 			buffer.destroy(gl);
-		}
-		for (const key in this.textures.values) {
+		});
+		Object.keys(this.textures.values).forEach((key) => {
 			const texture: Texture = this.textures.values[key];
 			texture.destroy(gl);
-		}
+		});
 		this.buffers = null;
 		this.textures = null;
 		this.uniforms = null;
@@ -643,9 +654,9 @@ export default class Canvas extends Renderer {
 	}
 
 	setUniforms(values: IUniformOption): void {
-		for (const key in values) {
+		Object.keys(values).forEach((key) => {
 			this.setUniform(key, values[key]);
-		}
+		});
 	}
 
 	pause(): void {

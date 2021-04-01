@@ -1,4 +1,5 @@
 // import 'promise-polyfill';
+import Common from '../core/common';
 import IterableStringMap from '../core/iterable';
 import Subscriber from '../core/subscriber';
 import Logger from '../logger/logger';
@@ -203,9 +204,9 @@ export class Texture extends Subscriber {
 		this.source = url;
 		this.sourceType = TextureSourceType.Url;
 		this.options = Object.assign(this.options, options);
-		const src = String((url.indexOf(':/') === -1 && this.workpath !== undefined) ? `${this.workpath}/${url}` : url);
 		const ext = url.split('?')[0].split('.').pop().toLowerCase();
 		const isVideo = TextureVideoExtensions.indexOf(ext) !== -1;
+		const src = Common.getResource(url, this.workpath);
 		let element: HTMLVideoElement | HTMLImageElement;
 		let promise: Promise<Texture>;
 		if (isVideo) {
@@ -411,9 +412,9 @@ export default class Textures extends IterableStringMap<Texture> {
 	animated: boolean = false;
 
 	clean() {
-		for (const key in this.values) {
+		Object.keys(this.values).forEach((key) => {
 			this.values[key].dirty = false;
-		}
+		});
 		this.dirty = false;
 	}
 

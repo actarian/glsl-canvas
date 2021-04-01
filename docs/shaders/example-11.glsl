@@ -2,8 +2,8 @@
 precision mediump float;
 #endif
 
-#include "shaders/example-11-include-01.glsl"
-#include "shaders/example-11-include-02.glsl"
+#include "./example-11-include-01.glsl"
+#include "./example-11-include-02.glsl"
 
 void main(){
 	vec3 color=vec3(

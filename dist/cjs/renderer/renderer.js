@@ -6,6 +6,7 @@ var buffers_1 = tslib_1.__importDefault(require("../buffers/buffers"));
 var orbit_camera_1 = tslib_1.__importDefault(require("../camera/orbit-camera"));
 var canvas_timer_1 = tslib_1.__importDefault(require("../canvas/canvas-timer"));
 var context_1 = require("../context/context");
+var common_1 = tslib_1.__importDefault(require("../core/common"));
 var subscriber_1 = tslib_1.__importDefault(require("../core/subscriber"));
 var box_geometry_1 = tslib_1.__importDefault(require("../geometry/box-geometry"));
 var flat_geometry_1 = tslib_1.__importDefault(require("../geometry/flat-geometry"));
@@ -36,6 +37,7 @@ var Renderer = /** @class */ (function (_super) {
         return _this;
     }
     Renderer.prototype.render = function () {
+        var _this = this;
         var gl = this.gl;
         if (!gl) {
             return;
@@ -44,27 +46,28 @@ var Renderer = /** @class */ (function (_super) {
         var BH = gl.drawingBufferHeight;
         this.update_();
         gl.viewport(0, 0, BW, BH);
-        for (var key in this.buffers.values) {
-            var buffer = this.buffers.values[key];
+        var uniforms = this.uniforms;
+        Object.keys(this.buffers.values).forEach(function (key) {
+            var buffer = _this.buffers.values[key];
             buffer.geometry.attachAttributes_(gl, buffer.program);
-            // this.uniforms.get('u_resolution').values = [1024, 1024];
-            this.uniforms.apply(gl, buffer.program);
+            // uniforms.get('u_resolution').values = [1024, 1024];
+            uniforms.apply(gl, buffer.program);
             /*
-            console.log('uniforms');
-            for (const key in this.uniforms.values) {
+            // console.log('uniforms');
+            Object.keys(uniforms.values).forEach((key) => {
                 if (key.indexOf('u_buff') === 0) {
-                    console.log(key);
+                    // console.log(key);
                 }
-            }
+            });
             */
             buffer.render(gl, BW, BH);
-        }
-        // this.uniforms.get('u_resolution').values = [BW, BH];
+        });
+        // uniforms.get('u_resolution').values = [BW, BH];
         this.geometry.attachAttributes_(gl, this.program);
-        this.uniforms.apply(gl, this.program);
+        uniforms.apply(gl, this.program);
         // gl.viewport(0, 0, BW, BH);
         this.drawFunc_(this.timer.delta);
-        this.uniforms.clean();
+        uniforms.clean();
         this.textures.clean();
         this.dirty = false;
         this.trigger('render', this);
@@ -126,34 +129,57 @@ var Renderer = /** @class */ (function (_super) {
         var hasTime = (fragmentString.match(/u_time/g) || []).length > 1;
         var hasDate = (fragmentString.match(/u_date/g) || []).length > 1;
         var hasMouse = (fragmentString.match(/u_mouse/g) || []).length > 1;
-        this.animated = hasTime || hasDate || hasMouse;
-        this.uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.Float, 'u_resolution', [BW, BH]);
+        var hasCamera = (fragmentString.match(/u_camera/g) || []).length > 1;
+        // this.animated = hasTime || hasDate || hasMouse;
+        this.animated = true; // !!!
+        var uniforms = this.uniforms;
+        uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.Float, 'u_resolution', [BW, BH]);
         if (hasDelta) {
-            this.uniforms.create(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_delta', [timer.delta / 1000.0]);
+            uniforms.create(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_delta', [timer.delta / 1000.0]);
+            this.updateUniformDelta_ = this.updateUniformDelta__;
+        }
+        else {
+            this.updateUniformDelta_ = this.updateUniformNoop_;
         }
         if (hasTime) {
-            this.uniforms.create(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_time', [timer.current / 1000.0]);
+            uniforms.create(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_time', [timer.current / 1000.0]);
+            this.updateUniformTime_ = this.updateUniformTime__;
+        }
+        else {
+            this.updateUniformTime_ = this.updateUniformNoop_;
         }
         if (hasDate) {
             var date = new Date();
-            this.uniforms.create(uniforms_1.UniformMethod.Uniform4f, uniforms_1.UniformType.Float, 'u_date', [date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001]);
+            uniforms.create(uniforms_1.UniformMethod.Uniform4f, uniforms_1.UniformType.Float, 'u_date', [date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001]);
+            this.updateUniformDate_ = this.updateUniformDate__;
+        }
+        else {
+            this.updateUniformDate_ = this.updateUniformNoop_;
         }
         if (hasMouse) {
-            this.uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.Float, 'u_mouse', [0, 0]);
+            uniforms.create(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.Float, 'u_mouse', [0, 0]);
+            this.updateUniformMouse_ = this.updateUniformMouse__;
+        }
+        else {
+            this.updateUniformMouse_ = this.updateUniformNoop_;
+        }
+        if (hasCamera) {
+            uniforms.create(uniforms_1.UniformMethod.Uniform3f, uniforms_1.UniformType.Float, 'u_camera', [0, 0, 0]);
+            this.updateUniformCamera_ = this.updateUniformCamera__;
+        }
+        else {
+            this.updateUniformCamera_ = this.updateUniformNoop_;
         }
         // if (this.mode !== ContextMode.Flat) {
         this.projectionMatrix = gl_matrix_1.mat4.create();
-        this.uniforms.create(uniforms_1.UniformMethod.UniformMatrix4fv, uniforms_1.UniformType.Float, 'u_projectionMatrix', this.projectionMatrix);
+        uniforms.create(uniforms_1.UniformMethod.UniformMatrix4fv, uniforms_1.UniformType.Float, 'u_projectionMatrix', this.projectionMatrix);
         this.modelViewMatrix = gl_matrix_1.mat4.create();
-        this.uniforms.create(uniforms_1.UniformMethod.UniformMatrix4fv, uniforms_1.UniformType.Float, 'u_modelViewMatrix', this.modelViewMatrix);
+        uniforms.create(uniforms_1.UniformMethod.UniformMatrix4fv, uniforms_1.UniformType.Float, 'u_modelViewMatrix', this.modelViewMatrix);
         this.normalMatrix = gl_matrix_1.mat4.create();
-        this.uniforms.create(uniforms_1.UniformMethod.UniformMatrix4fv, uniforms_1.UniformType.Float, 'u_normalMatrix', this.normalMatrix);
+        uniforms.create(uniforms_1.UniformMethod.UniformMatrix4fv, uniforms_1.UniformType.Float, 'u_normalMatrix', this.normalMatrix);
         // }
     };
     Renderer.prototype.update_ = function () {
-        this.updateUniforms_();
-    };
-    Renderer.prototype.updateUniforms_ = function () {
         var gl = this.gl;
         var BW = gl.drawingBufferWidth;
         var BH = gl.drawingBufferHeight;
@@ -161,35 +187,66 @@ var Renderer = /** @class */ (function (_super) {
             return;
         }
         var timer = this.timer.next();
-        this.uniforms.update(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.Float, 'u_resolution', [BW, BH]);
-        if (this.uniforms.has('u_delta')) {
-            this.uniforms.update(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_delta', [timer.delta / 1000.0]);
+        var uniforms = this.uniforms;
+        uniforms.update(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.Float, 'u_resolution', [BW, BH]);
+        this.updateUniformDelta_(timer);
+        this.updateUniformTime_(timer);
+        this.updateUniformDate_();
+        this.updateUniformMouse_();
+        this.updateUniformCamera_();
+        this.updateUniformMesh_();
+    };
+    Renderer.prototype.updateUniformNoop_ = function () { };
+    ;
+    Renderer.prototype.updateUniformDelta__ = function (timer) {
+        var uniforms = this.uniforms;
+        uniforms.update(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_delta', [timer.delta / 1000.0]);
+    };
+    ;
+    Renderer.prototype.updateUniformTime__ = function (timer) {
+        var uniforms = this.uniforms;
+        uniforms.update(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_time', [timer.current / 1000.0]);
+    };
+    ;
+    Renderer.prototype.updateUniformDate__ = function () {
+        var uniforms = this.uniforms;
+        var date = new Date();
+        uniforms.update(uniforms_1.UniformMethod.Uniform4f, uniforms_1.UniformType.Float, 'u_date', [date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001]);
+    };
+    ;
+    Renderer.prototype.updateUniformMouse__ = function () {
+        var uniforms = this.uniforms;
+        var mouse = this.mouse;
+        uniforms.update(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.Float, 'u_mouse', [mouse.x, mouse.y]);
+        /*
+        const rect = this.rect;
+        if (mouse.x >= rect.left && mouse.x <= rect.right &&
+            mouse.y >= rect.top && mouse.y <= rect.bottom) {
+            const MX = (mouse.x - rect.left) * this.devicePixelRatio;
+            const MY = (this.canvas.height - (mouse.y - rect.top) * this.devicePixelRatio);
+            uniforms.update(UniformMethod.Uniform2f, UniformType.Float, 'u_mouse', [MX, MY]);
         }
-        if (this.uniforms.has('u_time')) {
-            this.uniforms.update(uniforms_1.UniformMethod.Uniform1f, uniforms_1.UniformType.Float, 'u_time', [timer.current / 1000.0]);
-        }
-        if (this.uniforms.has('u_date')) {
-            var date = new Date();
-            this.uniforms.update(uniforms_1.UniformMethod.Uniform4f, uniforms_1.UniformType.Float, 'u_date', [date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() * 0.001]);
-        }
-        if (this.uniforms.has('u_mouse')) {
-            var mouse = this.mouse;
-            this.uniforms.update(uniforms_1.UniformMethod.Uniform2f, uniforms_1.UniformType.Float, 'u_mouse', [mouse.x, mouse.y]);
-            /*
-            const rect = this.rect;
-            if (mouse.x >= rect.left && mouse.x <= rect.right &&
-                mouse.y >= rect.top && mouse.y <= rect.bottom) {
-                const MX = (mouse.x - rect.left) * this.devicePixelRatio;
-                const MY = (this.canvas.height - (mouse.y - rect.top) * this.devicePixelRatio);
-                this.uniforms.update(UniformMethod.Uniform2f, UniformType.Float, 'u_mouse', [MX, MY]);
-            }
-            */
-        }
-        if (this.mode !== context_1.ContextMode.Flat) {
-            this.uniforms.update(uniforms_1.UniformMethod.UniformMatrix4fv, uniforms_1.UniformType.Float, 'u_projectionMatrix', this.updateProjectionMatrix_());
-            this.uniforms.update(uniforms_1.UniformMethod.UniformMatrix4fv, uniforms_1.UniformType.Float, 'u_modelViewMatrix', this.updateModelViewMatrix_(this.timer.delta));
-            this.uniforms.update(uniforms_1.UniformMethod.UniformMatrix4fv, uniforms_1.UniformType.Float, 'u_normalMatrix', this.updateNormalMatrix_(this.modelViewMatrix));
-        }
+        */
+    };
+    ;
+    Renderer.prototype.updateUniformCamera__ = function () {
+        var uniforms = this.uniforms;
+        var array = orbit_camera_1.default.toFloat32Array(this.camera);
+        uniforms.update(uniforms_1.UniformMethod.Uniform3f, uniforms_1.UniformType.Float, 'u_camera', array);
+    };
+    ;
+    Renderer.prototype.updateUniformMesh__ = function () {
+        var uniforms = this.uniforms;
+        uniforms.update(uniforms_1.UniformMethod.UniformMatrix4fv, uniforms_1.UniformType.Float, 'u_projectionMatrix', this.updateProjectionMatrix_());
+        uniforms.update(uniforms_1.UniformMethod.UniformMatrix4fv, uniforms_1.UniformType.Float, 'u_modelViewMatrix', this.updateModelViewMatrix_(this.timer.delta));
+        uniforms.update(uniforms_1.UniformMethod.UniformMatrix4fv, uniforms_1.UniformType.Float, 'u_normalMatrix', this.updateNormalMatrix_(this.modelViewMatrix));
+    };
+    ;
+    Renderer.prototype.updateUniformFlat__ = function () {
+        var uniforms = this.uniforms;
+        uniforms.update(uniforms_1.UniformMethod.UniformMatrix4fv, uniforms_1.UniformType.Float, 'u_projectionMatrix', gl_matrix_1.mat4.create());
+        uniforms.update(uniforms_1.UniformMethod.UniformMatrix4fv, uniforms_1.UniformType.Float, 'u_modelViewMatrix', gl_matrix_1.mat4.create());
+        uniforms.update(uniforms_1.UniformMethod.UniformMatrix4fv, uniforms_1.UniformType.Float, 'u_normalMatrix', gl_matrix_1.mat4.create());
     };
     Renderer.prototype.updateProjectionMatrix_ = function () {
         var gl = this.gl;
@@ -201,23 +258,26 @@ var Renderer = /** @class */ (function (_super) {
         return this.projectionMatrix;
     };
     Renderer.prototype.updateModelViewMatrix_ = function (deltaTime) {
-        this.modelViewMatrix = gl_matrix_1.mat4.identity(this.modelViewMatrix);
-        gl_matrix_1.mat4.translate(this.modelViewMatrix, this.modelViewMatrix, [0.0, 0.0, -this.camera.radius]); // amount to translate
-        gl_matrix_1.mat4.rotate(this.modelViewMatrix, this.modelViewMatrix, this.camera.theta + this.radians, [0, 1, 0]); // axis to rotate around (Y)
-        gl_matrix_1.mat4.rotate(this.modelViewMatrix, this.modelViewMatrix, this.camera.phi, [1, 0, 0]); // axis to rotate around (X)
-        if (!this.camera.mouse) {
-            this.camera.theta += (0 - this.camera.theta) / 20;
-            this.camera.phi += (0 - this.camera.phi) / 20;
+        var camera = this.camera;
+        var modelViewMatrix = this.modelViewMatrix;
+        modelViewMatrix = gl_matrix_1.mat4.identity(modelViewMatrix);
+        gl_matrix_1.mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, -camera.radius]); // amount to translate
+        gl_matrix_1.mat4.rotate(modelViewMatrix, modelViewMatrix, camera.theta + this.radians, [0, 1, 0]); // axis to rotate around (Y)
+        gl_matrix_1.mat4.rotate(modelViewMatrix, modelViewMatrix, camera.phi, [1, 0, 0]); // axis to rotate around (X)
+        if (!camera.mouse) {
+            camera.theta += (0 - camera.theta) / 20;
+            camera.phi += (0 - camera.phi) / 20;
             this.radians += deltaTime * 0.0005;
         }
-        return this.modelViewMatrix;
+        return modelViewMatrix;
     };
     Renderer.prototype.updateNormalMatrix_ = function (modelViewMatrix) {
         // this.normalMatrix = mat4.create();
-        this.normalMatrix = gl_matrix_1.mat4.identity(this.normalMatrix);
-        gl_matrix_1.mat4.invert(this.normalMatrix, modelViewMatrix);
-        gl_matrix_1.mat4.transpose(this.normalMatrix, this.normalMatrix);
-        return this.normalMatrix;
+        var normalMatrix = this.normalMatrix;
+        normalMatrix = gl_matrix_1.mat4.identity(normalMatrix);
+        gl_matrix_1.mat4.invert(normalMatrix, modelViewMatrix);
+        gl_matrix_1.mat4.transpose(normalMatrix, normalMatrix);
+        return normalMatrix;
     };
     Renderer.prototype.setMode = function (mode) {
         var _this = this;
@@ -227,6 +287,7 @@ var Renderer = /** @class */ (function (_super) {
             if (geometry) {
                 this.geometry = geometry;
                 this.mode = context_1.ContextMode.Mesh;
+                this.updateUniformMesh_ = this.updateUniformMesh__;
                 this.dirty = true;
                 return;
             }
@@ -235,24 +296,26 @@ var Renderer = /** @class */ (function (_super) {
         switch (mode) {
             case context_1.ContextMode.Flat:
                 geometry = new flat_geometry_1.default();
-                this.uniforms.update(uniforms_1.UniformMethod.UniformMatrix4fv, uniforms_1.UniformType.Float, 'u_projectionMatrix', gl_matrix_1.mat4.create());
-                this.uniforms.update(uniforms_1.UniformMethod.UniformMatrix4fv, uniforms_1.UniformType.Float, 'u_modelViewMatrix', gl_matrix_1.mat4.create());
-                this.uniforms.update(uniforms_1.UniformMethod.UniformMatrix4fv, uniforms_1.UniformType.Float, 'u_normalMatrix', gl_matrix_1.mat4.create());
+                this.updateUniformMesh_ = this.updateUniformNoop_;
+                this.updateUniformFlat__();
                 break;
             case context_1.ContextMode.Box:
                 geometry = new box_geometry_1.default();
+                this.updateUniformMesh_ = this.updateUniformMesh__;
                 break;
             case context_1.ContextMode.Sphere:
                 geometry = new sphere_geometry_1.default();
+                this.updateUniformMesh_ = this.updateUniformMesh__;
                 break;
             case context_1.ContextMode.Torus:
                 geometry = new torus_geometry_1.default();
+                this.updateUniformMesh_ = this.updateUniformMesh__;
                 break;
             case context_1.ContextMode.Mesh:
                 geometry = new flat_geometry_1.default();
                 if (this.mesh) {
                     loader = new obj_loader_1.default();
-                    loader.load(this.getResource(this.mesh)).then(function (geometry) {
+                    loader.load(common_1.default.getResource(this.mesh, this.workpath)).then(function (geometry) {
                         geometry.createAttributes_(_this.gl, _this.program);
                         var cache = {};
                         cache[_this.mesh] = geometry;
@@ -267,6 +330,7 @@ var Renderer = /** @class */ (function (_super) {
                 else {
                     mode = context_1.ContextMode.Flat;
                 }
+                this.updateUniformMesh_ = this.updateUniformMesh__;
                 break;
         }
         geometry.create(this.gl, this.program);
@@ -276,9 +340,6 @@ var Renderer = /** @class */ (function (_super) {
     };
     Renderer.prototype.setMesh = function (mesh) {
         this.mesh = mesh;
-    };
-    Renderer.prototype.getResource = function (url) {
-        return String((url.indexOf(':/') === -1 && this.workpath !== undefined) ? this.workpath + "/" + url : url);
     };
     return Renderer;
 }(subscriber_1.default));

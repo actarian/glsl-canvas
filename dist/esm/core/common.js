@@ -22,4 +22,37 @@ export default class Common {
             xhr.send(null);
         });
     }
+    static getResource(filepath, workpath = '') {
+        const resource = (filepath.indexOf(':/') === -1) ? Common.join(workpath, filepath) : filepath;
+        return resource;
+    }
+    static join(...args) {
+        let comp = [];
+        args.forEach(a => {
+            const parts = a.split(/(?<!\/)\/(?!\/)/g);
+            if (parts.length && parts[parts.length - 1] === '') {
+                parts.pop();
+            }
+            parts.forEach(x => {
+                switch (x) {
+                    case '':
+                        comp = [];
+                        break;
+                    case '.':
+                        break;
+                    case '..':
+                        comp.pop();
+                        break;
+                    default:
+                        comp.push(x);
+                }
+            });
+        });
+        return comp.join('/');
+    }
+    static dirname(path) {
+        const comp = path.split(/(?<!\/)\/(?!\/)/g);
+        comp.pop();
+        return comp.join('/');
+    }
 }

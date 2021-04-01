@@ -25,6 +25,8 @@ export default class Canvas extends Renderer {
     visible: boolean;
     controls: boolean;
     rafId: number;
+    vertexPath: string;
+    fragmentPath: string;
     static items: Canvas[];
     constructor(canvas: HTMLCanvasElement, options?: ICanvasOptions);
     private getShaders_;

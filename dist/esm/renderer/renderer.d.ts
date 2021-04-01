@@ -47,11 +47,23 @@ export default class Renderer extends Subscriber {
     protected parseGeometry_(): void;
     protected createUniforms_(): void;
     protected update_(): void;
-    protected updateUniforms_(): void;
+    updateUniformNoop_(): void;
+    updateUniformDelta_: (timer: CanvasTimer) => void;
+    updateUniformTime_: (timer: CanvasTimer) => void;
+    updateUniformDate_: () => void;
+    updateUniformMouse_: () => void;
+    updateUniformCamera_: () => void;
+    updateUniformMesh_: () => void;
+    protected updateUniformDelta__(timer: CanvasTimer): void;
+    protected updateUniformTime__(timer: CanvasTimer): void;
+    protected updateUniformDate__(): void;
+    protected updateUniformMouse__(): void;
+    protected updateUniformCamera__(): void;
+    protected updateUniformMesh__(): void;
+    protected updateUniformFlat__(): void;
     protected updateProjectionMatrix_(): mat4;
     protected updateModelViewMatrix_(deltaTime: number): mat4;
     protected updateNormalMatrix_(modelViewMatrix: mat4): mat4;
     setMode(mode: ContextMode): void;
     setMesh(mesh: string): void;
-    getResource(url: string): string;
 }

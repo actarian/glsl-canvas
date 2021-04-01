@@ -50,7 +50,7 @@ export default class Context {
     static getContext_(canvas: HTMLCanvasElement, options?: WebGLContextAttributes): WebGLRenderingContext;
     static getContext2_(canvas: HTMLCanvasElement, options?: WebGLContextAttributes): WebGL2RenderingContext;
     static getFragmentVertex(gl: WebGLRenderingContext | WebGL2RenderingContext, fragmentString: string): string;
-    static getIncludes(input: string | undefined): Promise<string | undefined>;
+    static getIncludes(input: string | undefined, workpath?: string): Promise<string | undefined>;
     static isWebGl(context: WebGLRenderingContext | WebGL2RenderingContext): boolean;
     static isWebGl2(context: WebGLRenderingContext | WebGL2RenderingContext): boolean;
     static inferVersion(vertexString?: string, fragmentString?: string): ContextVersion;

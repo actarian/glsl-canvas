@@ -23,9 +23,10 @@ export default class ObjLoader {
                     resolve(geometry);
                 }
                 else {
-                    reject('ObjLoader error: empty positions');
+                    reject(`ObjLoader error: empty positions ${url}`);
                 }
             }, error => {
+                console.log('ObjLoader error:', error, url);
                 reject(error);
             });
         });
@@ -57,7 +58,7 @@ export default class ObjLoader {
                     }
                     /*
                     else {
-                        console.log('error', name, source.length, index - 1);
+                        // console.log('error', name, source.length, index - 1);
                     }
                     */
                 }
@@ -177,9 +178,9 @@ export default class ObjLoader {
             texcoords = this.unrapUvw(positions);
         }
         /*
-        console.log(positions.length, normals.length, texcoords.length, colors.length,
-            positions.length / 3 * 2 === texcoords.length,
-            positions.length / 3 * 4 === colors.length);
+        // console.log(positions.length, normals.length, texcoords.length, colors.length,
+        //	positions.length / 3 * 2 === texcoords.length,
+        //	positions.length / 3 * 4 === colors.length);
         */
         return {
             positions, normals, texcoords, colors

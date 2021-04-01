@@ -103,7 +103,7 @@ ${fragmentString}`;
 		return vertexString;
 	}
 
-	static getIncludes(input: string | undefined): Promise<string | undefined> {
+	static getIncludes(input: string | undefined, workpath: string = ''): Promise<string | undefined> {
 		if (input === undefined) {
 			return Promise.resolve(input);
 		}
@@ -114,7 +114,10 @@ ${fragmentString}`;
 		while ((match = regex.exec(input)) !== null) {
 			promises.push(Promise.resolve(input.slice(i, match.index)));
 			i = match.index + match[0].length;
-			promises.push(Common.fetch(match[1]));
+			const filePath = match[1];
+			const url = Common.getResource(filePath, workpath);
+			const nextWorkpath = filePath.indexOf(':/') === -1 ? Common.dirname(url) : '';
+			promises.push(Common.fetch(url).then(input => Context.getIncludes(input, nextWorkpath)));
 		}
 		promises.push(Promise.resolve(input.slice(i)));
 		return Promise.all(promises).then(chunks => {

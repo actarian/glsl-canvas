@@ -22,6 +22,8 @@ var Canvas = /** @class */ (function (_super) {
         _this.valid = false;
         _this.visible = false;
         _this.controls = false;
+        _this.vertexPath = '';
+        _this.fragmentPath = '';
         if (!canvas) {
             return _this;
         }
@@ -37,8 +39,8 @@ var Canvas = /** @class */ (function (_super) {
         _this.defaultMesh = _this.mesh;
         _this.workpath = options.workpath;
         canvas.style.backgroundColor = options.backgroundColor || 'rgba(0,0,0,0)';
-        _this.getShaders_().then(function (success) {
-            _this.load().then(function (success) {
+        _this.getShaders_().then(function (_) {
+            _this.load().then(function (_) {
                 if (!_this.program) {
                     return;
                 }
@@ -53,7 +55,7 @@ var Canvas = /** @class */ (function (_super) {
     }
     Canvas.prototype.getShaders_ = function () {
         var _this = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve) {
             _this.vertexString = _this.options.vertexString || _this.vertexString;
             _this.fragmentString = _this.options.fragmentString || _this.fragmentString;
             var canvas = _this.canvas;
@@ -71,19 +73,22 @@ var Canvas = /** @class */ (function (_super) {
                 _this.fragmentString = canvas.getAttribute('data-fragment');
             }
             if (Object.keys(urls).length) {
-                Promise.all(Object.keys(urls).map(function (key, i) {
-                    var url = urls[key];
+                Promise.all(Object.keys(urls).map(function (key) {
+                    var url = common_1.default.getResource(urls[key], _this.workpath);
                     return common_1.default.fetch(url)
                         // .then((response) => response.text())
                         .then(function (body) {
+                        var path = common_1.default.dirname(urls[key]);
                         if (key === 'vertex') {
+                            _this.vertexPath = path;
                             return _this.vertexString = body;
                         }
                         else {
+                            _this.fragmentPath = path;
                             return _this.fragmentString = body;
                         }
                     });
-                })).then(function (shaders) {
+                })).then(function (_) {
                     resolve([_this.vertexString, _this.fragmentString]);
                 });
             }
@@ -152,7 +157,7 @@ var Canvas = /** @class */ (function (_super) {
         document.removeEventListener('touchmove', this.onTouchMove);
         this.removeCanvasListeners_();
     };
-    Canvas.prototype.onScroll = function (e) {
+    Canvas.prototype.onScroll = function (_) {
         this.rect = this.canvas.getBoundingClientRect();
     };
     Canvas.prototype.onWheel = function (e) {
@@ -167,17 +172,23 @@ var Canvas = /** @class */ (function (_super) {
         this.trigger('click', e);
     };
     Canvas.prototype.onDown = function (mx, my) {
-        this.mouse.x = mx * this.devicePixelRatio;
-        this.mouse.y = my * this.devicePixelRatio;
         var rect = this.rect;
+        mx = (mx - rect.left);
+        my = (rect.height - (my - rect.top));
+        var x = mx * this.devicePixelRatio;
+        var y = my * this.devicePixelRatio;
+        this.mouse.x = x;
+        this.mouse.y = y;
         var min = Math.min(rect.width, rect.height);
         this.camera.down(mx / min, my / min);
         this.trigger('down', this.mouse);
     };
     Canvas.prototype.onMove = function (mx, my) {
         var rect = this.rect;
-        var x = (mx - rect.left) * this.devicePixelRatio;
-        var y = (rect.height - (my - rect.top)) * this.devicePixelRatio;
+        mx = (mx - rect.left);
+        my = (rect.height - (my - rect.top));
+        var x = mx * this.devicePixelRatio;
+        var y = my * this.devicePixelRatio;
         if (x !== this.mouse.x ||
             y !== this.mouse.y) {
             this.mouse.x = x;
@@ -252,7 +263,7 @@ var Canvas = /** @class */ (function (_super) {
         this.onUp(e);
         document.removeEventListener('touchend', this.onTouchEnd);
     };
-    Canvas.prototype.onLoop = function (time) {
+    Canvas.prototype.onLoop = function (_) {
         this.checkRender();
         this.rafId = window.requestAnimationFrame(this.onLoop);
     };
@@ -291,6 +302,7 @@ var Canvas = /** @class */ (function (_super) {
     };
     // check size change at start of requestFrame
     Canvas.prototype.sizeDidChanged_ = function () {
+        var _this = this;
         var gl = this.gl;
         var CW = Math.ceil(this.canvas.clientWidth), CH = Math.ceil(this.canvas.clientHeight);
         if (this.width !== CW ||
@@ -300,12 +312,12 @@ var Canvas = /** @class */ (function (_super) {
             // Lookup the size the browser is displaying the canvas in CSS pixels
             // and compute a size needed to make our drawingbuffer match it in
             // device pixels.
-            var W = Math.ceil(CW * this.devicePixelRatio);
-            var H = Math.ceil(CH * this.devicePixelRatio);
-            this.W = W;
-            this.H = H;
-            this.canvas.width = W;
-            this.canvas.height = H;
+            var W_1 = Math.ceil(CW * this.devicePixelRatio);
+            var H_1 = Math.ceil(CH * this.devicePixelRatio);
+            this.W = W_1;
+            this.H = H_1;
+            this.canvas.width = W_1;
+            this.canvas.height = H_1;
             /*
             if (gl.canvas.width !== W ||
                 gl.canvas.height !== H) {
@@ -315,10 +327,10 @@ var Canvas = /** @class */ (function (_super) {
                 // gl.viewport(0, 0, W, H);
             }
             */
-            for (var key in this.buffers.values) {
-                var buffer = this.buffers.values[key];
-                buffer.resize(gl, W, H);
-            }
+            Object.keys(this.buffers.values).forEach(function (key) {
+                var buffer = _this.buffers.values[key];
+                buffer.resize(gl, W_1, H_1);
+            });
             this.rect = this.canvas.getBoundingClientRect();
             this.trigger('resize');
             // gl.useProgram(this.program);
@@ -358,8 +370,8 @@ var Canvas = /** @class */ (function (_super) {
         var _this = this;
         var fragmentVertexString = context_1.default.getFragmentVertex(this.gl, fragmentString || this.fragmentString);
         return Promise.all([
-            context_1.default.getIncludes(fragmentString || this.fragmentString),
-            context_1.default.getIncludes(fragmentVertexString || vertexString || this.vertexString)
+            context_1.default.getIncludes(fragmentString || this.fragmentString, this.fragmentPath === '' ? this.workpath : this.fragmentPath),
+            context_1.default.getIncludes(fragmentVertexString || vertexString || this.vertexString, this.vertexPath === '' ? this.workpath : this.vertexPath)
         ]).then(function (array) {
             _this.fragmentString = array[0];
             _this.vertexString = array[1];
@@ -473,10 +485,11 @@ var Canvas = /** @class */ (function (_super) {
         }
     };
     Canvas.prototype.createBuffers_ = function () {
-        for (var key in this.buffers.values) {
-            var buffer = this.buffers.values[key];
-            this.uniforms.create(uniforms_1.UniformMethod.Uniform1i, uniforms_1.UniformType.Sampler2D, buffer.key, [buffer.input.index]);
-        }
+        var _this = this;
+        Object.keys(this.buffers.values).forEach(function (key) {
+            var buffer = _this.buffers.values[key];
+            _this.uniforms.create(uniforms_1.UniformMethod.Uniform1i, uniforms_1.UniformType.Sampler2D, buffer.key, [buffer.input.index]);
+        });
     };
     Canvas.prototype.createTextures_ = function () {
         var _this = this;
@@ -494,33 +507,36 @@ var Canvas = /** @class */ (function (_super) {
         this.updateTextures_();
     };
     Canvas.prototype.updateBuffers_ = function () {
-        for (var key in this.buffers.values) {
-            var buffer = this.buffers.values[key];
-            this.uniforms.update(uniforms_1.UniformMethod.Uniform1i, uniforms_1.UniformType.Sampler2D, buffer.key, [buffer.input.index]);
-        }
+        var _this = this;
+        Object.keys(this.buffers.values).forEach(function (key) {
+            var buffer = _this.buffers.values[key];
+            _this.uniforms.update(uniforms_1.UniformMethod.Uniform1i, uniforms_1.UniformType.Sampler2D, buffer.key, [buffer.input.index]);
+        });
     };
     Canvas.prototype.updateTextures_ = function () {
+        var _this = this;
         var gl = this.gl;
-        for (var key in this.textures.values) {
-            var texture = this.textures.values[key];
+        Object.keys(this.textures.values).forEach(function (key) {
+            var texture = _this.textures.values[key];
             texture.tryUpdate(gl);
-            this.uniforms.update(uniforms_1.UniformMethod.Uniform1i, uniforms_1.UniformType.Sampler2D, texture.key, [texture.index]);
-        }
+            _this.uniforms.update(uniforms_1.UniformMethod.Uniform1i, uniforms_1.UniformType.Sampler2D, texture.key, [texture.index]);
+        });
     };
     Canvas.prototype.destroyContext_ = function () {
+        var _this = this;
         var gl = this.gl;
         gl.useProgram(null);
         if (this.program) {
             gl.deleteProgram(this.program);
         }
-        for (var key in this.buffers.values) {
-            var buffer = this.buffers.values[key];
+        Object.keys(this.buffers.values).forEach(function (key) {
+            var buffer = _this.buffers.values[key];
             buffer.destroy(gl);
-        }
-        for (var key in this.textures.values) {
-            var texture = this.textures.values[key];
+        });
+        Object.keys(this.textures.values).forEach(function (key) {
+            var texture = _this.textures.values[key];
             texture.destroy(gl);
-        }
+        });
         this.buffers = null;
         this.textures = null;
         this.uniforms = null;
@@ -583,9 +599,10 @@ var Canvas = /** @class */ (function (_super) {
         return this.setUniform_(key, values, null, uniforms_1.UniformType.Int);
     };
     Canvas.prototype.setUniforms = function (values) {
-        for (var key in values) {
-            this.setUniform(key, values[key]);
-        }
+        var _this = this;
+        Object.keys(values).forEach(function (key) {
+            _this.setUniform(key, values[key]);
+        });
     };
     Canvas.prototype.pause = function () {
         if (this.valid) {

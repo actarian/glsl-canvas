@@ -1,7 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Texture = exports.isTextureData = exports.TextureFilteringType = exports.TextureSourceType = exports.TextureExtensions = exports.TextureVideoExtensions = exports.TextureImageExtensions = void 0;
 var tslib_1 = require("tslib");
 // import 'promise-polyfill';
+var common_1 = tslib_1.__importDefault(require("../core/common"));
 var iterable_1 = tslib_1.__importDefault(require("../core/iterable"));
 var subscriber_1 = tslib_1.__importDefault(require("../core/subscriber"));
 var logger_1 = tslib_1.__importDefault(require("../logger/logger"));
@@ -148,9 +150,9 @@ var Texture = /** @class */ (function (_super) {
         this.source = url;
         this.sourceType = TextureSourceType.Url;
         this.options = Object.assign(this.options, options);
-        var src = String((url.indexOf(':/') === -1 && this.workpath !== undefined) ? this.workpath + "/" + url : url);
         var ext = url.split('?')[0].split('.').pop().toLowerCase();
         var isVideo = exports.TextureVideoExtensions.indexOf(ext) !== -1;
+        var src = common_1.default.getResource(url, this.workpath);
         var element;
         var promise;
         if (isVideo) {
@@ -350,9 +352,10 @@ var Textures = /** @class */ (function (_super) {
         return _this;
     }
     Textures.prototype.clean = function () {
-        for (var key in this.values) {
-            this.values[key].dirty = false;
-        }
+        var _this = this;
+        Object.keys(this.values).forEach(function (key) {
+            _this.values[key].dirty = false;
+        });
         this.dirty = false;
     };
     Textures.prototype.createOrUpdate = function (gl, key, urlElementOrData, index, options, workpath) {

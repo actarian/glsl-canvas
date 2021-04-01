@@ -4,11 +4,10 @@
 
 ***Now supporting WebGL2. just add `#version 300 es` at the very start of the file.***
 
----
+***Now supporting multiple includes with relative paths.***
 
 > [Examples](https://actarian.github.io/glsl-canvas/)  
 > [Docs](https://actarian.github.io/glsl-canvas/api/)   
-___
 
 ## How to use
 
@@ -318,10 +317,11 @@ ___
 [![GitHub forks](https://img.shields.io/github/forks/actarian/glsl-canvas.svg?style=social&label=Fork&maxAge=2592000)](https://gitHub.com/actarian/glsl-canvas/network/)  [![GitHub stars](https://img.shields.io/github/stars/actarian/glsl-canvas.svg?style=social&label=Star&maxAge=2592000)](https://GitHub.com/actarian/glsl-canvas/stargazers/)  [![GitHub followers](https://img.shields.io/github/followers/actarian.svg?style=social&label=Follow&maxAge=2592000)](https://github.com/actarian?tab=followers)
 
 * [Github Project Page](https://github.com/actarian/glsl-canvas)  
-
+<!--
 *If you find it helpful, feel free to contribute in keeping this extension up to date via [PayPal](https://www.paypal.me/circledev/5)*
 
 [![PayPal](https://www.paypalobjects.com/webstatic/en_US/i/buttons/PP_logo_h_100x26.png)](https://www.paypal.me/circledev/5)
+-->
 ___
 
 ## Contact

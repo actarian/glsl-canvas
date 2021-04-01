@@ -3,6 +3,14 @@ All notable changes to the "glsl-canvas" library will be documented in this file
 
 ---
 
+## [0.2.3] - 2021-04-01
+### Fixed
+- u_mouse mousedown, touchstart.
+### Added
+- nested includes.
+
+---
+
 ## [0.2.2] - 2020-04-26
 ### Added
 - modes: flat, box, sphere, torus, mesh.

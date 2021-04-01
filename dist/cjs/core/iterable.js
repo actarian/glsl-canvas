@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.StringMap = exports.NumberMap = void 0;
 var NumberMap = /** @class */ (function () {
     function NumberMap() {
     }
@@ -19,7 +20,8 @@ var IterableStringMap = /** @class */ (function () {
         this.values = new StringMap();
     }
     IterableStringMap.prototype.has = function (key) {
-        return this.values.hasOwnProperty(key);
+        return key in this.values;
+        // return this.values.hasOwnProperty(key);
     };
     IterableStringMap.prototype.set = function (key, item) {
         this.values[key] = item;
@@ -28,18 +30,20 @@ var IterableStringMap = /** @class */ (function () {
         return this.values[key];
     };
     IterableStringMap.prototype.forEach = function (callbackfn) {
+        var _this = this;
         var i = 0;
-        for (var key in this.values) {
-            callbackfn(this.values[key], i, this.values);
+        Object.keys(this.values).forEach(function (key) {
+            callbackfn(_this.values[key], i, _this.values);
             i++;
-        }
+        });
     };
     IterableStringMap.prototype.reduce = function (callbackfn, initialValue) {
+        var _this = this;
         var previous = initialValue, i = 0;
-        for (var key in this.values) {
-            previous = callbackfn(previous, this.values[key], i, this.values);
+        Object.keys(this.values).forEach(function (key) {
+            previous = callbackfn(previous, _this.values[key], i, _this.values);
             i++;
-        }
+        });
         return previous;
     };
     return IterableStringMap;
