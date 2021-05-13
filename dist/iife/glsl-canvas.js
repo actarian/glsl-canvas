@@ -1469,12 +1469,12 @@ var OrbitCamera = function (_Vector) {
     return new OrbitCamera(theta, phi, radius);
   };
 
-  OrbitCamera.toFloat32Array = function toFloat32Array(camera) {
+  OrbitCamera.toArray = function toArray(camera) {
     var spr = Math.sin(camera.phi) * camera.radius;
     var x = spr * Math.sin(camera.theta);
     var y = Math.cos(camera.phi) * camera.radius;
     var z = spr * Math.cos(camera.theta);
-    return new Float32Array([x, y, z]);
+    return [x, y, z];
   };
 
   return OrbitCamera;
@@ -3304,7 +3304,7 @@ var Uniforms = function (_IterableStringMap) {
 
   _proto.updateUniformCamera__ = function updateUniformCamera__() {
     var uniforms = this.uniforms;
-    var array = OrbitCamera.toFloat32Array(this.camera);
+    var array = OrbitCamera.toArray(this.camera);
     uniforms.update(exports.UniformMethod.Uniform3f, exports.UniformType.Float, 'u_camera', array);
   };
 

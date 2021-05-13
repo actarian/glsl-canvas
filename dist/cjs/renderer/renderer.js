@@ -231,7 +231,7 @@ var Renderer = /** @class */ (function (_super) {
     ;
     Renderer.prototype.updateUniformCamera__ = function () {
         var uniforms = this.uniforms;
-        var array = orbit_camera_1.default.toFloat32Array(this.camera);
+        var array = orbit_camera_1.default.toArray(this.camera);
         uniforms.update(uniforms_1.UniformMethod.Uniform3f, uniforms_1.UniformType.Float, 'u_camera', array);
     };
     ;
