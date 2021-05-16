@@ -4,7 +4,7 @@
 
 ***Now supporting WebGL2. just add `#version 300 es` at the very start of the file.***
 
-***Now supporting multiple includes with relative paths.***
+***Now supporting nested includes with relative paths.***
 
 > [Examples](https://actarian.github.io/glsl-canvas/)  
 > [Docs](https://actarian.github.io/glsl-canvas/api/)   
