@@ -46,12 +46,12 @@ var OrbitCamera = /** @class */ (function (_super) {
         var phi = Math.atan(vector.x / vector.z); //phi
         return new OrbitCamera(theta, phi, radius);
     };
-    OrbitCamera.toFloat32Array = function (camera) {
+    OrbitCamera.toArray = function (camera) {
         var spr = Math.sin(camera.phi) * camera.radius;
         var x = spr * Math.sin(camera.theta);
         var y = Math.cos(camera.phi) * camera.radius;
         var z = spr * Math.cos(camera.theta);
-        return new Float32Array([x, y, z]);
+        return [x, y, z];
     };
     return OrbitCamera;
 }(vector3_1.default));

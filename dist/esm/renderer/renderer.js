@@ -225,7 +225,7 @@ export default class Renderer extends Subscriber {
     ;
     updateUniformCamera__() {
         const uniforms = this.uniforms;
-        const array = OrbitCamera.toFloat32Array(this.camera);
+        const array = OrbitCamera.toArray(this.camera);
         uniforms.update(UniformMethod.Uniform3f, UniformType.Float, 'u_camera', array);
     }
     ;

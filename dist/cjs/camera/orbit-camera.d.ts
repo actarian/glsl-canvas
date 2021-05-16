@@ -14,5 +14,5 @@ export default class OrbitCamera extends Vector3 {
     up(): void;
     wheel(d: number): void;
     static fromVector(vector: Vector3): OrbitCamera;
-    static toFloat32Array(camera: OrbitCamera): number[] | Float32Array;
+    static toArray(camera: OrbitCamera): number[];
 }

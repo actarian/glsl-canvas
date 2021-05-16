@@ -255,8 +255,8 @@ export default class Renderer extends Subscriber {
 	};
 	protected updateUniformCamera__():void {
 		const uniforms = this.uniforms;
-		const array = OrbitCamera.toFloat32Array(this.camera);
-		uniforms.update(UniformMethod.Uniform3f, UniformType.Float, 'u_camera', array as number[]);
+		const array = OrbitCamera.toArray(this.camera);
+		uniforms.update(UniformMethod.Uniform3f, UniformType.Float, 'u_camera', array);
 	};
 	protected updateUniformMesh__():void {
 		const uniforms = this.uniforms;
