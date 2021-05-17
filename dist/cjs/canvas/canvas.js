@@ -342,9 +342,7 @@ var Canvas = /** @class */ (function (_super) {
     };
     Canvas.prototype.parseTextures_ = function (fragmentString) {
         var _this = this;
-        // const regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\:\/\/|\.|\-|\_]*)|\s*)/gm;
         var regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\:\/\/|\.|\-|\_|\?|\&|\=]*)|\s*)/gm;
-        // const regexp = /uniform\s*sampler2D\s*([\w]*);(\s*\/\/\s*([\w|\://|\.|\-|\_]*)|\s*)((\s*\:\s)(\{(\s*\w*\:\s*['|"]{0,1}\w*['|"]{0,1}\s*[,]{0,1})+\}))*/gm;
         var matches;
         while ((matches = regexp.exec(fragmentString)) !== null) {
             var key = matches[1];

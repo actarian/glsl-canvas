@@ -318,5 +318,4 @@ ${fragmentString}`;
 		gl.vertexAttribPointer(positionIndex, 2, gl.FLOAT, false, 0, 0);
 		return vertexBuffers;
 	}
-
 }

@@ -30,34 +30,35 @@ export default class Common {
 	}
 
 	static join(...args: string[]): string {
-		let comp: string[] = [];
+		let comps: string[] = [];
 		args.forEach(a => {
-			const parts = a.split(/(?<!\/)\/(?!\/)/g);
-			if (parts.length && parts[parts.length - 1] === '') {
-				parts.pop();
+			if (a.indexOf('/') === 0) {
+				comps = [];
 			}
+			const parts = Common.comps(a);
 			parts.forEach(x => {
 				switch(x) {
-					case '':
-						comp = [];
-						break;
 					case '.':
 						break;
 					case '..':
-						comp.pop();
+						comps.pop();
 						break;
 					default:
-						comp.push(x);
+						comps.push(x);
 				}
 			});
 		});
-		return comp.join('/');
+		return comps.join('/');
 	}
 
 	static dirname(path: string): string {
-		const comp: string[] = path.split(/(?<!\/)\/(?!\/)/g);
-		comp.pop();
-		return comp.join('/');
+		// return path.replace(/\/[^\/]+\.\w+/, '');
+		const comps: string[] = Common.comps(path);
+		comps.pop();
+		return comps.join('/');
 	}
 
+	static comps(path: string): string[] {
+		return path.replace(/\/$/, '').split(/\/+/);
+	}
 }

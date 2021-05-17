@@ -1,5 +1,5 @@
 /**
- * @license glsl-canvas-js v0.2.3
+ * @license glsl-canvas-js v0.2.5
  * (c) 2021 Luca Zampetti <lzampetti@gmail.com>
  * License: MIT
  */
@@ -418,44 +418,43 @@ Promise$1._unhandledRejectionFn = function _unhandledRejectionFn(err) {
   };
 
   Common.join = function join() {
-    var comp = [];
+    var comps = [];
 
     for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
       args[_key] = arguments[_key];
     }
 
     args.forEach(function (a) {
-      var parts = a.split(/(?<!\/)\/(?!\/)/g);
-
-      if (parts.length && parts[parts.length - 1] === '') {
-        parts.pop();
+      if (a.indexOf('/') === 0) {
+        comps = [];
       }
 
+      var parts = Common.comps(a);
       parts.forEach(function (x) {
         switch (x) {
-          case '':
-            comp = [];
-            break;
-
           case '.':
             break;
 
           case '..':
-            comp.pop();
+            comps.pop();
             break;
 
           default:
-            comp.push(x);
+            comps.push(x);
         }
       });
     });
-    return comp.join('/');
+    return comps.join('/');
   };
 
   Common.dirname = function dirname(path) {
-    var comp = path.split(/(?<!\/)\/(?!\/)/g);
-    comp.pop();
-    return comp.join('/');
+    var comps = Common.comps(path);
+    comps.pop();
+    return comps.join('/');
+  };
+
+  Common.comps = function comps(path) {
+    return path.replace(/\/$/, '').split(/\/+/);
   };
 
   return Common;

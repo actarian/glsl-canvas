@@ -36,33 +36,34 @@ var Common = /** @class */ (function () {
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
         }
-        var comp = [];
+        var comps = [];
         args.forEach(function (a) {
-            var parts = a.split(/(?<!\/)\/(?!\/)/g);
-            if (parts.length && parts[parts.length - 1] === '') {
-                parts.pop();
+            if (a.indexOf('/') === 0) {
+                comps = [];
             }
+            var parts = Common.comps(a);
             parts.forEach(function (x) {
                 switch (x) {
-                    case '':
-                        comp = [];
-                        break;
                     case '.':
                         break;
                     case '..':
-                        comp.pop();
+                        comps.pop();
                         break;
                     default:
-                        comp.push(x);
+                        comps.push(x);
                 }
             });
         });
-        return comp.join('/');
+        return comps.join('/');
     };
     Common.dirname = function (path) {
-        var comp = path.split(/(?<!\/)\/(?!\/)/g);
-        comp.pop();
-        return comp.join('/');
+        // return path.replace(/\/[^\/]+\.\w+/, '');
+        var comps = Common.comps(path);
+        comps.pop();
+        return comps.join('/');
+    };
+    Common.comps = function (path) {
+        return path.replace(/\/$/, '').split(/\/+/);
     };
     return Common;
 }());

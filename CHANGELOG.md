@@ -3,6 +3,12 @@ All notable changes to the "glsl-canvas" library will be documented in this file
 
 ---
 
+## [0.2.5] - 2021-05-17
+### Fixed
+- Safari Regex lookbehind.
+
+---
+
 ## [0.2.4] - 2021-05-16
 ### Fixed
 - u_camera uniform.
