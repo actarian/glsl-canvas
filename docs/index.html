@@ -149,14 +149,14 @@
 			switch (i) {
 				case 3:
 					canvas.on('over', function() {
-						if (canvas.uniforms.get('u_texture').texture.url === 'data/mars.jpg') {
-							canvas.setUniform('u_texture', 'data/moon.jpg');
+						if (canvas.uniforms.get('u_texture').texture.url === 'glsl-canvas/data/mars.jpg') {
+							canvas.setUniform('u_texture', 'glsl-canvas/data/moon.jpg');
 							/*
-							canvas.setTexture('u_texture', 'data/moon.jpg', { repeat: true });
+							canvas.setTexture('u_texture', 'glsl-canvas/data/moon.jpg', { repeat: true });
 							*/
 						} else {
-							// canvas.setUniform('u_texture', 'data/mars.jpg');
-							canvas.setTexture('u_texture', 'data/mars.jpg', { repeat: true });
+							// canvas.setUniform('u_texture', 'glsl-canvas/data/mars.jpg');
+							canvas.setTexture('u_texture', 'glsl-canvas/data/mars.jpg', { repeat: true });
 						}
 					});
 					break;
@@ -164,7 +164,7 @@
 					canvas.setUniform('u_video', '#video-4');
 					break;
 				case 5:
-					canvas.setTexture('u_texture', 'data/noise.png', { repeat: true });
+					canvas.setTexture('u_texture', 'glsl-canvas/data/noise.png', { repeat: true });
 					break;
 				case 6:
 					canvas.on('render', function() {
@@ -184,7 +184,7 @@
 					});
 					break;
 				case 9:
-					canvas.setUniform('u_texture', ['data/moon.jpg', 'data/mars.jpg']);
+					canvas.setUniform('u_texture', ['glsl-canvas/data/moon.jpg', 'glsl-canvas/data/mars.jpg']);
 					break;
 				case 10:
 					canvas.setUniform('u_video', '#video-4');
@@ -196,8 +196,8 @@
 					});
 					break;
 				case 12:
-					// canvas.setTexture('u_texture', 'data/bayer-matrix.png', { filtering: 'nearest' });
-					canvas.setTexture('u_texture', 'data/bayer-matrix.png?filtering=nearest&repeat=true');
+					// canvas.setTexture('u_texture', 'glsl-canvas/data/bayer-matrix.png', { filtering: 'nearest' });
+					canvas.setTexture('u_texture', 'glsl-canvas/data/bayer-matrix.png?filtering=nearest&repeat=true');
 					break;
 			}
 			return canvas;
