@@ -20,7 +20,7 @@ uniform sampler2D u_buffer0;
 
 #if defined(VERTEX)
 
-attribute vec4 a_position; // data/duck-toy.obj
+attribute vec4 a_position; // glsl-canvas/data/duck-toy.obj
 // attribute vec4 a_position;
 attribute vec4 a_normal;
 attribute vec2 a_texcoord;

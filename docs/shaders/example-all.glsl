@@ -58,7 +58,7 @@ vec3 rotateZ(vec3 p, float angle) {
 /**
 * attribute vec4 a_position; // myfolder/myfile.obj
 */
-// attribute vec4 a_position; // data/dolphin.obj
+// attribute vec4 a_position; // glsl-canvas/data/dolphin.obj
 attribute vec4 a_position;
 attribute vec4 a_normal;
 attribute vec2 a_texcoord;

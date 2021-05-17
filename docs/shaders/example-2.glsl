@@ -8,9 +8,9 @@ precision highp float;
 
 uniform vec2 u_resolution;
 uniform float u_time;
-uniform sampler2D u_tex0; // data/moon.jpg
+uniform sampler2D u_tex0; // glsl-canvas/data/moon.jpg
 uniform vec2 u_tex0Resolution;
-uniform sampler2D u_logo; // data/logo.jpg
+uniform sampler2D u_logo; // glsl-canvas/data/logo.jpg
 uniform vec2 u_logoResolution;
 
 vec2 scale(vec2 st, float s) {

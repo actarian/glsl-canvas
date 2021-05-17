@@ -6,7 +6,7 @@ precision mediump float;
 #endif
 
 uniform vec2 u_resolution;
-uniform sampler2D u_texture; // data/moon.jpg
+uniform sampler2D u_texture; // glsl-canvas/data/moon.jpg
 uniform vec2 u_textureResolution;
 
 void main() {

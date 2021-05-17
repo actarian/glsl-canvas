@@ -9,7 +9,7 @@ varying vec2 v_texcoord;
 varying vec4 v_color;
 
 uniform vec2 u_resolution;
-uniform sampler2D u_texture; // data/bayer-matrix.png?repeat=true
+uniform sampler2D u_texture; // glsl-canvas/data/bayer-matrix.png?repeat=true
 // ?filtering=nearest
 uniform vec2 u_textureResolution;
 uniform float u_time;
