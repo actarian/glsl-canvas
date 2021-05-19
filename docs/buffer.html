@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<base href="/glsl-canvas/">
+	<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=2,user-scalable=yes">
+	<title>GlslCanvas</title>
+	<link rel="stylesheet" type="text/css" href="/glsl-canvas/css/docs.min.css">
+	<script type="text/javascript" src="/glsl-canvas/js/vendors.js"></script>
+	<script type="text/javascript" src="/glsl-canvas/js/glsl-canvas.js"></script>
+</head>
+
+<body>
+	<h3>WebGl 1</h3>
+	<div class="examples">
+		<div class="example">
+			<h4>buffers</h4>
+			<canvas class="canvas" controls data-fragment-url="/glsl-canvas/shaders/example-1.glsl"></canvas>
+			<button type="button" class="btn btn-toggle">toggle</button>
+		</div>
+	</div>
+
+	<h3>WebGl 2</h3>
+	<div class="examples">
+		<div class="example">
+			<h4>buffers</h4>
+			<canvas class="canvas" controls data-fragment-url="/glsl-canvas/shaders/example-21.glsl"></canvas>
+			<button type="button" class="btn btn-toggle">toggle</button>
+		</div>
+	</div>
+</body>
+
+<script>
+	var stats = new Stats();
+	stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+	document.body.appendChild(stats.dom);
+	// glsl.Canvas.logger.enabled = false;
+	var canvases = [].slice.call(document.querySelectorAll('.canvas'))
+		.map(function(element, i) {
+			var canvas = glsl.of(element, { extensions: i === 3 ? ['EXT_shader_texture_lod'] : [] });
+			canvas.on('render', function() {
+				stats.end();
+				stats.begin();
+			});
+			return canvas;
+		});
+	var buttons = [].slice.call(document.querySelectorAll('.btn-toggle'))
+		.forEach(function(button, i) {
+			button.addEventListener('click', function() {
+				var canvas = canvases[i];
+				if (canvas) {
+					canvas.toggle();
+				}
+			});
+		});
+
+</script>
+
+</html>
