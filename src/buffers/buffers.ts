@@ -17,83 +17,81 @@ export class Buffer {
 	BH: number;
 	index: number;
 
-	static floatType: BufferFloatType = BufferFloatType.HALF_FLOAT;
+	static type: BufferFloatType = BufferFloatType.HALF_FLOAT;
 
-	static getFloatExtension(gl: WebGLRenderingContext | WebGL2RenderingContext): any {
-		// return Context.isWebGl2(gl) ? 'EXT_color_buffer_float' : 'OES_texture_float';
-		let extension: any, extensionName: string;
+	static getFloatType(gl: WebGLRenderingContext | WebGL2RenderingContext): number | null {
+		let extension: any;
 		if (Context.isWebGl2(gl)) {
-			extensionName = 'EXT_color_buffer_float';
-			extension = gl.getExtension(extensionName);
+			extension = gl.getExtension('EXT_color_buffer_float');
 			if (extension) {
-				return extension;
+				return gl.FLOAT;
 			}
 		}
-		extensionName = 'OES_texture_float';
-		return gl.getExtension(extensionName);
+		extension = gl.getExtension('OES_texture_float');
+		if (extension) {
+			return gl.FLOAT;
+		}
+		return null;
 	}
 
-	static getHalfFloatExtension(gl: WebGLRenderingContext | WebGL2RenderingContext): any {
-		// return Context.isWebGl2(gl) ? 'EXT_color_buffer_half_float' : 'OES_texture_half_float';
-		let extension: any, extensionName: string;
+	static getHalfFloatType(gl: WebGLRenderingContext | WebGL2RenderingContext): number | null {
+		let extension: any;
 		if (Context.isWebGl2(gl)) {
-			extensionName = 'EXT_color_buffer_half_float';
-			extension = gl.getExtension(extensionName);
-			if (extension && extension.HALF_FLOAT_OES) {
-				return extension;
+			extension = gl.getExtension('EXT_color_buffer_half_float') || gl.getExtension('EXT_color_buffer_float');
+			if (extension) {
+				return (gl as WebGL2RenderingContext).HALF_FLOAT;
 			}
 		}
-		extensionName = 'OES_texture_half_float';
-		return gl.getExtension(extensionName);
+		extension = gl.getExtension('OES_texture_half_float');
+		if (extension) {
+			return extension.HALF_FLOAT_OES || null;
+		}
+		return null;
 	}
 
 	static getInternalFormat(gl: WebGLRenderingContext | WebGL2RenderingContext): number {
 		return (Context.isWebGl2(gl) ? (gl as WebGL2RenderingContext).RGBA16F : gl.RGBA);
 	}
 
-	static getFloatType(gl: WebGLRenderingContext | WebGL2RenderingContext): number {
-		let floatType: number, extension;
-		if (Buffer.floatType === BufferFloatType.HALF_FLOAT) {
-			extension = Buffer.getHalfFloatExtension(gl);
-			if (extension) {
-				floatType = extension.HALF_FLOAT_OES;
-			} else if (Context.isWebGl2(gl)) {
-				floatType = (gl as WebGL2RenderingContext).HALF_FLOAT;
+	static getType(gl: WebGLRenderingContext | WebGL2RenderingContext): number {
+		let type: number;
+		if (Buffer.type === BufferFloatType.HALF_FLOAT) {
+			type = Buffer.getHalfFloatType(gl);
+			if (type) {
+				return type;
 			} else {
-				Buffer.floatType = BufferFloatType.FLOAT;
-				return Buffer.getFloatType(gl);
+				Buffer.type = BufferFloatType.FLOAT;
+				return Buffer.getType(gl);
 			}
 		} else {
-			extension = Buffer.getFloatExtension(gl);
-			if (extension) {
-				floatType = gl.FLOAT;
+			type = Buffer.getFloatType(gl);
+			if (type) {
+				return type;
 			} else {
-				Buffer.floatType = BufferFloatType.HALF_FLOAT;
-				return Buffer.getFloatType(gl);
+				Buffer.type = BufferFloatType.HALF_FLOAT;
+				return Buffer.getType(gl);
 			}
 		}
-		console.log(Buffer.floatType, floatType, extension);
-		return floatType;
 	}
 
 	static getTexture(gl: WebGLRenderingContext | WebGL2RenderingContext, BW: number, BH: number, index: number): WebGLTexture {
 		const internalFormat = Buffer.getInternalFormat(gl);
 		const format = gl.RGBA;
-		const floatType = Buffer.getFloatType(gl);
+		const type = Buffer.getType(gl);
 		const texture = gl.createTexture();
 		gl.activeTexture(gl.TEXTURE0 + index);
 		gl.bindTexture(gl.TEXTURE_2D, texture);
-		gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, BW, BH, 0, format, floatType, null);
+		gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, BW, BH, 0, format, type, null);
 		const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
 		if (status !== gl.FRAMEBUFFER_COMPLETE) {
-			if (Buffer.floatType === BufferFloatType.FLOAT) {
-				Buffer.floatType = BufferFloatType.HALF_FLOAT;
+			if (Buffer.type === BufferFloatType.FLOAT) {
+				Buffer.type = BufferFloatType.HALF_FLOAT;
 			} else {
-				Buffer.floatType = BufferFloatType.FLOAT;
+				Buffer.type = BufferFloatType.FLOAT;
 			}
 			return Buffer.getTexture(gl, BW, BH, index);
 		}
-		console.log('getTexture', texture);
+		// console.log('getTexture', 'internalFormat', internalFormat === (gl as WebGL2RenderingContext).RGBA16F, 'format', format === gl.RGBA, 'type', type === (gl as WebGL2RenderingContext).HALF_FLOAT, 'status', status === gl.FRAMEBUFFER_COMPLETE);
 		return texture;
 	}
 
@@ -121,21 +119,21 @@ export class Buffer {
 			const minW = Math.min(BW, this.BW);
 			const minH = Math.min(BH, this.BH);
 			let pixels: Float32Array;
-			let floatType = Buffer.getFloatType(gl);
+			let type = Buffer.getType(gl);
 			if (status === gl.FRAMEBUFFER_COMPLETE) {
 				pixels = new Float32Array(minW * minH * 4);
-				gl.readPixels(0, 0, minW, minH, gl.RGBA, floatType, pixels);
+				gl.readPixels(0, 0, minW, minH, gl.RGBA, type, pixels);
 			}
 			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 			const newIndex = index + 1; // temporary index
 			const newTexture = Buffer.getTexture(gl, BW, BH, newIndex);
-			floatType = Buffer.getFloatType(gl);
+			type = Buffer.getType(gl);
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 			if (pixels) {
-				gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, minW, minH, gl.RGBA, floatType, pixels);
+				gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, minW, minH, gl.RGBA, type, pixels);
 			}
 			const newBuffer = gl.createFramebuffer();
 			/*
@@ -153,7 +151,7 @@ export class Buffer {
 			this.buffer = newBuffer;
 			this.BW = BW;
 			this.BH = BH;
-			console.log('resize', newBuffer);
+			// console.log('resize', newBuffer);
 		}
 	}
 }

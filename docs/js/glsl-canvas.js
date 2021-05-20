@@ -1062,92 +1062,94 @@ var Buffer = function () {
     this.index = index;
   }
 
-  Buffer.getFloatExtension = function getFloatExtension(gl) {
-    var extension, extensionName;
+  Buffer.getFloatType = function getFloatType(gl) {
+    var extension;
 
     if (Context.isWebGl2(gl)) {
-      extensionName = 'EXT_color_buffer_float';
-      extension = gl.getExtension(extensionName);
+      extension = gl.getExtension('EXT_color_buffer_float');
 
       if (extension) {
-        return extension;
+        return gl.FLOAT;
       }
     }
 
-    extensionName = 'OES_texture_float';
-    return gl.getExtension(extensionName);
+    extension = gl.getExtension('OES_texture_float');
+
+    if (extension) {
+      return gl.FLOAT;
+    }
+
+    return null;
   };
 
-  Buffer.getHalfFloatExtension = function getHalfFloatExtension(gl) {
-    var extension, extensionName;
+  Buffer.getHalfFloatType = function getHalfFloatType(gl) {
+    var extension;
 
     if (Context.isWebGl2(gl)) {
-      extensionName = 'EXT_color_buffer_half_float';
-      extension = gl.getExtension(extensionName);
+      extension = gl.getExtension('EXT_color_buffer_half_float') || gl.getExtension('EXT_color_buffer_float');
 
-      if (extension && extension.HALF_FLOAT_OES) {
-        return extension;
+      if (extension) {
+        return gl.HALF_FLOAT;
       }
     }
 
-    extensionName = 'OES_texture_half_float';
-    return gl.getExtension(extensionName);
+    extension = gl.getExtension('OES_texture_half_float');
+
+    if (extension) {
+      return extension.HALF_FLOAT_OES || null;
+    }
+
+    return null;
   };
 
   Buffer.getInternalFormat = function getInternalFormat(gl) {
     return Context.isWebGl2(gl) ? gl.RGBA16F : gl.RGBA;
   };
 
-  Buffer.getFloatType = function getFloatType(gl) {
-    var floatType, extension;
+  Buffer.getType = function getType(gl) {
+    var type;
 
-    if (Buffer.floatType === exports.BufferFloatType.HALF_FLOAT) {
-      extension = Buffer.getHalfFloatExtension(gl);
+    if (Buffer.type === exports.BufferFloatType.HALF_FLOAT) {
+      type = Buffer.getHalfFloatType(gl);
 
-      if (extension) {
-        floatType = extension.HALF_FLOAT_OES;
-      } else if (Context.isWebGl2(gl)) {
-        floatType = gl.HALF_FLOAT;
+      if (type) {
+        return type;
       } else {
-        Buffer.floatType = exports.BufferFloatType.FLOAT;
-        return Buffer.getFloatType(gl);
+        Buffer.type = exports.BufferFloatType.FLOAT;
+        return Buffer.getType(gl);
       }
     } else {
-      extension = Buffer.getFloatExtension(gl);
+      type = Buffer.getFloatType(gl);
 
-      if (extension) {
-        floatType = gl.FLOAT;
+      if (type) {
+        return type;
       } else {
-        Buffer.floatType = exports.BufferFloatType.HALF_FLOAT;
-        return Buffer.getFloatType(gl);
+        Buffer.type = exports.BufferFloatType.HALF_FLOAT;
+        return Buffer.getType(gl);
       }
     }
-
-    console.log(Buffer.floatType, floatType, extension);
-    return floatType;
   };
 
   Buffer.getTexture = function getTexture(gl, BW, BH, index) {
     var internalFormat = Buffer.getInternalFormat(gl);
     var format = gl.RGBA;
-    var floatType = Buffer.getFloatType(gl);
+    var type = Buffer.getType(gl);
     var texture = gl.createTexture();
     gl.activeTexture(gl.TEXTURE0 + index);
     gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, BW, BH, 0, format, floatType, null);
+    gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, BW, BH, 0, format, type, null);
     var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
 
     if (status !== gl.FRAMEBUFFER_COMPLETE) {
-      if (Buffer.floatType === exports.BufferFloatType.FLOAT) {
-        Buffer.floatType = exports.BufferFloatType.HALF_FLOAT;
+      if (Buffer.type === exports.BufferFloatType.FLOAT) {
+        Buffer.type = exports.BufferFloatType.HALF_FLOAT;
       } else {
-        Buffer.floatType = exports.BufferFloatType.FLOAT;
+        Buffer.type = exports.BufferFloatType.FLOAT;
       }
 
       return Buffer.getTexture(gl, BW, BH, index);
     }
 
-    console.log('getTexture', texture);
     return texture;
   };
 
@@ -1163,24 +1165,24 @@ var Buffer = function () {
       var minW = Math.min(BW, this.BW);
       var minH = Math.min(BH, this.BH);
       var pixels;
-      var floatType = Buffer.getFloatType(gl);
+      var type = Buffer.getType(gl);
 
       if (status === gl.FRAMEBUFFER_COMPLETE) {
         pixels = new Float32Array(minW * minH * 4);
-        gl.readPixels(0, 0, minW, minH, gl.RGBA, floatType, pixels);
+        gl.readPixels(0, 0, minW, minH, gl.RGBA, type, pixels);
       }
 
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       var newIndex = index + 1;
       var newTexture = Buffer.getTexture(gl, BW, BH, newIndex);
-      floatType = Buffer.getFloatType(gl);
+      type = Buffer.getType(gl);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
       if (pixels) {
-        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, minW, minH, gl.RGBA, floatType, pixels);
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, minW, minH, gl.RGBA, type, pixels);
       }
 
       var newBuffer = gl.createFramebuffer();
@@ -1193,13 +1195,12 @@ var Buffer = function () {
       this.buffer = newBuffer;
       this.BW = BW;
       this.BH = BH;
-      console.log('resize', newBuffer);
     }
   };
 
   return Buffer;
 }();
-Buffer.floatType = exports.BufferFloatType.HALF_FLOAT;
+Buffer.type = exports.BufferFloatType.HALF_FLOAT;
 var IOBuffer = function () {
   function IOBuffer(index, key, vertexString, fragmentString) {
     this.isValid = false;
