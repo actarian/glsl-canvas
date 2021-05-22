@@ -5,15 +5,18 @@ export declare enum BufferFloatType {
     HALF_FLOAT = 1
 }
 export declare class Buffer {
-    static floatType: BufferFloatType;
     texture: WebGLTexture;
     buffer: WebGLFramebuffer;
     BW: number;
     BH: number;
     index: number;
+    static type: BufferFloatType;
+    static getFloatType(gl: WebGLRenderingContext | WebGL2RenderingContext): number | null;
+    static getHalfFloatType(gl: WebGLRenderingContext | WebGL2RenderingContext): number | null;
+    static getInternalFormat(gl: WebGLRenderingContext | WebGL2RenderingContext): number;
+    static getType(gl: WebGLRenderingContext | WebGL2RenderingContext): number;
+    static getTexture(gl: WebGLRenderingContext | WebGL2RenderingContext, BW: number, BH: number, index: number): WebGLTexture;
     constructor(gl: WebGLRenderingContext | WebGL2RenderingContext, BW: number, BH: number, index: number);
-    getFloatType(gl: WebGLRenderingContext | WebGL2RenderingContext): number;
-    getTexture(gl: WebGLRenderingContext | WebGL2RenderingContext, BW: number, BH: number, index: number): WebGLTexture;
     resize(gl: WebGLRenderingContext | WebGL2RenderingContext, BW: number, BH: number): void;
 }
 export declare class IOBuffer {

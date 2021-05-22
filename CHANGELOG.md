@@ -3,6 +3,12 @@ All notable changes to the "glsl-canvas" library will be documented in this file
 
 ---
 
+## [0.2.6] - 2021-05-22
+### Fixed
+- WebGL2 Buffer Half_Float.
+
+---
+
 ## [0.2.5] - 2021-05-17
 ### Fixed
 - Safari Regex lookbehind.

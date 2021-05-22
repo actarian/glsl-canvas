@@ -1,5 +1,5 @@
 /**
- * @license glsl-canvas-js v0.2.5
+ * @license glsl-canvas-js v0.2.6
  * (c) 2021 Luca Zampetti <lzampetti@gmail.com>
  * License: MIT
  */
@@ -1050,7 +1050,7 @@ var IterableStringMap = function () {
 var Buffer = function () {
   function Buffer(gl, BW, BH, index) {
     var buffer = gl.createFramebuffer();
-    var texture = this.getTexture(gl, BW, BH, index);
+    var texture = Buffer.getTexture(gl, BW, BH, index);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -1062,57 +1062,98 @@ var Buffer = function () {
     this.index = index;
   }
 
-  var _proto = Buffer.prototype;
+  Buffer.getFloatType = function getFloatType(gl) {
+    var extension;
 
-  _proto.getFloatType = function getFloatType(gl) {
-    var floatType, extension;
-
-    if (Buffer.floatType === exports.BufferFloatType.FLOAT) {
-      var extensionName = Context.isWebGl2(gl) ? 'EXT_color_buffer_float' : 'OES_texture_float';
-      extension = gl.getExtension(extensionName);
+    if (Context.isWebGl2(gl)) {
+      extension = gl.getExtension('EXT_color_buffer_float');
 
       if (extension) {
-        floatType = gl.FLOAT;
-      } else {
-        Buffer.floatType = exports.BufferFloatType.HALF_FLOAT;
-        return this.getFloatType(gl);
-      }
-    } else {
-      var _extensionName = Context.isWebGl2(gl) ? 'EXT_color_buffer_half_float' : 'OES_texture_half_float';
-
-      extension = gl.getExtension(_extensionName);
-
-      if (extension) {
-        floatType = extension.HALF_FLOAT_OES;
-      } else {
-        Buffer.floatType = exports.BufferFloatType.FLOAT;
-        return this.getFloatType(gl);
+        return gl.FLOAT;
       }
     }
 
-    return floatType;
+    extension = gl.getExtension('OES_texture_float');
+
+    if (extension) {
+      return gl.FLOAT;
+    }
+
+    return null;
   };
 
-  _proto.getTexture = function getTexture(gl, BW, BH, index) {
-    var floatType = this.getFloatType(gl);
+  Buffer.getHalfFloatType = function getHalfFloatType(gl) {
+    var extension;
+
+    if (Context.isWebGl2(gl)) {
+      extension = gl.getExtension('EXT_color_buffer_half_float') || gl.getExtension('EXT_color_buffer_float');
+
+      if (extension) {
+        return gl.HALF_FLOAT;
+      }
+    }
+
+    extension = gl.getExtension('OES_texture_half_float');
+
+    if (extension) {
+      return extension.HALF_FLOAT_OES || null;
+    }
+
+    return null;
+  };
+
+  Buffer.getInternalFormat = function getInternalFormat(gl) {
+    return Context.isWebGl2(gl) ? gl.RGBA16F : gl.RGBA;
+  };
+
+  Buffer.getType = function getType(gl) {
+    var type;
+
+    if (Buffer.type === exports.BufferFloatType.HALF_FLOAT) {
+      type = Buffer.getHalfFloatType(gl);
+
+      if (type) {
+        return type;
+      } else {
+        Buffer.type = exports.BufferFloatType.FLOAT;
+        return Buffer.getType(gl);
+      }
+    } else {
+      type = Buffer.getFloatType(gl);
+
+      if (type) {
+        return type;
+      } else {
+        Buffer.type = exports.BufferFloatType.HALF_FLOAT;
+        return Buffer.getType(gl);
+      }
+    }
+  };
+
+  Buffer.getTexture = function getTexture(gl, BW, BH, index) {
+    var internalFormat = Buffer.getInternalFormat(gl);
+    var format = gl.RGBA;
+    var type = Buffer.getType(gl);
     var texture = gl.createTexture();
     gl.activeTexture(gl.TEXTURE0 + index);
     gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, Context.isWebGl2(gl) ? gl.RGBA16F : gl.RGBA, BW, BH, 0, gl.RGBA, floatType, null);
+    gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, BW, BH, 0, format, type, null);
     var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
 
     if (status !== gl.FRAMEBUFFER_COMPLETE) {
-      if (Buffer.floatType === exports.BufferFloatType.FLOAT) {
-        Buffer.floatType = exports.BufferFloatType.HALF_FLOAT;
+      if (Buffer.type === exports.BufferFloatType.FLOAT) {
+        Buffer.type = exports.BufferFloatType.HALF_FLOAT;
       } else {
-        Buffer.floatType = exports.BufferFloatType.FLOAT;
+        Buffer.type = exports.BufferFloatType.FLOAT;
       }
 
-      return this.getTexture(gl, BW, BH, index);
+      return Buffer.getTexture(gl, BW, BH, index);
     }
 
     return texture;
   };
+
+  var _proto = Buffer.prototype;
 
   _proto.resize = function resize(gl, BW, BH) {
     if (BW !== this.BW || BH !== this.BH) {
@@ -1124,24 +1165,24 @@ var Buffer = function () {
       var minW = Math.min(BW, this.BW);
       var minH = Math.min(BH, this.BH);
       var pixels;
-      var floatType = this.getFloatType(gl);
+      var type = Buffer.getType(gl);
 
       if (status === gl.FRAMEBUFFER_COMPLETE) {
         pixels = new Float32Array(minW * minH * 4);
-        gl.readPixels(0, 0, minW, minH, gl.RGBA, floatType, pixels);
+        gl.readPixels(0, 0, minW, minH, gl.RGBA, type, pixels);
       }
 
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       var newIndex = index + 1;
-      var newTexture = this.getTexture(gl, BW, BH, newIndex);
-      floatType = this.getFloatType(gl);
+      var newTexture = Buffer.getTexture(gl, BW, BH, newIndex);
+      type = Buffer.getType(gl);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
       if (pixels) {
-        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, minW, minH, gl.RGBA, floatType, pixels);
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, minW, minH, gl.RGBA, type, pixels);
       }
 
       var newBuffer = gl.createFramebuffer();
@@ -1159,7 +1200,7 @@ var Buffer = function () {
 
   return Buffer;
 }();
-Buffer.floatType = exports.BufferFloatType.HALF_FLOAT;
+Buffer.type = exports.BufferFloatType.HALF_FLOAT;
 var IOBuffer = function () {
   function IOBuffer(index, key, vertexString, fragmentString) {
     this.isValid = false;
