@@ -87,19 +87,19 @@ export default class Context {
 	static getFragmentVertex(gl: WebGLRenderingContext | WebGL2RenderingContext, fragmentString: string): string {
 		let vertexString;
 		if (fragmentString) {
-			if (Context.isWebGl2(gl)) {
-				fragmentString = fragmentString.replace(/^\#version\s*300\s*es\s*\n/, '');
+			const version = Context.inferVersion(fragmentString);
+			if (version === ContextVersion.WebGl2) {
+				fragmentString = fragmentString.replace(/^\#version\s*300\s*es.*?\n/, '');
 			}
 			const regexp = /(?:^\s*)((?:#if|#elif)(?:\s*)(defined\s*\(\s*VERTEX)(?:\s*\))|(?:#ifdef)(?:\s*VERTEX)(?:\s*))/gm;
 			const matches = regexp.exec(fragmentString);
 			if (matches !== null) {
-				vertexString = Context.isWebGl2(gl) ? `#version 300 es
+				vertexString = version === ContextVersion.WebGl2 ? `#version 300 es
 #define VERTEX
 ${fragmentString}` : `#define VERTEX
 ${fragmentString}`;
 			}
 		}
-		// console.log('vertexString', vertexString);
 		return vertexString;
 	}
 

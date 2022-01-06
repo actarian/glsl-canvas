@@ -3,6 +3,12 @@ All notable changes to the "glsl-canvas" library will be documented in this file
 
 ---
 
+## [0.2.7] - 2022-01-06
+### Fixed
+- WebGL2 VERTEX shader definition.
+
+---
+
 ## [0.2.6] - 2021-05-22
 ### Fixed
 - WebGL2 Buffer Half_Float.
