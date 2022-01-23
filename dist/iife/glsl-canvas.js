@@ -1,6 +1,6 @@
 /**
- * @license glsl-canvas-js v0.2.6
- * (c) 2021 Luca Zampetti <lzampetti@gmail.com>
+ * @license glsl-canvas-js v0.2.8
+ * (c) 2022 Luca Zampetti <lzampetti@gmail.com>
  * License: MIT
  */
 
@@ -584,15 +584,17 @@ var Context = function () {
     var vertexString;
 
     if (fragmentString) {
-      if (Context.isWebGl2(gl)) {
-        fragmentString = fragmentString.replace(/^\#version\s*300\s*es\s*\n/, '');
+      var version = Context.inferVersion(fragmentString);
+
+      if (version === exports.ContextVersion.WebGl2) {
+        fragmentString = fragmentString.replace(/^\#version\s*300\s*es.*?\n/, '');
       }
 
       var regexp = /(?:^\s*)((?:#if|#elif)(?:\s*)(defined\s*\(\s*VERTEX)(?:\s*\))|(?:#ifdef)(?:\s*VERTEX)(?:\s*))/gm;
       var matches = regexp.exec(fragmentString);
 
       if (matches !== null) {
-        vertexString = Context.isWebGl2(gl) ? "#version 300 es\n#define VERTEX\n" + fragmentString : "#define VERTEX\n" + fragmentString;
+        vertexString = version === exports.ContextVersion.WebGl2 ? "#version 300 es\n#define VERTEX\n" + fragmentString : "#define VERTEX\n" + fragmentString;
       }
     }
 

@@ -88,16 +88,16 @@ var Context = /** @class */ (function () {
     Context.getFragmentVertex = function (gl, fragmentString) {
         var vertexString;
         if (fragmentString) {
-            if (Context.isWebGl2(gl)) {
-                fragmentString = fragmentString.replace(/^\#version\s*300\s*es\s*\n/, '');
+            var version = Context.inferVersion(fragmentString);
+            if (version === ContextVersion.WebGl2) {
+                fragmentString = fragmentString.replace(/^\#version\s*300\s*es.*?\n/, '');
             }
             var regexp = /(?:^\s*)((?:#if|#elif)(?:\s*)(defined\s*\(\s*VERTEX)(?:\s*\))|(?:#ifdef)(?:\s*VERTEX)(?:\s*))/gm;
             var matches = regexp.exec(fragmentString);
             if (matches !== null) {
-                vertexString = Context.isWebGl2(gl) ? "#version 300 es\n#define VERTEX\n" + fragmentString : "#define VERTEX\n" + fragmentString;
+                vertexString = version === ContextVersion.WebGl2 ? "#version 300 es\n#define VERTEX\n" + fragmentString : "#define VERTEX\n" + fragmentString;
             }
         }
-        // console.log('vertexString', vertexString);
         return vertexString;
     };
     Context.getIncludes = function (input, workpath) {
