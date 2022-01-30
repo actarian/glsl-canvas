@@ -27,7 +27,7 @@ export function loadAll() {
     const canvases = [].slice.call(document.getElementsByClassName('glsl-canvas')).filter((x) => x instanceof HTMLCanvasElement);
     return canvases.map(x => of(x));
 }
-if (document) {
+if (typeof window === 'object') {
     document.addEventListener('DOMContentLoaded', () => {
         loadAll();
     });
