@@ -3,6 +3,12 @@ All notable changes to the "glsl-canvas" library will be documented in this file
 
 ---
 
+## [0.2.9] - 2022-01-30
+### Fixed
+- Browser check.
+
+---
+
 ## [0.2.8] - 2022-01-23
 ### Fixed
 - WebGL2 VERTEX shader definition.

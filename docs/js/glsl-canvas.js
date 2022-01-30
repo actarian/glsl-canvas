@@ -1,5 +1,5 @@
 /**
- * @license glsl-canvas-js v0.2.8
+ * @license glsl-canvas-js v0.2.9
  * (c) 2022 Luca Zampetti <lzampetti@gmail.com>
  * License: MIT
  */
@@ -4229,7 +4229,7 @@ function loadAll() {
   });
 }
 
-if (document) {
+if (typeof window === 'object') {
   document.addEventListener('DOMContentLoaded', function () {
     loadAll();
   });
