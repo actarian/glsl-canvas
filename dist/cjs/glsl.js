@@ -85,7 +85,7 @@ function loadAll() {
     return canvases.map(function (x) { return of(x); });
 }
 exports.loadAll = loadAll;
-if (document) {
+if (typeof window === 'object') {
     document.addEventListener('DOMContentLoaded', function () {
         loadAll();
     });

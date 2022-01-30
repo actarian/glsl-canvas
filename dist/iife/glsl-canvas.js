@@ -4229,7 +4229,7 @@ function loadAll() {
   });
 }
 
-if (document) {
+if (typeof window === 'object') {
   document.addEventListener('DOMContentLoaded', function () {
     loadAll();
   });

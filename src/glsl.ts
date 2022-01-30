@@ -31,7 +31,7 @@ export function loadAll(): Canvas[] {
 	return canvases.map(x => of(x));
 }
 
-if (document) {
+if (typeof window === 'object') {
 	document.addEventListener('DOMContentLoaded', () => {
 		loadAll();
 	});
