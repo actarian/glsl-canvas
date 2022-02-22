@@ -81,6 +81,15 @@ export class Uniform {
 					}
 				}
 				break;
+			case UniformMethod.Uniform1fv:
+				this.apply = (gl: WebGLRenderingContext | WebGL2RenderingContext, program: WebGLProgram) => {
+					if (this.dirty) {
+						gl.useProgram(program);
+						const location = gl.getUniformLocation(program, this.key);
+						(gl as any)[this.method].apply(gl, [location].concat([this.values]));
+					}
+				}
+				break;
 			default:
 				this.apply = (gl: WebGLRenderingContext | WebGL2RenderingContext, program: WebGLProgram) => {
 					if (this.dirty) {
